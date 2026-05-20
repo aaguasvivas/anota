@@ -1,7 +1,6 @@
 import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { colors } from '../constants/colors';
-import { QUICK_SCORES, radii, spacing } from '../constants/layout';
+import { StyleSheet, Text, View } from 'react-native';
+import { QUICK_SCORES, spacing } from '../constants/layout';
 import { teamDisplayName, useT } from '../i18n';
 import type { Team, TeamId } from '../types';
 import { ScoreButton } from './ScoreButton';
@@ -35,20 +34,14 @@ export function ScorePad({ team, teamId, onAdd, onCustom }: Props) {
             style={styles.gridItem}
           />
         ))}
+        <ScoreButton
+          label={`+ ${t.chrome.customAdd}`}
+          color={team.color}
+          outline
+          onPress={() => onCustom(teamId)}
+          style={styles.customItem}
+        />
       </View>
-
-      <Pressable
-        onPress={() => onCustom(teamId)}
-        style={({ pressed }) => [
-          styles.customBtn,
-          { borderColor: team.color },
-          pressed && { opacity: 0.6, transform: [{ scale: 0.98 }] },
-        ]}
-      >
-        <Text style={[styles.customText, { color: team.color }]}>
-          + {t.chrome.customAdd}
-        </Text>
-      </Pressable>
     </View>
   );
 }
@@ -76,17 +69,9 @@ const styles = StyleSheet.create({
     flexBasis: '30%',
     flexGrow: 1,
   },
-  customBtn: {
-    marginTop: spacing.sm,
-    borderWidth: 1.5,
-    borderRadius: radii.md,
-    paddingVertical: 12,
-    alignItems: 'center',
-    backgroundColor: colors.felt,
-  },
-  customText: {
-    fontSize: 14,
-    fontWeight: '700',
-    letterSpacing: 0.6,
+  customItem: {
+    flexBasis: '100%',
+    flexGrow: 0,
+    minHeight: 48,
   },
 });

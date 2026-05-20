@@ -20,7 +20,7 @@ import { WinnerModal } from './src/components/WinnerModal';
 import { colors, teamPalette } from './src/constants/colors';
 import { radii, spacing } from './src/constants/layout';
 import { useMatch } from './src/hooks/useMatch';
-import { LanguageProvider, useT } from './src/i18n';
+import { LanguageProvider, teamDisplayName, useT } from './src/i18n';
 import type { TeamId } from './src/types';
 import {
   notifySuccess,
@@ -118,7 +118,7 @@ function Scorekeeper() {
             <Text style={styles.targetPillHint}>✎</Text>
           </Pressable>
 
-          <View style={styles.teams}>
+          <View style={styles.teamBlock}>
             <TeamCard
               team={match.state.teams.A}
               targetScore={match.state.targetScore}
@@ -126,11 +126,22 @@ function Scorekeeper() {
               glowColor={teamPalette.A.glow}
               onRename={openRename}
             />
-            <View style={styles.vsRow}>
-              <View style={styles.vsLine} />
-              <Text style={styles.vsText}>{t.chrome.vs}</Text>
-              <View style={styles.vsLine} />
+            <View style={styles.padInline}>
+              <ScorePad
+                team={match.state.teams.A}
+                teamId="A"
+                onAdd={handleAdd}
+                onCustom={(id) => {
+                  tapLight();
+                  setCustomFor(id);
+                }}
+              />
             </View>
+          </View>
+
+          <LeadsPill match={match} />
+
+          <View style={styles.teamBlock}>
             <TeamCard
               team={match.state.teams.B}
               targetScore={match.state.targetScore}
@@ -138,29 +149,17 @@ function Scorekeeper() {
               glowColor={teamPalette.B.glow}
               onRename={openRename}
             />
-          </View>
-
-          <View style={styles.padBlock}>
-            <ScorePad
-              team={match.state.teams.A}
-              teamId="A"
-              onAdd={handleAdd}
-              onCustom={(id) => {
-                tapLight();
-                setCustomFor(id);
-              }}
-            />
-          </View>
-          <View style={styles.padBlock}>
-            <ScorePad
-              team={match.state.teams.B}
-              teamId="B"
-              onAdd={handleAdd}
-              onCustom={(id) => {
-                tapLight();
-                setCustomFor(id);
-              }}
-            />
+            <View style={styles.padInline}>
+              <ScorePad
+                team={match.state.teams.B}
+                teamId="B"
+                onAdd={handleAdd}
+                onCustom={(id) => {
+                  tapLight();
+                  setCustomFor(id);
+                }}
+              />
+            </View>
           </View>
 
           <View style={styles.historyBlock}>
@@ -256,6 +255,50 @@ function Scorekeeper() {
   );
 }
 
+type LeadsPillProps = {
+  match: ReturnType<typeof useMatch>;
+};
+
+function LeadsPill({ match }: LeadsPillProps) {
+  const { t } = useT();
+  const { teams } = match.state;
+  const tied = teams.A.score === teams.B.score;
+
+  if (tied) {
+    return (
+      <View
+        style={[
+          styles.leadsPill,
+          { borderColor: colors.hairline, backgroundColor: 'rgba(255,255,255,0.03)' },
+        ]}
+      >
+        <Text style={[styles.leadsPillText, { color: colors.textDim }]}>
+          {t.chrome.tied.toUpperCase()}
+        </Text>
+      </View>
+    );
+  }
+
+  const leaderId = teams.A.score > teams.B.score ? 'A' : 'B';
+  const leader = teams[leaderId];
+  const diff = Math.abs(teams.A.score - teams.B.score);
+  const name = teamDisplayName(leader, t);
+
+  return (
+    <View
+      style={[
+        styles.leadsPill,
+        { borderColor: `${leader.color}66`, backgroundColor: `${leader.color}1A` },
+      ]}
+    >
+      <View style={[styles.leadsPillDot, { backgroundColor: leader.color }]} />
+      <Text style={[styles.leadsPillText, { color: leader.color }]}>
+        {t.chrome.leadsBy(name, diff)}
+      </Text>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   root: {
     flex: 1,
@@ -343,29 +386,32 @@ const styles = StyleSheet.create({
     opacity: 0.7,
     fontWeight: '700',
   },
-  teams: {
-    gap: spacing.sm,
+  teamBlock: {
+    gap: spacing.md,
   },
-  vsRow: {
+  padInline: {
+    marginTop: spacing.xs,
+  },
+  leadsPill: {
+    alignSelf: 'center',
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    paddingVertical: 4,
+    paddingVertical: 6,
+    paddingHorizontal: 14,
+    borderRadius: radii.pill,
+    borderWidth: 1,
+    marginVertical: spacing.lg,
+    gap: 8,
   },
-  vsLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: colors.divider,
-  },
-  vsText: {
-    color: colors.textDim,
-    fontSize: 11,
-    letterSpacing: 2,
+  leadsPillText: {
+    fontSize: 12,
     fontWeight: '800',
-    textTransform: 'uppercase',
+    letterSpacing: 0.6,
   },
-  padBlock: {
-    marginTop: spacing.xl,
+  leadsPillDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
   },
   historyBlock: {
     marginTop: spacing.xxl,

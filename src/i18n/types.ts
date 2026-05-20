@@ -18,7 +18,8 @@ export type Dictionary = {
     leader: string;
     target: string;
     targetChange: string;
-    tapRename: string;
+    tied: string;
+    leadsBy: (name: string, n: number) => string;
     vs: string;
     footerTagline: string;
   };

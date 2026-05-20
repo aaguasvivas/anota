@@ -57,7 +57,7 @@ export function TeamCard({ team, targetScore, isLeader, glowColor, onRename }: P
             <Text style={styles.teamName} numberOfLines={1}>
               {name}
             </Text>
-            <Text style={styles.editHint}>{t.chrome.tapRename}</Text>
+            <Text style={[styles.editIcon, { color: team.color }]}>✎</Text>
           </Pressable>
           {isLeader ? (
             <View style={[styles.leaderPill, { borderColor: team.color }]}>
@@ -116,18 +116,21 @@ const styles = StyleSheet.create({
   },
   nameWrap: {
     flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   teamName: {
     color: colors.text,
     fontSize: 22,
     fontWeight: '700',
     letterSpacing: 0.2,
+    flexShrink: 1,
   },
-  editHint: {
-    color: colors.textFaint,
-    fontSize: 11,
-    marginTop: 2,
-    letterSpacing: 0.6,
+  editIcon: {
+    fontSize: 14,
+    opacity: 0.55,
+    fontWeight: '700',
   },
   leaderPill: {
     paddingHorizontal: 10,
