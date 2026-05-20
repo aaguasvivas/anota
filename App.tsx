@@ -20,6 +20,7 @@ import { WinnerModal } from './src/components/WinnerModal';
 import { colors, teamPalette } from './src/constants/colors';
 import { radii, spacing } from './src/constants/layout';
 import { useMatch } from './src/hooks/useMatch';
+import { LanguageProvider, useT } from './src/i18n';
 import type { TeamId } from './src/types';
 import {
   notifySuccess,
@@ -31,12 +32,15 @@ import {
 export default function App() {
   return (
     <SafeAreaProvider>
-      <Scorekeeper />
+      <LanguageProvider>
+        <Scorekeeper />
+      </LanguageProvider>
     </SafeAreaProvider>
   );
 }
 
 function Scorekeeper() {
+  const { t } = useT();
   const match = useMatch();
   const [customFor, setCustomFor] = useState<TeamId | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -52,12 +56,6 @@ function Scorekeeper() {
   function handleAdd(teamId: TeamId, points: number) {
     tapMedium();
     match.addPoints(teamId, points);
-  }
-
-  function handleUndo() {
-    if (match.state.rounds.length === 0) return;
-    tapLight();
-    match.undoLast();
   }
 
   function handleResetConfirm() {
@@ -82,37 +80,23 @@ function Scorekeeper() {
       <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
         <View style={styles.header}>
           <View style={styles.brand}>
-            <Text style={styles.brandWord}>Capi</Text>
-            <Text style={styles.brandWordAccent}>Scorekeeper</Text>
+            <Text style={styles.brandWord}>{t.brand.name}</Text>
             <View style={styles.brandDot} />
           </View>
-          <View style={styles.headerActions}>
-            <Pressable
-              onPress={handleUndo}
-              disabled={match.state.rounds.length === 0}
-              style={({ pressed }) => [
-                styles.iconBtn,
-                pressed && { opacity: 0.6 },
-                match.state.rounds.length === 0 && { opacity: 0.35 },
-              ]}
-              hitSlop={8}
-            >
-              <Text style={styles.iconBtnText}>↶ undo</Text>
-            </Pressable>
-            <Pressable
-              onPress={() => {
-                tapLight();
-                setSettingsOpen(true);
-              }}
-              style={({ pressed }) => [
-                styles.iconBtn,
-                pressed && { opacity: 0.6 },
-              ]}
-              hitSlop={8}
-            >
-              <Text style={styles.iconBtnText}>⚙︎</Text>
-            </Pressable>
-          </View>
+          <Pressable
+            onPress={() => {
+              tapLight();
+              setSettingsOpen(true);
+            }}
+            style={({ pressed }) => [
+              styles.iconBtn,
+              pressed && { opacity: 0.6 },
+            ]}
+            hitSlop={8}
+            accessibilityLabel={t.chrome.settings}
+          >
+            <Text style={styles.iconBtnText}>⚙︎</Text>
+          </Pressable>
         </View>
 
         <ScrollView
@@ -129,9 +113,9 @@ function Scorekeeper() {
               pressed && { opacity: 0.7 },
             ]}
           >
-            <Text style={styles.targetPillLabel}>Hasta</Text>
+            <Text style={styles.targetPillLabel}>{t.chrome.target}</Text>
             <Text style={styles.targetPillValue}>{match.state.targetScore}</Text>
-            <Text style={styles.targetPillHint}>cambiar</Text>
+            <Text style={styles.targetPillHint}>✎</Text>
           </Pressable>
 
           <View style={styles.teams}>
@@ -144,7 +128,7 @@ function Scorekeeper() {
             />
             <View style={styles.vsRow}>
               <View style={styles.vsLine} />
-              <Text style={styles.vsText}>vs</Text>
+              <Text style={styles.vsText}>{t.chrome.vs}</Text>
               <View style={styles.vsLine} />
             </View>
             <TeamCard
@@ -185,7 +169,11 @@ function Scorekeeper() {
 
           <View style={styles.footerRow}>
             <Pressable
-              onPress={handleUndo}
+              onPress={() => {
+                if (match.state.rounds.length === 0) return;
+                tapLight();
+                match.undoLast();
+              }}
               disabled={match.state.rounds.length === 0}
               style={({ pressed }) => [
                 styles.footerBtn,
@@ -193,7 +181,7 @@ function Scorekeeper() {
                 match.state.rounds.length === 0 && { opacity: 0.35 },
               ]}
             >
-              <Text style={styles.footerBtnText}>↶ Deshacer</Text>
+              <Text style={styles.footerBtnText}>↶ {t.chrome.undo}</Text>
             </Pressable>
             <Pressable
               onPress={() => {
@@ -207,21 +195,19 @@ function Scorekeeper() {
               ]}
             >
               <Text style={[styles.footerBtnText, { color: colors.danger }]}>
-                Reiniciar
+                {t.chrome.reset}
               </Text>
             </Pressable>
           </View>
 
-          <Text style={styles.tagline}>
-            Hecho para la mesa dominicana · dominó, capicúa y café
-          </Text>
+          <Text style={styles.tagline}>{t.chrome.footerTagline}</Text>
         </ScrollView>
       </SafeAreaView>
 
       <CustomScoreModal
         visible={customFor !== null}
-        teamName={customFor ? match.state.teams[customFor].name : ''}
-        teamColor={customFor ? match.state.teams[customFor].color : colors.gold}
+        teamId={customFor}
+        team={customFor ? match.state.teams[customFor] : null}
         onCancel={() => setCustomFor(null)}
         onSubmit={(value) => {
           if (customFor) {
@@ -245,10 +231,10 @@ function Scorekeeper() {
 
       <ConfirmDialog
         visible={confirmReset}
-        title="¿Reiniciar partida?"
-        message="Se borrarán los puntajes y las rondas. Los nombres y el objetivo se mantienen."
-        confirmLabel="Reiniciar"
-        cancelLabel="Cancelar"
+        title={t.reset.title}
+        message={t.reset.message}
+        confirmLabel={t.reset.confirm}
+        cancelLabel={t.chrome.cancel}
         destructive
         onConfirm={handleResetConfirm}
         onCancel={() => setConfirmReset(false)}
@@ -293,30 +279,20 @@ const styles = StyleSheet.create({
   },
   brandWord: {
     color: colors.text,
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: '800',
-    letterSpacing: 0.6,
-  },
-  brandWordAccent: {
-    color: colors.gold,
-    fontSize: 20,
-    fontWeight: '800',
-    letterSpacing: 0.6,
+    letterSpacing: 0.4,
   },
   brandDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
     backgroundColor: colors.gold,
     marginLeft: 4,
     shadowColor: colors.gold,
     shadowOpacity: 0.9,
     shadowRadius: 6,
     shadowOffset: { width: 0, height: 0 },
-  },
-  headerActions: {
-    flexDirection: 'row',
-    gap: spacing.sm,
   },
   iconBtn: {
     paddingHorizontal: 12,
@@ -328,9 +304,8 @@ const styles = StyleSheet.create({
   },
   iconBtnText: {
     color: colors.textDim,
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: '700',
-    letterSpacing: 0.5,
   },
   scroll: {
     paddingHorizontal: spacing.lg,
@@ -363,10 +338,9 @@ const styles = StyleSheet.create({
     fontVariant: ['tabular-nums'],
   },
   targetPillHint: {
-    color: colors.textFaint,
-    fontSize: 10,
-    letterSpacing: 1.2,
-    textTransform: 'uppercase',
+    color: colors.gold,
+    fontSize: 12,
+    opacity: 0.7,
     fontWeight: '700',
   },
   teams: {

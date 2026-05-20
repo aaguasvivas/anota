@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { MatchState } from '../types';
 
-const KEY = '@capi-scorekeeper:match:v1';
+const KEY = '@anota:match:v1';
 
 export async function loadMatch(): Promise<MatchState | null> {
   try {

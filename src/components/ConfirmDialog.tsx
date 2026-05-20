@@ -2,6 +2,7 @@ import React from 'react';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { colors } from '../constants/colors';
 import { radii, spacing } from '../constants/layout';
+import { useT } from '../i18n';
 
 type Props = {
   visible: boolean;
@@ -18,12 +19,15 @@ export function ConfirmDialog({
   visible,
   title,
   message,
-  confirmLabel = 'Confirmar',
-  cancelLabel = 'Cancelar',
+  confirmLabel,
+  cancelLabel,
   destructive,
   onConfirm,
   onCancel,
 }: Props) {
+  const { t } = useT();
+  const confirm = confirmLabel ?? t.chrome.confirm;
+  const cancel = cancelLabel ?? t.chrome.cancel;
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel}>
       <View style={styles.backdrop}>
@@ -40,7 +44,7 @@ export function ConfirmDialog({
                 pressed && { opacity: 0.6 },
               ]}
             >
-              <Text style={styles.cancelText}>{cancelLabel}</Text>
+              <Text style={styles.cancelText}>{cancel}</Text>
             </Pressable>
             <Pressable
               onPress={onConfirm}
@@ -53,7 +57,7 @@ export function ConfirmDialog({
               <Text
                 style={destructive ? styles.destructiveText : styles.primaryText}
               >
-                {confirmLabel}
+                {confirm}
               </Text>
             </Pressable>
           </View>

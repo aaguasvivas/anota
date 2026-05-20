@@ -2,6 +2,7 @@ import React from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { colors } from '../constants/colors';
 import { radii, spacing } from '../constants/layout';
+import { teamDisplayName, useT } from '../i18n';
 import type { Round, Team, TeamId } from '../types';
 
 type Props = {
@@ -10,18 +11,20 @@ type Props = {
 };
 
 export function RoundHistory({ rounds, teams }: Props) {
+  const { t } = useT();
+
   if (rounds.length === 0) {
     return (
       <View style={styles.empty}>
-        <Text style={styles.emptyTitle}>Sin rondas todavía</Text>
-        <Text style={styles.emptySub}>Suma puntos y verás la historia aquí.</Text>
+        <Text style={styles.emptyTitle}>{t.history.emptyTitle}</Text>
+        <Text style={styles.emptySub}>{t.history.emptySubtitle}</Text>
       </View>
     );
   }
 
   return (
     <View style={styles.wrap}>
-      <Text style={styles.sectionTitle}>Rondas</Text>
+      <Text style={styles.sectionTitle}>{t.history.sectionTitle}</Text>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -42,7 +45,7 @@ export function RoundHistory({ rounds, teams }: Props) {
             >
               <Text style={[styles.chipPoints, { color: team.color }]}>+{r.points}</Text>
               <Text style={styles.chipTeam} numberOfLines={1}>
-                {team.name}
+                {teamDisplayName(team, t)}
               </Text>
             </View>
           );

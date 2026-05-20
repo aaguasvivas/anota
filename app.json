@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "Capi Scorekeeper",
-    "slug": "capi-scorekeeper",
+    "name": "Anota",
+    "slug": "anota",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -14,10 +14,10 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "dev.capi.scorekeeper"
+      "bundleIdentifier": "dev.anota.app"
     },
     "android": {
-      "package": "dev.capi.scorekeeper",
+      "package": "dev.anota.app",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#070D0A"
@@ -27,6 +27,9 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      "expo-localization"
+    ]
   }
 }

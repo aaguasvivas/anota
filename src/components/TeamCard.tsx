@@ -3,9 +3,10 @@ import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { colors } from '../constants/colors';
 import { radii, spacing } from '../constants/layout';
+import { teamDisplayName, useT } from '../i18n';
 import type { Team } from '../types';
 import { AnimatedScore } from './AnimatedScore';
-import { DominoTile, tileFacesForScore } from './DominoTile';
+import { DominoTile } from './DominoTile';
 import { ProgressBar } from './ProgressBar';
 
 type Props = {
@@ -17,9 +18,10 @@ type Props = {
 };
 
 export function TeamCard({ team, targetScore, isLeader, glowColor, onRename }: Props) {
-  const [top, bottom] = tileFacesForScore(team.score, targetScore);
+  const { t } = useT();
   const progress = team.score / targetScore;
   const remaining = Math.max(0, targetScore - team.score);
+  const name = teamDisplayName(team, t);
 
   return (
     <View style={styles.wrapper}>
@@ -42,7 +44,7 @@ export function TeamCard({ team, targetScore, isLeader, glowColor, onRename }: P
       >
         <View style={styles.header}>
           <View style={styles.tileWrap}>
-            <DominoTile top={top} bottom={bottom} pipColor={team.color} size={36} />
+            <DominoTile top={6} bottom={6} pipColor={team.color} size={36} />
           </View>
           <Pressable
             onPress={onRename}
@@ -53,13 +55,15 @@ export function TeamCard({ team, targetScore, isLeader, glowColor, onRename }: P
             ]}
           >
             <Text style={styles.teamName} numberOfLines={1}>
-              {team.name}
+              {name}
             </Text>
-            <Text style={styles.editHint}>tap to rename</Text>
+            <Text style={styles.editHint}>{t.chrome.tapRename}</Text>
           </Pressable>
           {isLeader ? (
             <View style={[styles.leaderPill, { borderColor: team.color }]}>
-              <Text style={[styles.leaderText, { color: team.color }]}>LEAD</Text>
+              <Text style={[styles.leaderText, { color: team.color }]}>
+                {t.chrome.leader}
+              </Text>
             </View>
           ) : (
             <View style={styles.leaderPillSpacer} />
@@ -75,7 +79,7 @@ export function TeamCard({ team, targetScore, isLeader, glowColor, onRename }: P
           <View style={styles.targetCol}>
             <Text style={styles.targetSlash}>/ {targetScore}</Text>
             <Text style={styles.remaining}>
-              {remaining === 0 ? '¡llegó!' : `${remaining} para ganar`}
+              {remaining === 0 ? t.team.arrived : t.team.toWin(remaining)}
             </Text>
           </View>
         </View>
@@ -124,7 +128,6 @@ const styles = StyleSheet.create({
     fontSize: 11,
     marginTop: 2,
     letterSpacing: 0.6,
-    textTransform: 'uppercase',
   },
   leaderPill: {
     paddingHorizontal: 10,

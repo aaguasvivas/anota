@@ -2,6 +2,7 @@ import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { colors } from '../constants/colors';
 import { QUICK_SCORES, radii, spacing } from '../constants/layout';
+import { teamDisplayName, useT } from '../i18n';
 import type { Team, TeamId } from '../types';
 import { ScoreButton } from './ScoreButton';
 
@@ -13,11 +14,14 @@ type Props = {
 };
 
 export function ScorePad({ team, teamId, onAdd, onCustom }: Props) {
+  const { t } = useT();
+  const displayName = teamDisplayName(team, t);
+
   return (
     <View style={styles.wrap}>
       <View style={styles.headerRow}>
         <Text style={[styles.headerName, { color: team.color }]} numberOfLines={1}>
-          + para {team.name}
+          {t.team.plusFor(displayName)}
         </Text>
       </View>
 
@@ -41,7 +45,9 @@ export function ScorePad({ team, teamId, onAdd, onCustom }: Props) {
           pressed && { opacity: 0.6, transform: [{ scale: 0.98 }] },
         ]}
       >
-        <Text style={[styles.customText, { color: team.color }]}>+ custom</Text>
+        <Text style={[styles.customText, { color: team.color }]}>
+          + {t.chrome.customAdd}
+        </Text>
       </Pressable>
     </View>
   );

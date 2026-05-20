@@ -6,18 +6,21 @@ import { makeId } from '../utils/id';
 import { clearMatch, loadMatch, saveMatch } from '../utils/storage';
 
 function initialMatch(): MatchState {
+  // Team names default to '' — the UI fills in the localized default
+  // (e.g. "Nosotros" / "Us") so it follows the active language until the
+  // user explicitly renames.
   return {
     teams: {
       A: {
         id: 'A',
-        name: 'Team 1',
+        name: '',
         score: 0,
         color: teamPalette.A.color,
         accent: teamPalette.A.accent,
       },
       B: {
         id: 'B',
-        name: 'Team 2',
+        name: '',
         score: 0,
         color: teamPalette.B.color,
         accent: teamPalette.B.accent,
@@ -112,8 +115,9 @@ export function useMatch() {
   }, []);
 
   const renameTeam = useCallback((teamId: TeamId, name: string) => {
+    // Empty trimmed name resets the team to its localized default
+    // (the UI fills it in via teamDisplayName()).
     const trimmed = name.trim().slice(0, 24);
-    if (!trimmed) return;
     setState((prev) => ({
       ...prev,
       teams: {

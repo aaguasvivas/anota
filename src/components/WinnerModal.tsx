@@ -2,8 +2,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useMemo, useRef } from 'react';
 import { Animated, Modal, Pressable, Share, StyleSheet, Text, View } from 'react-native';
 import { colors } from '../constants/colors';
-import { pickRandom, winnerPhrases, winnerSubtitles } from '../constants/copy';
 import { radii, spacing } from '../constants/layout';
+import { teamDisplayName, useT } from '../i18n';
 import type { MatchState, Team } from '../types';
 import { DominoTile } from './DominoTile';
 
@@ -15,11 +15,12 @@ type Props = {
 };
 
 export function WinnerModal({ visible, state, onNewMatch, onKeepPlaying }: Props) {
+  const { t, pick } = useT();
   const scale = useRef(new Animated.Value(0.6)).current;
   const opacity = useRef(new Animated.Value(0)).current;
 
-  const phrase = useMemo(() => pickRandom(winnerPhrases), [visible]);
-  const subtitle = useMemo(() => pickRandom(winnerSubtitles), [visible]);
+  const phrase = useMemo(() => pick(t.winner.phrases), [visible, t, pick]);
+  const subtitle = useMemo(() => pick(t.winner.subtitles), [visible, t, pick]);
 
   useEffect(() => {
     if (visible) {
@@ -45,11 +46,18 @@ export function WinnerModal({ visible, state, onNewMatch, onKeepPlaying }: Props
   if (!winnerId) return null;
   const winner: Team = state.teams[winnerId];
   const loser: Team = winnerId === 'A' ? state.teams.B : state.teams.A;
+  const winnerName = teamDisplayName(winner, t);
+  const loserName = teamDisplayName(loser, t);
 
   async function shareResult() {
     try {
       await Share.share({
-        message: `🁢 Capi Scorekeeper\n${winner.name} ${winner.score} – ${loser.score} ${loser.name}\n¡${winner.name} ganó!`,
+        message: t.winner.shareMessage(
+          winnerName,
+          loserName,
+          winner.score,
+          loser.score,
+        ),
       });
     } catch {
       // user cancelled
@@ -85,16 +93,16 @@ export function WinnerModal({ visible, state, onNewMatch, onKeepPlaying }: Props
 
           <View style={styles.scoreBlock}>
             <Text style={styles.winnerName} numberOfLines={1}>
-              {winner.name}
+              {winnerName}
             </Text>
             <Text style={[styles.winnerScore, { color: winner.color }]}>{winner.score}</Text>
             <View style={styles.versus}>
               <View style={[styles.divider, { backgroundColor: `${winner.color}55` }]} />
-              <Text style={styles.vsText}>vs</Text>
+              <Text style={styles.vsText}>{t.chrome.vs}</Text>
               <View style={[styles.divider, { backgroundColor: `${winner.color}55` }]} />
             </View>
             <Text style={styles.loserLine}>
-              {loser.name}  ·  {loser.score}
+              {loserName}  ·  {loser.score}
             </Text>
           </View>
 
@@ -106,7 +114,7 @@ export function WinnerModal({ visible, state, onNewMatch, onKeepPlaying }: Props
                 pressed && { opacity: 0.6 },
               ]}
             >
-              <Text style={styles.secondaryText}>Seguir jugando</Text>
+              <Text style={styles.secondaryText}>{t.winner.keepPlaying}</Text>
             </Pressable>
             <Pressable
               onPress={onNewMatch}
@@ -116,12 +124,12 @@ export function WinnerModal({ visible, state, onNewMatch, onKeepPlaying }: Props
                 pressed && { opacity: 0.85 },
               ]}
             >
-              <Text style={styles.primaryText}>Nueva partida</Text>
+              <Text style={styles.primaryText}>{t.winner.newMatch}</Text>
             </Pressable>
           </View>
 
           <Pressable onPress={shareResult} hitSlop={10} style={styles.shareBtn}>
-            <Text style={styles.shareText}>Compartir resultado</Text>
+            <Text style={styles.shareText}>{t.winner.share}</Text>
           </Pressable>
         </Animated.View>
       </View>

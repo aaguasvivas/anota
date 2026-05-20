@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { colors, teamPalette } from '../constants/colors';
 import { radii, spacing, TARGET_PRESETS } from '../constants/layout';
+import { useT } from '../i18n';
 import type { MatchState, TeamId } from '../types';
 
 type Props = {
@@ -31,6 +32,7 @@ export function SettingsModal({
   onTargetChange,
   onResetMatch,
 }: Props) {
+  const { t, lang, setLang } = useT();
   const [nameA, setNameA] = useState(state.teams.A.name);
   const [nameB, setNameB] = useState(state.teams.B.name);
   const [customTarget, setCustomTarget] = useState(String(state.targetScore));
@@ -70,9 +72,49 @@ export function SettingsModal({
             keyboardShouldPersistTaps="handled"
             contentContainerStyle={styles.body}
           >
-            <Text style={styles.title}>Ajustes de partida</Text>
+            <Text style={styles.title}>{t.settings.title}</Text>
 
-            <Text style={styles.sectionLabel}>Nombres de equipos</Text>
+            <Text style={styles.sectionLabel}>{t.settings.languageSection}</Text>
+            <View style={styles.langRow}>
+              <Pressable
+                onPress={() => setLang('es')}
+                style={({ pressed }) => [
+                  styles.langChip,
+                  lang === 'es' && styles.langChipActive,
+                  pressed && { opacity: 0.7 },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.langChipText,
+                    lang === 'es' && styles.langChipTextActive,
+                  ]}
+                >
+                  {t.settings.languageEs}
+                </Text>
+              </Pressable>
+              <Pressable
+                onPress={() => setLang('en')}
+                style={({ pressed }) => [
+                  styles.langChip,
+                  lang === 'en' && styles.langChipActive,
+                  pressed && { opacity: 0.7 },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.langChipText,
+                    lang === 'en' && styles.langChipTextActive,
+                  ]}
+                >
+                  {t.settings.languageEn}
+                </Text>
+              </Pressable>
+            </View>
+
+            <Text style={[styles.sectionLabel, { marginTop: spacing.xl }]}>
+              {t.settings.namesSection}
+            </Text>
             <View style={styles.teamRow}>
               <View style={[styles.swatch, { backgroundColor: teamPalette.A.color }]} />
               <TextInput
@@ -80,7 +122,7 @@ export function SettingsModal({
                 onChangeText={setNameA}
                 onBlur={commitNames}
                 maxLength={24}
-                placeholder="Team 1"
+                placeholder={t.team.defaultA}
                 placeholderTextColor={colors.textFaint}
                 style={styles.input}
                 returnKeyType="done"
@@ -94,7 +136,7 @@ export function SettingsModal({
                 onChangeText={setNameB}
                 onBlur={commitNames}
                 maxLength={24}
-                placeholder="Team 2"
+                placeholder={t.team.defaultB}
                 placeholderTextColor={colors.textFaint}
                 style={styles.input}
                 returnKeyType="done"
@@ -103,7 +145,7 @@ export function SettingsModal({
             </View>
 
             <Text style={[styles.sectionLabel, { marginTop: spacing.xl }]}>
-              Puntaje objetivo
+              {t.settings.targetSection}
             </Text>
             <View style={styles.targetRow}>
               {TARGET_PRESETS.map((preset) => {
@@ -135,7 +177,7 @@ export function SettingsModal({
             </View>
 
             <View style={[styles.teamRow, { marginTop: spacing.md }]}>
-              <Text style={styles.customLabel}>Custom</Text>
+              <Text style={styles.customLabel}>{t.settings.customLabel}</Text>
               <TextInput
                 value={customTarget}
                 onChangeText={handleCustomTarget}
@@ -155,7 +197,7 @@ export function SettingsModal({
                 pressed && { opacity: 0.7 },
               ]}
             >
-              <Text style={styles.resetText}>Reiniciar partida</Text>
+              <Text style={styles.resetText}>{t.settings.resetMatch}</Text>
             </Pressable>
 
             <Pressable
@@ -168,7 +210,7 @@ export function SettingsModal({
                 pressed && { opacity: 0.85 },
               ]}
             >
-              <Text style={styles.doneText}>Listo</Text>
+              <Text style={styles.doneText}>{t.chrome.done}</Text>
             </Pressable>
           </ScrollView>
         </View>
@@ -220,6 +262,32 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     fontWeight: '800',
     marginBottom: spacing.sm,
+  },
+  langRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  langChip: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: radii.md,
+    alignItems: 'center',
+    backgroundColor: colors.bgDeep,
+    borderWidth: 1,
+    borderColor: colors.hairline,
+  },
+  langChipActive: {
+    backgroundColor: colors.gold,
+    borderColor: colors.gold,
+  },
+  langChipText: {
+    color: colors.textDim,
+    fontSize: 14,
+    fontWeight: '800',
+    letterSpacing: 0.4,
+  },
+  langChipTextActive: {
+    color: colors.tileInk,
   },
   teamRow: {
     flexDirection: 'row',
