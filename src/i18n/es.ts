@@ -61,7 +61,7 @@ export const es: Dictionary = {
       '¡Eso e’ tuyo!',
     ],
     subtitles: [
-      'Que sirvan otro café.',
+      'Otra cuando quieran.',
       '¿Otra mano?',
       'Eso e’ arroz.',
       'Partida ganada.',
