@@ -2,27 +2,22 @@ import { useKeepAwake } from 'expo-keep-awake';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
 import React, { useEffect, useState } from 'react';
-import {
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
 import { ConfirmDialog } from './src/components/ConfirmDialog';
 import { CustomScoreModal } from './src/components/CustomScoreModal';
-import { RoundHistory } from './src/components/RoundHistory';
+import { RoundStrip } from './src/components/RoundStrip';
 import { ScorePad } from './src/components/ScorePad';
 import { SettingsModal } from './src/components/SettingsModal';
+import { TargetPill } from './src/components/TargetPill';
 import { TeamCard } from './src/components/TeamCard';
 import { WinnerModal } from './src/components/WinnerModal';
 import { colors, teamPalette } from './src/constants/colors';
 import { radii, spacing } from './src/constants/layout';
 import { useMatch } from './src/hooks/useMatch';
 import { LanguageProvider, teamDisplayName, useT } from './src/i18n';
-import type { TeamId } from './src/types';
+import type { Round, TeamId } from './src/types';
 import {
   notifySuccess,
   notifyWarning,
@@ -48,6 +43,7 @@ function Scorekeeper() {
   const [customFor, setCustomFor] = useState<TeamId | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
+  const [roundToRemove, setRoundToRemove] = useState<Round | null>(null);
 
   useEffect(() => {
     hydratePrefs();
@@ -71,9 +67,23 @@ function Scorekeeper() {
     setConfirmReset(false);
   }
 
+  function confirmRemoveRound() {
+    if (!roundToRemove) return;
+    tapMedium();
+    match.removeRound(roundToRemove.id);
+    setRoundToRemove(null);
+  }
+
   function openRename() {
     setSettingsOpen(true);
   }
+
+  const removeRoundMessage = roundToRemove
+    ? t.history.removeRoundConfirm(
+        roundToRemove.points,
+        teamDisplayName(match.state.teams[roundToRemove.teamId], t),
+      )
+    : '';
 
   return (
     <View style={styles.root}>
@@ -90,6 +100,14 @@ function Scorekeeper() {
             <Text style={styles.brandWord}>{t.brand.name}</Text>
             <View style={styles.brandDot} />
           </View>
+          <TargetPill
+            value={match.state.targetScore}
+            onChange={match.setTargetScore}
+            onPressLong={() => {
+              tapLight();
+              setSettingsOpen(true);
+            }}
+          />
           <Pressable
             onPress={() => {
               tapLight();
@@ -100,35 +118,15 @@ function Scorekeeper() {
               pressed && { opacity: 0.6 },
             ]}
             hitSlop={8}
+            accessibilityRole="button"
             accessibilityLabel={t.chrome.settings}
           >
             <Text style={styles.iconBtnText}>⚙︎</Text>
           </Pressable>
         </View>
 
-        <ScrollView
-          contentContainerStyle={styles.scroll}
-          showsVerticalScrollIndicator={false}
-        >
-          <Pressable
-            onPress={() => {
-              tapLight();
-              setSettingsOpen(true);
-            }}
-            accessibilityRole="button"
-            accessibilityLabel={`${t.chrome.target} ${match.state.targetScore}`}
-            accessibilityHint={t.chrome.targetChange}
-            style={({ pressed }) => [
-              styles.targetPill,
-              pressed && { opacity: 0.7 },
-            ]}
-          >
-            <Text style={styles.targetPillLabel}>{t.chrome.target}</Text>
-            <Text style={styles.targetPillValue}>{match.state.targetScore}</Text>
-            <Text style={styles.targetPillHint}>✎</Text>
-          </Pressable>
-
-          <View style={styles.teamBlock}>
+        <View style={styles.body}>
+          <View style={styles.teamRegion}>
             <TeamCard
               team={match.state.teams.A}
               targetScore={match.state.targetScore}
@@ -136,7 +134,7 @@ function Scorekeeper() {
               glowColor={teamPalette.A.glow}
               onRename={openRename}
             />
-            <View style={styles.padInline}>
+            <View style={styles.padWrap}>
               <ScorePad
                 team={match.state.teams.A}
                 teamId="A"
@@ -149,9 +147,18 @@ function Scorekeeper() {
             </View>
           </View>
 
-          <LeadsPill match={match} />
+          <View style={styles.divider}>
+            <RoundStrip
+              rounds={match.state.rounds}
+              teams={match.state.teams}
+              onRequestRemove={(r) => {
+                tapLight();
+                setRoundToRemove(r);
+              }}
+            />
+          </View>
 
-          <View style={styles.teamBlock}>
+          <View style={styles.teamRegion}>
             <TeamCard
               team={match.state.teams.B}
               targetScore={match.state.targetScore}
@@ -159,7 +166,7 @@ function Scorekeeper() {
               glowColor={teamPalette.B.glow}
               onRename={openRename}
             />
-            <View style={styles.padInline}>
+            <View style={styles.padWrap}>
               <ScorePad
                 team={match.state.teams.B}
                 teamId="B"
@@ -171,48 +178,42 @@ function Scorekeeper() {
               />
             </View>
           </View>
+        </View>
 
-          <View style={styles.historyBlock}>
-            <RoundHistory rounds={match.state.rounds} teams={match.state.teams} />
-          </View>
-
-          <View style={styles.footerRow}>
-            <Pressable
-              onPress={() => {
-                if (match.state.rounds.length === 0) return;
-                tapLight();
-                match.undoLast();
-              }}
-              disabled={match.state.rounds.length === 0}
-              accessibilityRole="button"
-              accessibilityLabel={t.chrome.undo}
-              accessibilityState={{ disabled: match.state.rounds.length === 0 }}
-              style={({ pressed }) => [
-                styles.footerBtn,
-                pressed && { opacity: 0.7 },
-                match.state.rounds.length === 0 && { opacity: 0.35 },
-              ]}
-            >
-              <Text style={styles.footerBtnText}>↶ {t.chrome.undo}</Text>
-            </Pressable>
-            <Pressable
-              onPress={() => {
-                tapLight();
-                setConfirmReset(true);
-              }}
-              accessibilityRole="button"
-              accessibilityLabel={t.chrome.newMatch}
-              style={({ pressed }) => [
-                styles.footerBtn,
-                pressed && { opacity: 0.7 },
-              ]}
-            >
-              <Text style={styles.footerBtnText}>⟲ {t.chrome.newMatch}</Text>
-            </Pressable>
-          </View>
-
-          <Text style={styles.tagline}>{t.chrome.footerTagline}</Text>
-        </ScrollView>
+        <View style={styles.footer}>
+          <Pressable
+            onPress={() => {
+              if (match.state.rounds.length === 0) return;
+              tapLight();
+              match.undoLast();
+            }}
+            disabled={match.state.rounds.length === 0}
+            accessibilityRole="button"
+            accessibilityLabel={t.chrome.undo}
+            accessibilityState={{ disabled: match.state.rounds.length === 0 }}
+            style={({ pressed }) => [
+              styles.footerBtn,
+              pressed && { opacity: 0.7 },
+              match.state.rounds.length === 0 && { opacity: 0.35 },
+            ]}
+          >
+            <Text style={styles.footerBtnText}>↶ {t.chrome.undo}</Text>
+          </Pressable>
+          <Pressable
+            onPress={() => {
+              tapLight();
+              setConfirmReset(true);
+            }}
+            accessibilityRole="button"
+            accessibilityLabel={t.chrome.newMatch}
+            style={({ pressed }) => [
+              styles.footerBtn,
+              pressed && { opacity: 0.7 },
+            ]}
+          >
+            <Text style={styles.footerBtnText}>⟲ {t.chrome.newMatch}</Text>
+          </Pressable>
+        </View>
       </SafeAreaView>
 
       <CustomScoreModal
@@ -250,6 +251,16 @@ function Scorekeeper() {
         onCancel={() => setConfirmReset(false)}
       />
 
+      <ConfirmDialog
+        visible={roundToRemove !== null}
+        title={removeRoundMessage}
+        confirmLabel={t.chrome.confirm}
+        cancelLabel={t.chrome.cancel}
+        destructive
+        onConfirm={confirmRemoveRound}
+        onCancel={() => setRoundToRemove(null)}
+      />
+
       <WinnerModal
         visible={!!match.state.winnerId}
         state={match.state}
@@ -262,50 +273,6 @@ function Scorekeeper() {
           match.dismissWinner();
         }}
       />
-    </View>
-  );
-}
-
-type LeadsPillProps = {
-  match: ReturnType<typeof useMatch>;
-};
-
-function LeadsPill({ match }: LeadsPillProps) {
-  const { t } = useT();
-  const { teams } = match.state;
-  const tied = teams.A.score === teams.B.score;
-
-  if (tied) {
-    return (
-      <View
-        style={[
-          styles.leadsPill,
-          { borderColor: colors.hairline, backgroundColor: 'rgba(255,255,255,0.03)' },
-        ]}
-      >
-        <Text style={[styles.leadsPillText, { color: colors.textDim }]}>
-          {t.chrome.tied.toUpperCase()}
-        </Text>
-      </View>
-    );
-  }
-
-  const leaderId = teams.A.score > teams.B.score ? 'A' : 'B';
-  const leader = teams[leaderId];
-  const diff = Math.abs(teams.A.score - teams.B.score);
-  const name = teamDisplayName(leader, t);
-
-  return (
-    <View
-      style={[
-        styles.leadsPill,
-        { borderColor: `${leader.color}66`, backgroundColor: `${leader.color}1A` },
-      ]}
-    >
-      <View style={[styles.leadsPillDot, { backgroundColor: leader.color }]} />
-      <Text style={[styles.leadsPillText, { color: leader.color }]}>
-        {t.chrome.leadsBy(name, diff)}
-      </Text>
     </View>
   );
 }
@@ -323,34 +290,35 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: spacing.lg,
-    paddingTop: spacing.sm,
-    paddingBottom: spacing.sm,
+    paddingTop: spacing.xs,
+    paddingBottom: spacing.xs,
+    gap: spacing.sm,
   },
   brand: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 5,
   },
   brandWord: {
     color: colors.text,
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: '800',
     letterSpacing: 0.4,
   },
   brandDot: {
-    width: 7,
-    height: 7,
-    borderRadius: 3.5,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
     backgroundColor: colors.gold,
-    marginLeft: 4,
+    marginLeft: 3,
     shadowColor: colors.gold,
     shadowOpacity: 0.9,
     shadowRadius: 6,
     shadowOffset: { width: 0, height: 0 },
   },
   iconBtn: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
     borderRadius: radii.pill,
     borderWidth: 1,
     borderColor: colors.hairline,
@@ -358,83 +326,34 @@ const styles = StyleSheet.create({
   },
   iconBtnText: {
     color: colors.textDim,
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '700',
   },
-  scroll: {
+  body: {
+    flex: 1,
     paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.xxl,
+    justifyContent: 'space-between',
   },
-  targetPill: {
-    alignSelf: 'center',
-    flexDirection: 'row',
+  teamRegion: {
+    gap: spacing.sm,
+  },
+  padWrap: {
+    width: '100%',
+  },
+  divider: {
     alignItems: 'center',
-    backgroundColor: 'rgba(230, 180, 73, 0.1)',
-    borderColor: 'rgba(230, 180, 73, 0.4)',
-    borderWidth: 1,
-    borderRadius: radii.pill,
-    paddingVertical: 6,
-    paddingHorizontal: 14,
-    marginBottom: spacing.lg,
-    gap: 8,
+    paddingVertical: spacing.sm,
   },
-  targetPillLabel: {
-    color: colors.gold,
-    fontSize: 11,
-    fontWeight: '800',
-    letterSpacing: 1.4,
-    textTransform: 'uppercase',
-  },
-  targetPillValue: {
-    color: colors.text,
-    fontSize: 16,
-    fontWeight: '800',
-    fontVariant: ['tabular-nums'],
-  },
-  targetPillHint: {
-    color: colors.gold,
-    fontSize: 12,
-    opacity: 0.7,
-    fontWeight: '700',
-  },
-  teamBlock: {
-    gap: spacing.md,
-  },
-  padInline: {
-    marginTop: spacing.xs,
-  },
-  leadsPill: {
-    alignSelf: 'center',
+  footer: {
     flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 6,
-    paddingHorizontal: 14,
-    borderRadius: radii.pill,
-    borderWidth: 1,
-    marginVertical: spacing.lg,
-    gap: 8,
-  },
-  leadsPillText: {
-    fontSize: 12,
-    fontWeight: '800',
-    letterSpacing: 0.6,
-  },
-  leadsPillDot: {
-    width: 5,
-    height: 5,
-    borderRadius: 2.5,
-  },
-  historyBlock: {
-    marginTop: spacing.xxl,
-  },
-  footerRow: {
-    flexDirection: 'row',
-    marginTop: spacing.xl,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.xs,
     gap: spacing.md,
   },
   footerBtn: {
     flex: 1,
-    paddingVertical: 14,
+    paddingVertical: 12,
     borderRadius: radii.md,
     borderWidth: 1,
     borderColor: colors.hairline,
@@ -445,13 +364,6 @@ const styles = StyleSheet.create({
     color: colors.textDim,
     fontWeight: '800',
     fontSize: 14,
-    letterSpacing: 0.4,
-  },
-  tagline: {
-    color: colors.textFaint,
-    fontSize: 11,
-    textAlign: 'center',
-    marginTop: spacing.xl,
     letterSpacing: 0.4,
   },
 });

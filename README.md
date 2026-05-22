@@ -2,7 +2,7 @@
 
 > Anotador de dominó · Domino Scorekeeper
 
-A polished Dominican-style dominoes scorekeeper for iPhone. Two teams, big legible scores, quick-add buttons, custom point input, round history, undo, target score, and a celebratory winner moment. Bilingual (Español / English) with a language toggle in Settings. Local-only, no accounts, no backend.
+A polished Dominican-style dominoes scorekeeper for iPhone. Two teams always visible on a single non-scrolling screen, big legible scores, Dominican-friendly quick-add buttons (25 / 30 / 50 / 75 / 100 + custom), inline target editing, undo, per-round delete via long-press on the divider strip, and a celebratory winner moment. Bilingual (Español / English) with a language toggle in Settings, plus a haptics-mute toggle. Local-only, no accounts, no backend.
 
 Built with Expo + React Native + TypeScript.
 
@@ -54,11 +54,12 @@ anota/
     │   ├── CustomScoreModal.tsx  # custom-point input modal
     │   ├── DominoTile.tsx        # SVG-free domino tile (pips on a 3x3 grid)
     │   ├── ProgressBar.tsx       # animated progress toward target
-    │   ├── RoundHistory.tsx      # horizontal chip-style history
+    │   ├── RoundStrip.tsx        # divider between teams: leads-by + chip strip with long-press delete
     │   ├── ScoreButton.tsx       # quick-add button
-    │   ├── ScorePad.tsx          # +5/+10/+15/+20/+25/+50 grid per team
-    │   ├── SettingsModal.tsx     # language toggle, names, target, reset
-    │   ├── TeamCard.tsx          # large team card with score, tile, progress
+    │   ├── ScorePad.tsx          # 25/30/50/75/100 quick scores + custom per team
+    │   ├── SettingsModal.tsx     # language, names, target presets, haptics mute, reset
+    │   ├── TargetPill.tsx        # header pill with inline target editing
+    │   ├── TeamCard.tsx          # compact team card with score, tile, progress
     │   └── WinnerModal.tsx       # celebratory winner moment + share
     ├── constants/
     │   ├── colors.ts             # palette (dark felt + ivory tiles)
@@ -73,9 +74,10 @@ anota/
     ├── types/
     │   └── index.ts              # Team, Round, MatchState, TeamId
     └── utils/
-        ├── haptics.ts            # tap / success / warning helpers
+        ├── haptics.ts            # tap / success / warning helpers, respects haptics-mute preference
         ├── id.ts                 # round id generator
-        └── storage.ts            # AsyncStorage persistence wrapper
+        ├── preferences.ts        # hapticsMuted preference, persisted, subscribable
+        └── storage.ts            # AsyncStorage persistence wrapper with schema guard
 ```
 
 ---

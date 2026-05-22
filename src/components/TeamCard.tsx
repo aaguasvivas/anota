@@ -45,7 +45,7 @@ export function TeamCard({ team, targetScore, isLeader, glowColor, onRename }: P
       >
         <View style={styles.header}>
           <View style={styles.tileWrap}>
-            <DominoTile top={topFace} bottom={bottomFace} pipColor={team.color} size={36} />
+            <DominoTile top={topFace} bottom={bottomFace} pipColor={team.color} size={28} />
           </View>
           <Pressable
             onPress={onRename}
@@ -97,6 +97,7 @@ export function TeamCard({ team, targetScore, isLeader, glowColor, onRename }: P
           progress={progress}
           color={team.color}
           glowColor={glowColor}
+          height={5}
         />
       </LinearGradient>
     </View>
@@ -108,42 +109,43 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   card: {
-    borderRadius: radii.xl,
+    borderRadius: radii.lg,
     borderWidth: 1,
-    padding: spacing.lg,
-    shadowOffset: { width: 0, height: 6 },
-    shadowRadius: 14,
-    elevation: 6,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 10,
+    elevation: 4,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: spacing.md,
+    marginBottom: spacing.xs,
   },
   tileWrap: {
-    marginRight: spacing.md,
+    marginRight: spacing.sm,
   },
   nameWrap: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 6,
   },
   teamName: {
     color: colors.text,
-    fontSize: 22,
+    fontSize: 18,
     fontWeight: '700',
     letterSpacing: 0.2,
     flexShrink: 1,
   },
   editIcon: {
-    fontSize: 14,
+    fontSize: 12,
     opacity: 0.55,
     fontWeight: '700',
   },
   leaderPill: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
     borderRadius: radii.pill,
     borderWidth: 1,
   },
@@ -151,35 +153,35 @@ const styles = StyleSheet.create({
     width: 0,
   },
   leaderText: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: '800',
     letterSpacing: 1.2,
   },
   scoreRow: {
     flexDirection: 'row',
     alignItems: 'flex-end',
-    marginBottom: spacing.md,
+    marginBottom: spacing.xs,
   },
   score: {
-    fontSize: 76,
+    fontSize: 60,
     fontWeight: '800',
-    letterSpacing: -2,
+    letterSpacing: -1.5,
     fontVariant: ['tabular-nums'],
-    lineHeight: 80,
+    lineHeight: 64,
   },
   targetCol: {
-    marginLeft: spacing.md,
-    paddingBottom: 10,
+    marginLeft: spacing.sm,
+    paddingBottom: 8,
   },
   targetSlash: {
     color: colors.textDim,
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '600',
   },
   remaining: {
     color: colors.textFaint,
-    fontSize: 12,
-    marginTop: 2,
-    letterSpacing: 0.4,
+    fontSize: 11,
+    marginTop: 1,
+    letterSpacing: 0.3,
   },
 });
