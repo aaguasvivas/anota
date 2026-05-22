@@ -49,6 +49,9 @@ export const es: Dictionary = {
     languageSection: 'Idioma',
     languageEs: 'Español',
     languageEn: 'English',
+    hapticsSection: 'Vibración',
+    hapticsLabel: 'Vibración al tocar',
+    hapticsHint: 'Apágala si molesta a la mesa.',
     resetMatch: 'Reiniciar la partida',
   },
   winner: {
@@ -89,5 +92,6 @@ export const es: Dictionary = {
     sectionTitle: 'Rondas',
     emptyTitle: 'Todavía no se ha jugao’',
     emptySubtitle: 'Suma puntos y la historia aparece aquí.',
+    removeRoundConfirm: (n, name) => `¿Borrar +${n} de ${name}?`,
   },
 };

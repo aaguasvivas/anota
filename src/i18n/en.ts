@@ -47,6 +47,9 @@ export const en: Dictionary = {
     languageSection: 'Language',
     languageEs: 'Español',
     languageEn: 'English',
+    hapticsSection: 'Haptics',
+    hapticsLabel: 'Vibrate on tap',
+    hapticsHint: 'Turn off if it’s bothering the table.',
     resetMatch: 'Reset match',
   },
   winner: {
@@ -86,5 +89,6 @@ export const en: Dictionary = {
     sectionTitle: 'Rounds',
     emptyTitle: 'No rounds yet',
     emptySubtitle: 'Add points and they’ll show up here.',
+    removeRoundConfirm: (n, name) => `Remove +${n} from ${name}?`,
   },
 };

@@ -114,6 +114,26 @@ export function useMatch() {
     });
   }, []);
 
+  const removeRound = useCallback((roundId: string) => {
+    setState((prev) => {
+      const target = prev.rounds.find((r) => r.id === roundId);
+      if (!target) return prev;
+      const team = prev.teams[target.teamId];
+      return {
+        ...prev,
+        teams: {
+          ...prev.teams,
+          [target.teamId]: {
+            ...team,
+            score: Math.max(0, team.score - target.points),
+          },
+        },
+        rounds: prev.rounds.filter((r) => r.id !== roundId),
+        winnerId: null,
+      };
+    });
+  }, []);
+
   const renameTeam = useCallback((teamId: TeamId, name: string) => {
     // Empty trimmed name resets the team to its localized default
     // (the UI fills it in via teamDisplayName()).
@@ -170,6 +190,7 @@ export function useMatch() {
     hydrated,
     addPoints,
     undoLast,
+    removeRound,
     renameTeam,
     setTargetScore,
     resetMatch,

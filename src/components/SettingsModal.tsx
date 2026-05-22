@@ -6,6 +6,7 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
+  Switch,
   Text,
   TextInput,
   View,
@@ -14,6 +15,7 @@ import { colors, teamPalette } from '../constants/colors';
 import { radii, spacing, TARGET_PRESETS } from '../constants/layout';
 import { useT } from '../i18n';
 import type { MatchState, TeamId } from '../types';
+import { isHapticsMuted, setHapticsMuted, subscribePrefs } from '../utils/preferences';
 
 type Props = {
   visible: boolean;
@@ -36,14 +38,18 @@ export function SettingsModal({
   const [nameA, setNameA] = useState(state.teams.A.name);
   const [nameB, setNameB] = useState(state.teams.B.name);
   const [customTarget, setCustomTarget] = useState(String(state.targetScore));
+  const [hapticsOn, setHapticsOn] = useState(!isHapticsMuted());
 
   useEffect(() => {
     if (visible) {
       setNameA(state.teams.A.name);
       setNameB(state.teams.B.name);
       setCustomTarget(String(state.targetScore));
+      setHapticsOn(!isHapticsMuted());
     }
   }, [visible, state]);
+
+  useEffect(() => subscribePrefs((p) => setHapticsOn(!p.hapticsMuted)), []);
 
   function commitNames() {
     onRename('A', nameA);
@@ -196,6 +202,26 @@ export function SettingsModal({
                 placeholderTextColor={colors.textFaint}
                 style={[styles.input, { textAlign: 'right' }]}
                 returnKeyType="done"
+              />
+            </View>
+
+            <Text style={[styles.sectionLabel, { marginTop: spacing.xl }]}>
+              {t.settings.hapticsSection}
+            </Text>
+            <View style={styles.toggleRow}>
+              <View style={styles.toggleTextWrap}>
+                <Text style={styles.toggleLabel}>{t.settings.hapticsLabel}</Text>
+                <Text style={styles.toggleHint}>{t.settings.hapticsHint}</Text>
+              </View>
+              <Switch
+                value={hapticsOn}
+                onValueChange={(v) => {
+                  setHapticsOn(v);
+                  setHapticsMuted(!v);
+                }}
+                trackColor={{ false: colors.bgDeep, true: colors.gold }}
+                thumbColor={hapticsOn ? colors.text : colors.textDim}
+                accessibilityLabel={t.settings.hapticsLabel}
               />
             </View>
 
@@ -357,6 +383,33 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: 0.4,
     marginRight: spacing.md,
+  },
+  toggleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: colors.bgDeep,
+    borderRadius: radii.md,
+    borderWidth: 1,
+    borderColor: colors.hairline,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+  },
+  toggleTextWrap: {
+    flex: 1,
+    paddingRight: spacing.md,
+  },
+  toggleLabel: {
+    color: colors.text,
+    fontSize: 15,
+    fontWeight: '700',
+    letterSpacing: 0.2,
+  },
+  toggleHint: {
+    color: colors.textFaint,
+    fontSize: 12,
+    marginTop: 2,
+    letterSpacing: 0.2,
   },
   resetBtn: {
     marginTop: spacing.xxl,

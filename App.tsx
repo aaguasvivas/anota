@@ -29,6 +29,7 @@ import {
   tapLight,
   tapMedium,
 } from './src/utils/haptics';
+import { hydratePrefs } from './src/utils/preferences';
 
 export default function App() {
   return (
@@ -47,6 +48,10 @@ function Scorekeeper() {
   const [customFor, setCustomFor] = useState<TeamId | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
+
+  useEffect(() => {
+    hydratePrefs();
+  }, []);
 
   // Celebrate when a winner is detected.
   useEffect(() => {

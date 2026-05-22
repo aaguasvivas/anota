@@ -45,7 +45,16 @@ export type Dictionary = {
     languageSection: string;
     languageEs: string;
     languageEn: string;
+    hapticsSection: string;
+    hapticsLabel: string;
+    hapticsHint: string;
     resetMatch: string;
+  };
+  history: {
+    sectionTitle: string;
+    emptyTitle: string;
+    emptySubtitle: string;
+    removeRoundConfirm: (n: number, name: string) => string;
   };
   winner: {
     phrases: readonly string[];
@@ -64,11 +73,6 @@ export type Dictionary = {
     title: string;
     message: string;
     confirm: string;
-  };
-  history: {
-    sectionTitle: string;
-    emptyTitle: string;
-    emptySubtitle: string;
   };
 };
 

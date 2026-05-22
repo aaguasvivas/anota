@@ -58,7 +58,12 @@ export function TeamCard({ team, targetScore, isLeader, glowColor, onRename }: P
               pressed && { opacity: 0.6 },
             ]}
           >
-            <Text style={styles.teamName} numberOfLines={1}>
+            <Text
+              style={styles.teamName}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.6}
+            >
               {name}
             </Text>
             <Text style={[styles.editIcon, { color: team.color }]}>✎</Text>
