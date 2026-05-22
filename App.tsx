@@ -332,7 +332,7 @@ const styles = StyleSheet.create({
   body: {
     flex: 1,
     paddingHorizontal: spacing.lg,
-    justifyContent: 'space-between',
+    paddingBottom: spacing.sm,
   },
   teamRegion: {
     gap: spacing.sm,
@@ -341,7 +341,9 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   divider: {
+    flex: 1,
     alignItems: 'center',
+    justifyContent: 'center',
     paddingVertical: spacing.sm,
   },
   footer: {
