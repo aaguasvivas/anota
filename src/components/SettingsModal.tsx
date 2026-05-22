@@ -78,6 +78,9 @@ export function SettingsModal({
             <View style={styles.langRow}>
               <Pressable
                 onPress={() => setLang('es')}
+                accessibilityRole="button"
+                accessibilityLabel={t.settings.languageEs}
+                accessibilityState={{ selected: lang === 'es' }}
                 style={({ pressed }) => [
                   styles.langChip,
                   lang === 'es' && styles.langChipActive,
@@ -95,6 +98,9 @@ export function SettingsModal({
               </Pressable>
               <Pressable
                 onPress={() => setLang('en')}
+                accessibilityRole="button"
+                accessibilityLabel={t.settings.languageEn}
+                accessibilityState={{ selected: lang === 'en' }}
                 style={({ pressed }) => [
                   styles.langChip,
                   lang === 'en' && styles.langChipActive,
@@ -157,6 +163,9 @@ export function SettingsModal({
                       onTargetChange(preset);
                       setCustomTarget(String(preset));
                     }}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${t.settings.targetSection} ${preset}`}
+                    accessibilityState={{ selected: active }}
                     style={({ pressed }) => [
                       styles.targetChip,
                       active && styles.targetChipActive,
@@ -192,6 +201,8 @@ export function SettingsModal({
 
             <Pressable
               onPress={onResetMatch}
+              accessibilityRole="button"
+              accessibilityLabel={t.settings.resetMatch}
               style={({ pressed }) => [
                 styles.resetBtn,
                 pressed && { opacity: 0.7 },
@@ -205,6 +216,8 @@ export function SettingsModal({
                 commitNames();
                 onClose();
               }}
+              accessibilityRole="button"
+              accessibilityLabel={t.chrome.done}
               style={({ pressed }) => [
                 styles.doneBtn,
                 pressed && { opacity: 0.85 },

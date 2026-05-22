@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { QUICK_SCORES, spacing } from '../constants/layout';
+import { PRIMARY_QUICK_SCORES, QUICK_SCORES, spacing } from '../constants/layout';
 import { teamDisplayName, useT } from '../i18n';
 import type { Team, TeamId } from '../types';
 import { ScoreButton } from './ScoreButton';
@@ -11,6 +11,8 @@ type Props = {
   onAdd: (teamId: TeamId, points: number) => void;
   onCustom: (teamId: TeamId) => void;
 };
+
+const PRIMARY = new Set<number>(PRIMARY_QUICK_SCORES);
 
 export function ScorePad({ team, teamId, onAdd, onCustom }: Props) {
   const { t } = useT();
@@ -24,24 +26,31 @@ export function ScorePad({ team, teamId, onAdd, onCustom }: Props) {
         </Text>
       </View>
 
-      <View style={styles.grid}>
-        {QUICK_SCORES.map((pts) => (
-          <ScoreButton
-            key={pts}
-            label={`+${pts}`}
-            color={team.color}
-            onPress={() => onAdd(teamId, pts)}
-            style={styles.gridItem}
-          />
-        ))}
-        <ScoreButton
-          label={`+ ${t.chrome.customAdd}`}
-          color={team.color}
-          outline
-          onPress={() => onCustom(teamId)}
-          style={styles.customItem}
-        />
+      <View style={styles.row}>
+        {QUICK_SCORES.map((pts) => {
+          const isPrimary = PRIMARY.has(pts);
+          return (
+            <ScoreButton
+              key={pts}
+              label={`+${pts}`}
+              color={team.color}
+              onPress={() => onAdd(teamId, pts)}
+              subdued={!isPrimary}
+              accessibilityLabel={t.team.plusForA11y(displayName, pts)}
+              style={styles.cell}
+            />
+          );
+        })}
       </View>
+
+      <ScoreButton
+        label={`+ ${t.chrome.customAdd}`}
+        color={team.color}
+        outline
+        onPress={() => onCustom(teamId)}
+        accessibilityLabel={t.team.customForA11y(displayName)}
+        style={styles.other}
+      />
     </View>
   );
 }
@@ -59,19 +68,16 @@ const styles = StyleSheet.create({
     letterSpacing: 1.2,
     textTransform: 'uppercase',
   },
-  grid: {
+  row: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
     gap: spacing.sm,
   },
-  gridItem: {
-    minWidth: '30%',
-    flexBasis: '30%',
-    flexGrow: 1,
+  cell: {
+    flex: 1,
+    paddingHorizontal: 4,
   },
-  customItem: {
-    flexBasis: '100%',
-    flexGrow: 0,
-    minHeight: 48,
+  other: {
+    marginTop: spacing.sm,
+    minHeight: 46,
   },
 });

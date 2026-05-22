@@ -11,6 +11,7 @@ export const es: Dictionary = {
   chrome: {
     undo: 'Deshacer',
     reset: 'Reiniciar',
+    newMatch: 'Nueva partida',
     settings: 'Ajustes',
     ok: 'OK',
     cancel: 'Cancelar',
@@ -30,6 +31,8 @@ export const es: Dictionary = {
     defaultA: 'Nosotros',
     defaultB: 'Ellos',
     plusFor: (name) => `+ para ${name}`,
+    plusForA11y: (name, n) => `Sumar ${n} a ${name}`,
+    customForA11y: (name) => `Puntos personalizados para ${name}`,
     arrived: '¡llegó!',
     toWin: (n) =>
       n === 1 ? 'una pa’ ganar' : `${n} pa’ ganar`,
@@ -75,6 +78,12 @@ export const es: Dictionary = {
     message:
       'Se borran los puntos y las rondas. Los nombres y el objetivo se quedan.',
     confirm: 'Reiniciar',
+  },
+  newMatchConfirm: {
+    title: '¿Empezar nueva partida?',
+    message:
+      'Los puntos y las rondas se borran. Los nombres y el objetivo se quedan.',
+    confirm: 'Empezar',
   },
   history: {
     sectionTitle: 'Rondas',

@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import type { MatchState } from '../types';
+import type { MatchState, Round, Team, TeamId } from '../types';
 
 const KEY = '@anota:match:v1';
 
@@ -7,10 +7,47 @@ export async function loadMatch(): Promise<MatchState | null> {
   try {
     const raw = await AsyncStorage.getItem(KEY);
     if (!raw) return null;
-    return JSON.parse(raw) as MatchState;
+    const parsed = JSON.parse(raw) as unknown;
+    return isMatchState(parsed) ? parsed : null;
   } catch {
     return null;
   }
+}
+
+function isMatchState(value: unknown): value is MatchState {
+  if (!value || typeof value !== 'object') return false;
+  const v = value as Partial<MatchState>;
+  if (typeof v.targetScore !== 'number' || !Number.isFinite(v.targetScore)) return false;
+  if (typeof v.startedAt !== 'number') return false;
+  if (v.winnerId !== null && v.winnerId !== 'A' && v.winnerId !== 'B') return false;
+  if (!Array.isArray(v.rounds) || !v.rounds.every(isRound)) return false;
+  if (!v.teams || !isTeam(v.teams.A, 'A') || !isTeam(v.teams.B, 'B')) return false;
+  return true;
+}
+
+function isTeam(value: unknown, id: TeamId): value is Team {
+  if (!value || typeof value !== 'object') return false;
+  const t = value as Partial<Team>;
+  return (
+    t.id === id &&
+    typeof t.name === 'string' &&
+    typeof t.score === 'number' &&
+    Number.isFinite(t.score) &&
+    typeof t.color === 'string' &&
+    typeof t.accent === 'string'
+  );
+}
+
+function isRound(value: unknown): value is Round {
+  if (!value || typeof value !== 'object') return false;
+  const r = value as Partial<Round>;
+  return (
+    typeof r.id === 'string' &&
+    (r.teamId === 'A' || r.teamId === 'B') &&
+    typeof r.points === 'number' &&
+    Number.isFinite(r.points) &&
+    typeof r.timestamp === 'number'
+  );
 }
 
 export async function saveMatch(state: MatchState): Promise<void> {
@@ -18,13 +55,5 @@ export async function saveMatch(state: MatchState): Promise<void> {
     await AsyncStorage.setItem(KEY, JSON.stringify(state));
   } catch {
     // Persistence failures are non-fatal — the match continues in memory.
-  }
-}
-
-export async function clearMatch(): Promise<void> {
-  try {
-    await AsyncStorage.removeItem(KEY);
-  } catch {
-    // ignore
   }
 }

@@ -38,6 +38,8 @@ export function ConfirmDialog({
           <View style={styles.row}>
             <Pressable
               onPress={onCancel}
+              accessibilityRole="button"
+              accessibilityLabel={cancel}
               style={({ pressed }) => [
                 styles.btn,
                 styles.cancel,
@@ -48,6 +50,8 @@ export function ConfirmDialog({
             </Pressable>
             <Pressable
               onPress={onConfirm}
+              accessibilityRole="button"
+              accessibilityLabel={confirm}
               style={({ pressed }) => [
                 styles.btn,
                 destructive ? styles.destructive : styles.primary,

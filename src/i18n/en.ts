@@ -10,6 +10,7 @@ export const en: Dictionary = {
   chrome: {
     undo: 'Undo',
     reset: 'Reset',
+    newMatch: 'New match',
     settings: 'Settings',
     ok: 'OK',
     cancel: 'Cancel',
@@ -29,6 +30,8 @@ export const en: Dictionary = {
     defaultA: 'Us',
     defaultB: 'Them',
     plusFor: (name) => `+ for ${name}`,
+    plusForA11y: (name, n) => `Add ${n} to ${name}`,
+    customForA11y: (name) => `Custom points for ${name}`,
     arrived: 'they did it!',
     toWin: (n) => (n === 1 ? '1 to win' : `${n} to win`),
   },
@@ -73,6 +76,12 @@ export const en: Dictionary = {
     message:
       'Scores and rounds are cleared. Team names and target stay the same.',
     confirm: 'Reset',
+  },
+  newMatchConfirm: {
+    title: 'Start a new match?',
+    message:
+      'Scores and rounds are cleared. Team names and target stay the same.',
+    confirm: 'Start',
   },
   history: {
     sectionTitle: 'Rounds',

@@ -1,7 +1,6 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { colors } from '../constants/colors';
-import { radii } from '../constants/layout';
 
 type Props = {
   top: number; // 0-6
@@ -129,5 +128,3 @@ export function tileFacesForScore(score: number, targetScore: number): [number, 
   const bottom = Math.max(0, 6 - top);
   return [top, bottom];
 }
-
-void radii;

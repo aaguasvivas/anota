@@ -109,6 +109,8 @@ export function WinnerModal({ visible, state, onNewMatch, onKeepPlaying }: Props
           <View style={styles.actions}>
             <Pressable
               onPress={onKeepPlaying}
+              accessibilityRole="button"
+              accessibilityLabel={t.winner.keepPlaying}
               style={({ pressed }) => [
                 styles.secondaryBtn,
                 pressed && { opacity: 0.6 },
@@ -118,6 +120,8 @@ export function WinnerModal({ visible, state, onNewMatch, onKeepPlaying }: Props
             </Pressable>
             <Pressable
               onPress={onNewMatch}
+              accessibilityRole="button"
+              accessibilityLabel={t.winner.newMatch}
               style={({ pressed }) => [
                 styles.primaryBtn,
                 { backgroundColor: winner.color },
@@ -128,7 +132,13 @@ export function WinnerModal({ visible, state, onNewMatch, onKeepPlaying }: Props
             </Pressable>
           </View>
 
-          <Pressable onPress={shareResult} hitSlop={10} style={styles.shareBtn}>
+          <Pressable
+            onPress={shareResult}
+            hitSlop={10}
+            accessibilityRole="button"
+            accessibilityLabel={t.winner.share}
+            style={styles.shareBtn}
+          >
             <Text style={styles.shareText}>{t.winner.share}</Text>
           </Pressable>
         </Animated.View>

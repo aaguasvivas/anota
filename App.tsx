@@ -1,3 +1,4 @@
+import { useKeepAwake } from 'expo-keep-awake';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
 import React, { useEffect, useState } from 'react';
@@ -40,6 +41,7 @@ export default function App() {
 }
 
 function Scorekeeper() {
+  useKeepAwake();
   const { t } = useT();
   const match = useMatch();
   const [customFor, setCustomFor] = useState<TeamId | null>(null);
@@ -108,6 +110,9 @@ function Scorekeeper() {
               tapLight();
               setSettingsOpen(true);
             }}
+            accessibilityRole="button"
+            accessibilityLabel={`${t.chrome.target} ${match.state.targetScore}`}
+            accessibilityHint={t.chrome.targetChange}
             style={({ pressed }) => [
               styles.targetPill,
               pressed && { opacity: 0.7 },
@@ -174,6 +179,9 @@ function Scorekeeper() {
                 match.undoLast();
               }}
               disabled={match.state.rounds.length === 0}
+              accessibilityRole="button"
+              accessibilityLabel={t.chrome.undo}
+              accessibilityState={{ disabled: match.state.rounds.length === 0 }}
               style={({ pressed }) => [
                 styles.footerBtn,
                 pressed && { opacity: 0.7 },
@@ -187,15 +195,14 @@ function Scorekeeper() {
                 tapLight();
                 setConfirmReset(true);
               }}
+              accessibilityRole="button"
+              accessibilityLabel={t.chrome.newMatch}
               style={({ pressed }) => [
                 styles.footerBtn,
-                styles.footerBtnDanger,
                 pressed && { opacity: 0.7 },
               ]}
             >
-              <Text style={[styles.footerBtnText, { color: colors.danger }]}>
-                {t.chrome.reset}
-              </Text>
+              <Text style={styles.footerBtnText}>⟲ {t.chrome.newMatch}</Text>
             </Pressable>
           </View>
 
@@ -230,11 +237,10 @@ function Scorekeeper() {
 
       <ConfirmDialog
         visible={confirmReset}
-        title={t.reset.title}
-        message={t.reset.message}
-        confirmLabel={t.reset.confirm}
+        title={t.newMatchConfirm.title}
+        message={t.newMatchConfirm.message}
+        confirmLabel={t.newMatchConfirm.confirm}
         cancelLabel={t.chrome.cancel}
-        destructive
         onConfirm={handleResetConfirm}
         onCancel={() => setConfirmReset(false)}
       />
@@ -429,10 +435,6 @@ const styles = StyleSheet.create({
     borderColor: colors.hairline,
     backgroundColor: 'rgba(255,255,255,0.03)',
     alignItems: 'center',
-  },
-  footerBtnDanger: {
-    borderColor: 'rgba(229, 72, 77, 0.4)',
-    backgroundColor: 'rgba(229, 72, 77, 0.06)',
   },
   footerBtnText: {
     color: colors.textDim,

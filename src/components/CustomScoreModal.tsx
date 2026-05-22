@@ -65,6 +65,8 @@ export function CustomScoreModal({ visible, team, onCancel, onSubmit }: Props) {
             <Pressable
               style={({ pressed }) => [styles.btn, styles.cancel, pressed && { opacity: 0.6 }]}
               onPress={onCancel}
+              accessibilityRole="button"
+              accessibilityLabel={t.chrome.cancel}
             >
               <Text style={styles.cancelText}>{t.chrome.cancel}</Text>
             </Pressable>
@@ -75,6 +77,8 @@ export function CustomScoreModal({ visible, team, onCancel, onSubmit }: Props) {
                 pressed && { opacity: 0.85 },
               ]}
               onPress={commit}
+              accessibilityRole="button"
+              accessibilityLabel={t.chrome.add}
             >
               <Text style={styles.addText}>{t.chrome.add}</Text>
             </Pressable>

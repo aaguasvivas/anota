@@ -10,16 +10,38 @@ type Props = {
   style?: ViewStyle;
   small?: boolean;
   outline?: boolean;
+  // Lower visual weight; team color tint instead of full fill.
+  subdued?: boolean;
+  accessibilityLabel?: string;
 };
 
-export function ScoreButton({ label, onPress, color, style, small, outline }: Props) {
+export function ScoreButton({
+  label,
+  onPress,
+  color,
+  style,
+  small,
+  outline,
+  subdued,
+  accessibilityLabel,
+}: Props) {
+  const bg = outline
+    ? undefined
+    : subdued
+    ? `${color}26`
+    : color;
+  const labelColor = outline || subdued ? color : colors.tile;
   return (
     <Pressable
       onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel ?? label}
       style={({ pressed }) => [
         styles.base,
         small && styles.small,
-        outline ? { borderColor: color, borderWidth: 1.5 } : { backgroundColor: color },
+        outline && { borderColor: color, borderWidth: 1.5 },
+        subdued && { borderColor: `${color}66`, borderWidth: 1 },
+        bg ? { backgroundColor: bg } : null,
         pressed && styles.pressed,
         style,
       ]}
@@ -30,7 +52,7 @@ export function ScoreButton({ label, onPress, color, style, small, outline }: Pr
           style={[
             styles.label,
             small && styles.labelSmall,
-            { color: outline ? color : colors.tile },
+            { color: labelColor },
           ]}
         >
           {label}
@@ -63,9 +85,9 @@ const styles = StyleSheet.create({
     opacity: 0.85,
   },
   label: {
-    fontSize: 20,
+    fontSize: 19,
     fontWeight: '800',
-    letterSpacing: 0.3,
+    letterSpacing: 0.2,
   },
   labelSmall: {
     fontSize: 14,

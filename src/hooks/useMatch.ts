@@ -3,7 +3,7 @@ import { teamPalette } from '../constants/colors';
 import { DEFAULT_TARGET } from '../constants/layout';
 import type { MatchState, Round, TeamId } from '../types';
 import { makeId } from '../utils/id';
-import { clearMatch, loadMatch, saveMatch } from '../utils/storage';
+import { loadMatch, saveMatch } from '../utils/storage';
 
 function initialMatch(): MatchState {
   // Team names default to '' — the UI fills in the localized default
@@ -153,11 +153,6 @@ export function useMatch() {
     setState((prev) => ({ ...prev, winnerId: null }));
   }, []);
 
-  const hardReset = useCallback(async () => {
-    await clearMatch();
-    setState(initialMatch());
-  }, []);
-
   const derived = useMemo(() => {
     const { teams, targetScore } = state;
     return {
@@ -179,7 +174,6 @@ export function useMatch() {
     setTargetScore,
     resetMatch,
     dismissWinner,
-    hardReset,
     ...derived,
   };
 }

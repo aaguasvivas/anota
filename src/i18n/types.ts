@@ -8,6 +8,7 @@ export type Dictionary = {
   chrome: {
     undo: string;
     reset: string;
+    newMatch: string;
     settings: string;
     ok: string;
     cancel: string;
@@ -27,6 +28,8 @@ export type Dictionary = {
     defaultA: string;
     defaultB: string;
     plusFor: (name: string) => string;
+    plusForA11y: (name: string, n: number) => string;
+    customForA11y: (name: string) => string;
     arrived: string;
     toWin: (n: number) => string;
   };
@@ -53,6 +56,11 @@ export type Dictionary = {
     shareMessage: (a: string, b: string, sa: number, sb: number) => string;
   };
   reset: {
+    title: string;
+    message: string;
+    confirm: string;
+  };
+  newMatchConfirm: {
     title: string;
     message: string;
     confirm: string;

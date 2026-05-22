@@ -6,7 +6,7 @@ import { radii, spacing } from '../constants/layout';
 import { teamDisplayName, useT } from '../i18n';
 import type { Team } from '../types';
 import { AnimatedScore } from './AnimatedScore';
-import { DominoTile } from './DominoTile';
+import { DominoTile, tileFacesForScore } from './DominoTile';
 import { ProgressBar } from './ProgressBar';
 
 type Props = {
@@ -22,6 +22,7 @@ export function TeamCard({ team, targetScore, isLeader, glowColor, onRename }: P
   const progress = team.score / targetScore;
   const remaining = Math.max(0, targetScore - team.score);
   const name = teamDisplayName(team, t);
+  const [topFace, bottomFace] = tileFacesForScore(team.score, targetScore);
 
   return (
     <View style={styles.wrapper}>
@@ -44,11 +45,14 @@ export function TeamCard({ team, targetScore, isLeader, glowColor, onRename }: P
       >
         <View style={styles.header}>
           <View style={styles.tileWrap}>
-            <DominoTile top={6} bottom={6} pipColor={team.color} size={36} />
+            <DominoTile top={topFace} bottom={bottomFace} pipColor={team.color} size={36} />
           </View>
           <Pressable
             onPress={onRename}
             hitSlop={10}
+            accessibilityRole="button"
+            accessibilityLabel={name}
+            accessibilityHint={t.settings.namesSection}
             style={({ pressed }) => [
               styles.nameWrap,
               pressed && { opacity: 0.6 },
