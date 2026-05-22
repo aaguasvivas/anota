@@ -332,7 +332,7 @@ const styles = StyleSheet.create({
   body: {
     flex: 1,
     paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.sm,
+    paddingBottom: spacing.lg,
   },
   teamRegion: {
     gap: spacing.sm,

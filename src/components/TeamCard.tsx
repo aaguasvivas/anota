@@ -45,7 +45,7 @@ export function TeamCard({ team, targetScore, isLeader, glowColor, onRename }: P
       >
         <View style={styles.header}>
           <View style={styles.tileWrap}>
-            <DominoTile top={topFace} bottom={bottomFace} pipColor={team.color} size={28} />
+            <DominoTile top={topFace} bottom={bottomFace} pipColor={team.color} size={22} />
           </View>
           <Pressable
             onPress={onRename}
