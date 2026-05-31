@@ -2,7 +2,7 @@
 
 > Anotador de dominó · Domino Scorekeeper
 
-A polished Dominican-style dominoes scorekeeper for iPhone. Two teams always visible on a single non-scrolling screen, big legible scores, Dominican-friendly quick-add buttons (25 / 30 / 50 / 75 / 100 + custom), inline target editing, undo, per-round delete via long-press on the divider strip, and a celebratory winner moment. Bilingual (Español / English) with a language toggle in Settings, plus a haptics-mute toggle. Local-only, no accounts, no backend.
+A polished Dominican-style dominoes scorekeeper for iPhone. Two teams always visible on a single non-scrolling screen, big legible scores, Dominican-friendly preset chips (25 / 30 / 50 for passes & capicúa) plus a fast in-app keypad for arbitrary pip counts, inline target editing, undo, per-round delete via long-press on the divider strip, and a celebratory winner moment. Bilingual (Español / English) with a language toggle in Settings, plus a haptics-mute toggle. Local-only, no accounts, no backend.
 
 Built with Expo + React Native + TypeScript.
 
