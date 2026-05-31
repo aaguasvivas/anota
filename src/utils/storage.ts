@@ -8,7 +8,9 @@ export async function loadMatch(): Promise<MatchState | null> {
     const raw = await AsyncStorage.getItem(KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as unknown;
-    return isMatchState(parsed) ? parsed : null;
+    if (!isMatchState(parsed)) return null;
+    // Default the acknowledged flag for matches saved before it existed.
+    return { ...parsed, winnerAcknowledged: parsed.winnerAcknowledged ?? false };
   } catch {
     return null;
   }
@@ -20,6 +22,7 @@ function isMatchState(value: unknown): value is MatchState {
   if (typeof v.targetScore !== 'number' || !Number.isFinite(v.targetScore)) return false;
   if (typeof v.startedAt !== 'number') return false;
   if (v.winnerId !== null && v.winnerId !== 'A' && v.winnerId !== 'B') return false;
+  if (v.winnerAcknowledged !== undefined && typeof v.winnerAcknowledged !== 'boolean') return false;
   if (!Array.isArray(v.rounds) || !v.rounds.every(isRound)) return false;
   if (!v.teams || !isTeam(v.teams.A, 'A') || !isTeam(v.teams.B, 'B')) return false;
   return true;
@@ -33,8 +36,7 @@ function isTeam(value: unknown, id: TeamId): value is Team {
     typeof t.name === 'string' &&
     typeof t.score === 'number' &&
     Number.isFinite(t.score) &&
-    typeof t.color === 'string' &&
-    typeof t.accent === 'string'
+    typeof t.color === 'string'
   );
 }
 

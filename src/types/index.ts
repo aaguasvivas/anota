@@ -12,7 +12,6 @@ export type Team = {
   name: string;
   score: number;
   color: string;
-  accent: string;
 };
 
 export type MatchState = {
@@ -20,5 +19,6 @@ export type MatchState = {
   targetScore: number;
   rounds: Round[];
   winnerId: TeamId | null;
+  winnerAcknowledged: boolean;
   startedAt: number;
 };
