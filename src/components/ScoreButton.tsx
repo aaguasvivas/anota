@@ -8,9 +8,8 @@ type Props = {
   onPress: () => void;
   color: string;
   style?: ViewStyle;
-  small?: boolean;
   outline?: boolean;
-  // Lower visual weight; team color tint instead of full fill.
+  // Lower visual weight; team-color tint instead of full fill.
   subdued?: boolean;
   accessibilityLabel?: string;
 };
@@ -20,16 +19,11 @@ export function ScoreButton({
   onPress,
   color,
   style,
-  small,
   outline,
   subdued,
   accessibilityLabel,
 }: Props) {
-  const bg = outline
-    ? undefined
-    : subdued
-    ? `${color}26`
-    : color;
+  const bg = outline ? undefined : subdued ? `${color}26` : color;
   const labelColor = outline || subdued ? color : colors.tile;
   return (
     <Pressable
@@ -38,7 +32,6 @@ export function ScoreButton({
       accessibilityLabel={accessibilityLabel ?? label}
       style={({ pressed }) => [
         styles.base,
-        small && styles.small,
         outline && { borderColor: color, borderWidth: 1.5 },
         subdued && { borderColor: `${color}66`, borderWidth: 1 },
         bg ? { backgroundColor: bg } : null,
@@ -48,15 +41,7 @@ export function ScoreButton({
       android_ripple={{ color: 'rgba(255,255,255,0.15)' }}
     >
       <View pointerEvents="none">
-        <Text
-          style={[
-            styles.label,
-            small && styles.labelSmall,
-            { color: labelColor },
-          ]}
-        >
-          {label}
-        </Text>
+        <Text style={[styles.label, { color: labelColor }]}>{label}</Text>
       </View>
     </Pressable>
   );
@@ -76,10 +61,6 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 3 },
     elevation: 3,
   },
-  small: {
-    minHeight: 40,
-    borderRadius: radii.sm,
-  },
   pressed: {
     transform: [{ scale: 0.96 }],
     opacity: 0.85,
@@ -88,9 +69,5 @@ const styles = StyleSheet.create({
     fontSize: 19,
     fontWeight: '800',
     letterSpacing: 0.2,
-  },
-  labelSmall: {
-    fontSize: 14,
-    fontWeight: '700',
   },
 });
