@@ -15,11 +15,9 @@ export const spacing = {
   xxl: 28,
 } as const;
 
-export const QUICK_SCORES = [25, 30, 50, 75, 100] as const;
-
-// Hands that are most frequent at a Dominican table get visual weight.
-// 30 (a "treinta") and 50 are by far the most-tapped values.
-export const PRIMARY_QUICK_SCORES = [30, 50] as const;
+// Fixed-score events at a Dominican table: passes / capicúa / multi-pass.
+// Arbitrary pip counts are entered on the keypad instead.
+export const QUICK_SCORES = [25, 30, 50] as const;
 
 export const TARGET_PRESETS = [100, 150, 200] as const;
 
