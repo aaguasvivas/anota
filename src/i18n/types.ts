@@ -14,6 +14,7 @@ export type Dictionary = {
     cancel: string;
     confirm: string;
     done: string;
+    delete: string;
     add: string;
     customAdd: string;
     leader: string;
@@ -30,6 +31,7 @@ export type Dictionary = {
     plusFor: (name: string) => string;
     plusForA11y: (name: string, n: number) => string;
     customForA11y: (name: string) => string;
+    addPoints: string;
     arrived: string;
     toWin: (n: number) => string;
   };

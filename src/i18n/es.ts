@@ -17,6 +17,7 @@ export const es: Dictionary = {
     cancel: 'Cancelar',
     confirm: 'Confirmar',
     done: 'Listo',
+    delete: 'Borrar',
     add: 'Añadir',
     customAdd: 'Otro',
     leader: 'VA',
@@ -33,6 +34,7 @@ export const es: Dictionary = {
     plusFor: (name) => `+ para ${name}`,
     plusForA11y: (name, n) => `Sumar ${n} a ${name}`,
     customForA11y: (name) => `Puntos personalizados para ${name}`,
+    addPoints: 'Puntos',
     arrived: '¡llegó!',
     toWin: (n) =>
       n === 1 ? 'una pa’ ganar' : `${n} pa’ ganar`,
