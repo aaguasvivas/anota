@@ -2,9 +2,12 @@ import {
   acknowledgeWinner,
   applyPoints,
   applyRemoveRound,
+  applyRename,
+  applyTarget,
   applyUndo,
   createMatch,
   detectWinner,
+  resetKeepingSettings,
 } from '../reducer';
 import type { MatchState } from '../../types';
 
@@ -76,4 +79,36 @@ test('undo below target re-arms celebration (acknowledged resets)', () => {
   s = applyUndo(s);
   expect(s.winnerId).toBeNull();
   expect(s.winnerAcknowledged).toBe(false);
+});
+
+test('applyTarget lowering the target below a score declares a winner', () => {
+  let s = base();
+  s = applyPoints(s, 'A', 60);
+  expect(s.winnerId).toBeNull();
+  s = applyTarget(s, 50); // 60 >= 50 → A wins
+  expect(s.targetScore).toBe(50);
+  expect(s.winnerId).toBe('A');
+});
+
+test('applyRename trims and caps the name at 24 characters', () => {
+  let s = base();
+  s = applyRename(s, 'A', '  Los Gallos  ');
+  expect(s.teams.A.name).toBe('Los Gallos');
+  s = applyRename(s, 'B', 'x'.repeat(40));
+  expect(s.teams.B.name).toHaveLength(24);
+});
+
+test('resetKeepingSettings keeps names + target, clears scores/rounds/winner', () => {
+  let s = base();
+  s = applyRename(s, 'A', 'Us');
+  s = applyPoints(s, 'A', 100); // A wins at target 100
+  expect(s.winnerId).toBe('A');
+  const r = resetKeepingSettings(s);
+  expect(r.teams.A.name).toBe('Us');
+  expect(r.targetScore).toBe(100);
+  expect(r.teams.A.score).toBe(0);
+  expect(r.teams.B.score).toBe(0);
+  expect(r.rounds).toHaveLength(0);
+  expect(r.winnerId).toBeNull();
+  expect(r.winnerAcknowledged).toBe(false);
 });
