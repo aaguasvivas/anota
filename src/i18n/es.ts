@@ -6,32 +6,26 @@ import type { Dictionary } from './types';
 export const es: Dictionary = {
   brand: {
     name: 'Anota',
-    tagline: 'Anotador de dominó',
   },
   chrome: {
     undo: 'Deshacer',
-    reset: 'Reiniciar',
     newMatch: 'Nueva partida',
     settings: 'Ajustes',
-    ok: 'OK',
     cancel: 'Cancelar',
     confirm: 'Confirmar',
     done: 'Listo',
     delete: 'Borrar',
     add: 'Añadir',
-    customAdd: 'Otro',
     leader: 'VA',
     target: 'Hasta',
     targetChange: 'cambiar',
     tied: 'empate',
     leadsBy: (name, n) => `${name} va ${n} arriba`,
     vs: 'vs',
-    footerTagline: 'Hecho pa’ la mesa dominicana · dominó, capicúa y café',
   },
   team: {
     defaultA: 'Nosotros',
     defaultB: 'Ellos',
-    plusFor: (name) => `+ para ${name}`,
     plusForA11y: (name, n) => `Sumar ${n} a ${name}`,
     customForA11y: (name) => `Puntos personalizados para ${name}`,
     addPoints: 'Puntos',
@@ -41,7 +35,6 @@ export const es: Dictionary = {
   },
   customModal: {
     titleFor: 'Puntos para',
-    placeholder: '0',
   },
   settings: {
     title: 'Ajustes de la partida',
@@ -78,12 +71,6 @@ export const es: Dictionary = {
     shareMessage: (a, b, sa, sb) =>
       `🁢 Anota — Anotador de dominó\n${a} ${sa} – ${sb} ${b}\n¡${a} ganó!`,
   },
-  reset: {
-    title: '¿Reiniciar la partida?',
-    message:
-      'Se borran los puntos y las rondas. Los nombres y el objetivo se quedan.',
-    confirm: 'Reiniciar',
-  },
   newMatchConfirm: {
     title: '¿Empezar nueva partida?',
     message:
@@ -92,7 +79,6 @@ export const es: Dictionary = {
   },
   history: {
     sectionTitle: 'Rondas',
-    emptyTitle: 'Todavía no se ha jugao’',
     emptySubtitle: 'Suma puntos y la historia aparece aquí.',
     removeRoundConfirm: (n, name) => `¿Borrar +${n} de ${name}?`,
   },

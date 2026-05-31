@@ -3,32 +3,26 @@
 export type Dictionary = {
   brand: {
     name: string;
-    tagline: string;
   };
   chrome: {
     undo: string;
-    reset: string;
     newMatch: string;
     settings: string;
-    ok: string;
     cancel: string;
     confirm: string;
     done: string;
     delete: string;
     add: string;
-    customAdd: string;
     leader: string;
     target: string;
     targetChange: string;
     tied: string;
     leadsBy: (name: string, n: number) => string;
     vs: string;
-    footerTagline: string;
   };
   team: {
     defaultA: string;
     defaultB: string;
-    plusFor: (name: string) => string;
     plusForA11y: (name: string, n: number) => string;
     customForA11y: (name: string) => string;
     addPoints: string;
@@ -37,7 +31,6 @@ export type Dictionary = {
   };
   customModal: {
     titleFor: string;
-    placeholder: string;
   };
   settings: {
     title: string;
@@ -54,7 +47,6 @@ export type Dictionary = {
   };
   history: {
     sectionTitle: string;
-    emptyTitle: string;
     emptySubtitle: string;
     removeRoundConfirm: (n: number, name: string) => string;
   };
@@ -65,11 +57,6 @@ export type Dictionary = {
     newMatch: string;
     share: string;
     shareMessage: (a: string, b: string, sa: number, sb: number) => string;
-  };
-  reset: {
-    title: string;
-    message: string;
-    confirm: string;
   };
   newMatchConfirm: {
     title: string;

@@ -5,32 +5,26 @@ import type { Dictionary } from './types';
 export const en: Dictionary = {
   brand: {
     name: 'Anota',
-    tagline: 'Domino Scorekeeper',
   },
   chrome: {
     undo: 'Undo',
-    reset: 'Reset',
     newMatch: 'New match',
     settings: 'Settings',
-    ok: 'OK',
     cancel: 'Cancel',
     confirm: 'Confirm',
     done: 'Done',
     delete: 'Delete',
     add: 'Add',
-    customAdd: 'Other',
     leader: 'UP',
     target: 'First to',
     targetChange: 'change',
     tied: 'tied up',
     leadsBy: (name, n) => `${name} up by ${n}`,
     vs: 'vs',
-    footerTagline: 'Made for the table · tiles, capicúa, café',
   },
   team: {
     defaultA: 'Us',
     defaultB: 'Them',
-    plusFor: (name) => `+ for ${name}`,
     plusForA11y: (name, n) => `Add ${n} to ${name}`,
     customForA11y: (name) => `Custom points for ${name}`,
     addPoints: 'Points',
@@ -39,7 +33,6 @@ export const en: Dictionary = {
   },
   customModal: {
     titleFor: 'Points for',
-    placeholder: '0',
   },
   settings: {
     title: 'Match settings',
@@ -66,7 +59,7 @@ export const en: Dictionary = {
     subtitles: [
       'Run it back?',
       'Easy money.',
-      'Stack ’em up.',
+      'Stack ‘em up.',
       'Take the W.',
       'Off the table.',
     ],
@@ -76,12 +69,6 @@ export const en: Dictionary = {
     shareMessage: (a, b, sa, sb) =>
       `🁢 Anota\n${a} ${sa} – ${sb} ${b}\n${a} took it. Capicúa!`,
   },
-  reset: {
-    title: 'Reset the match?',
-    message:
-      'Scores and rounds are cleared. Team names and target stay the same.',
-    confirm: 'Reset',
-  },
   newMatchConfirm: {
     title: 'Run it back?',
     message: 'Scores reset. Names and target stay.',
@@ -89,7 +76,6 @@ export const en: Dictionary = {
   },
   history: {
     sectionTitle: 'Rounds',
-    emptyTitle: 'No rounds yet',
     emptySubtitle: 'Add points and they’ll show up here.',
     removeRoundConfirm: (n, name) => `Remove +${n} from ${name}?`,
   },
