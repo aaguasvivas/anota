@@ -41,6 +41,7 @@ function Scorekeeper() {
   useKeepAwake();
   const { t } = useT();
   const match = useMatch();
+  const showWinner = !!match.state.winnerId && !match.state.winnerAcknowledged;
   const [customFor, setCustomFor] = useState<TeamId | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
@@ -50,12 +51,12 @@ function Scorekeeper() {
     hydratePrefs();
   }, []);
 
-  // Celebrate when a winner is detected.
+  // Celebrate when an (unacknowledged) winner appears.
   useEffect(() => {
-    if (match.state.winnerId) {
+    if (showWinner) {
       notifySuccess();
     }
-  }, [match.state.winnerId]);
+  }, [showWinner]);
 
   function handleAdd(teamId: TeamId, points: number) {
     tapMedium();
@@ -282,7 +283,7 @@ function Scorekeeper() {
       />
 
       <WinnerModal
-        visible={!!match.state.winnerId}
+        visible={showWinner}
         state={match.state}
         onNewMatch={() => {
           tapMedium();
