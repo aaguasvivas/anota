@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useMemo, useRef } from 'react';
 import { Animated, Modal, Pressable, Share, StyleSheet, Text, View } from 'react-native';
@@ -139,7 +140,10 @@ export function WinnerModal({ visible, state, onNewMatch, onKeepPlaying }: Props
             accessibilityLabel={t.winner.share}
             style={styles.shareBtn}
           >
-            <Text style={styles.shareText}>{t.winner.share}</Text>
+            <View style={styles.shareInner}>
+              <Ionicons name="share-outline" size={15} color={colors.gold} />
+              <Text style={styles.shareText}>{t.winner.share}</Text>
+            </View>
           </Pressable>
         </Animated.View>
       </View>
@@ -270,5 +274,10 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: 0.6,
     textDecorationLine: 'underline',
+  },
+  shareInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
 });

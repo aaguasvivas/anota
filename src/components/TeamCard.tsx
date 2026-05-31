@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
@@ -66,7 +67,7 @@ export function TeamCard({ team, targetScore, isLeader, glowColor, onRename }: P
             >
               {name}
             </Text>
-            <Text style={[styles.editIcon, { color: team.color }]}>✎</Text>
+            <Ionicons name="pencil" size={13} color={team.color} style={styles.editIcon} />
           </Pressable>
           {isLeader ? (
             <View style={[styles.leaderPill, { borderColor: team.color }]}>
@@ -139,9 +140,7 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
   editIcon: {
-    fontSize: 12,
     opacity: 0.55,
-    fontWeight: '700',
   },
   leaderPill: {
     paddingHorizontal: 8,

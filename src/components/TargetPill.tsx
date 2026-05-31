@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { colors } from '../constants/colors';
@@ -72,7 +73,7 @@ export function TargetPill({ value, onChange, onPressLong }: Props) {
     >
       <Text style={styles.label}>{t.chrome.target.toUpperCase()}</Text>
       <Text style={styles.value}>{value}</Text>
-      <Text style={styles.hint}>✎</Text>
+      <Ionicons name="pencil" size={11} color={colors.gold} style={styles.hint} />
     </Pressable>
   );
 }
@@ -107,10 +108,7 @@ const styles = StyleSheet.create({
     fontVariant: ['tabular-nums'],
   },
   hint: {
-    color: colors.gold,
-    fontSize: 11,
     opacity: 0.7,
-    fontWeight: '700',
   },
   input: {
     color: colors.text,

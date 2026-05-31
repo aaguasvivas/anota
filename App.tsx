@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import { useKeepAwake } from 'expo-keep-awake';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
@@ -121,7 +122,7 @@ function Scorekeeper() {
             accessibilityRole="button"
             accessibilityLabel={t.chrome.settings}
           >
-            <Text style={styles.iconBtnText}>⚙︎</Text>
+            <Ionicons name="settings-outline" size={18} color={colors.textDim} />
           </Pressable>
         </View>
 
@@ -197,7 +198,10 @@ function Scorekeeper() {
               match.state.rounds.length === 0 && { opacity: 0.35 },
             ]}
           >
-            <Text style={styles.footerBtnText}>↶ {t.chrome.undo}</Text>
+            <View style={styles.footerBtnInner}>
+              <Ionicons name="arrow-undo-outline" size={16} color={colors.textDim} />
+              <Text style={styles.footerBtnText}>{t.chrome.undo}</Text>
+            </View>
           </Pressable>
           <Pressable
             onPress={() => {
@@ -211,7 +215,10 @@ function Scorekeeper() {
               pressed && { opacity: 0.7 },
             ]}
           >
-            <Text style={styles.footerBtnText}>⟲ {t.chrome.newMatch}</Text>
+            <View style={styles.footerBtnInner}>
+              <Ionicons name="reload-outline" size={16} color={colors.textDim} />
+              <Text style={styles.footerBtnText}>{t.chrome.newMatch}</Text>
+            </View>
           </Pressable>
         </View>
       </SafeAreaView>
@@ -366,5 +373,10 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     fontSize: 14,
     letterSpacing: 0.4,
+  },
+  footerBtnInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
 });
