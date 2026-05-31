@@ -6,7 +6,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
 import { ConfirmDialog } from './src/components/ConfirmDialog';
-import { CustomScoreModal } from './src/components/CustomScoreModal';
+import { ScoreKeypad } from './src/components/ScoreKeypad';
 import { RoundStrip } from './src/components/RoundStrip';
 import { ScorePad } from './src/components/ScorePad';
 import { SettingsModal } from './src/components/SettingsModal';
@@ -216,9 +216,8 @@ function Scorekeeper() {
         </View>
       </SafeAreaView>
 
-      <CustomScoreModal
+      <ScoreKeypad
         visible={customFor !== null}
-        teamId={customFor}
         team={customFor ? match.state.teams[customFor] : null}
         onCancel={() => setCustomFor(null)}
         onSubmit={(value) => {
