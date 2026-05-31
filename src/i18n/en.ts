@@ -59,7 +59,7 @@ export const en: Dictionary = {
     subtitles: [
       'Run it back?',
       'Easy money.',
-      'Stack ‘em up.',
+      'Stack ’em up.',
       'Take the W.',
       'Off the table.',
     ],
