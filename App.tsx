@@ -86,6 +86,20 @@ function Scorekeeper() {
       )
     : '';
 
+  if (!match.hydrated) {
+    return (
+      <View style={styles.root}>
+        <LinearGradient
+          colors={[colors.bg, colors.felt, colors.bgDeep]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={StyleSheet.absoluteFill}
+        />
+        <StatusBar style="light" />
+      </View>
+    );
+  }
+
   return (
     <View style={styles.root}>
       <LinearGradient
