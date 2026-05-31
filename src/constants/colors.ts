@@ -25,7 +25,7 @@ export const colors = {
   goldDim: '#7A5E22',
   red: '#E63946',
   redDim: '#4A1318',
-  blue: '#2B6CB0',
+  blue: '#3B82F6',
   blueDim: '#13243B',
 
   // Status
@@ -35,14 +35,10 @@ export const colors = {
 export const teamPalette = {
   A: {
     color: colors.red,
-    accent: '#FF6B6B',
     glow: 'rgba(230, 57, 70, 0.35)',
-    pip: '#E63946',
   },
   B: {
     color: colors.blue,
-    accent: '#5AA9FF',
-    glow: 'rgba(43, 108, 176, 0.35)',
-    pip: '#2B6CB0',
+    glow: 'rgba(59, 130, 246, 0.35)',
   },
 } as const;
