@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pressable, StyleSheet, Text, View, ViewStyle } from 'react-native';
+import { Pressable, StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-native';
 import { colors } from '../constants/colors';
 import { radii } from '../constants/layout';
 
@@ -7,7 +7,7 @@ type Props = {
   label: string;
   onPress: () => void;
   color: string;
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
   outline?: boolean;
   // Lower visual weight; team-color tint instead of full fill.
   subdued?: boolean;
