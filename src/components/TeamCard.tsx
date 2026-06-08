@@ -9,6 +9,7 @@ import type { Team } from '../types';
 import { AnimatedScore } from './AnimatedScore';
 import { DominoTile, tileFacesForScore } from './DominoTile';
 import { ProgressBar } from './ProgressBar';
+import { useLayoutMetrics } from '../hooks/useLayoutMetrics';
 
 type Props = {
   team: Team;
@@ -20,6 +21,7 @@ type Props = {
 
 export function TeamCard({ team, targetScore, isLeader, glowColor, onRename }: Props) {
   const { t } = useT();
+  const m = useLayoutMetrics();
   const progress = team.score / targetScore;
   const remaining = Math.max(0, targetScore - team.score);
   const name = teamDisplayName(team, t);
@@ -41,12 +43,13 @@ export function TeamCard({ team, targetScore, isLeader, glowColor, onRename }: P
             borderColor: isLeader ? team.color : colors.hairline,
             shadowColor: isLeader ? team.color : '#000',
             shadowOpacity: isLeader ? 0.35 : 0.25,
+            paddingVertical: m.cardPadV,
           },
         ]}
       >
         <View style={styles.header}>
           <View style={styles.tileWrap}>
-            <DominoTile top={topFace} bottom={bottomFace} pipColor={team.color} size={22} />
+            <DominoTile top={topFace} bottom={bottomFace} pipColor={team.color} size={m.tileSize} />
           </View>
           <Pressable
             onPress={onRename}
@@ -83,7 +86,12 @@ export function TeamCard({ team, targetScore, isLeader, glowColor, onRename }: P
         <View style={styles.scoreRow}>
           <AnimatedScore
             value={team.score}
-            style={{ ...styles.score, color: colors.text }}
+            style={{
+              ...styles.score,
+              color: colors.text,
+              fontSize: m.scoreFontSize,
+              lineHeight: m.scoreLineHeight,
+            }}
             glowColor={glowColor}
           />
           <View style={styles.targetCol}>
@@ -98,7 +106,7 @@ export function TeamCard({ team, targetScore, isLeader, glowColor, onRename }: P
           progress={progress}
           color={team.color}
           glowColor={glowColor}
-          height={5}
+          height={m.progressHeight}
         />
       </LinearGradient>
     </View>
