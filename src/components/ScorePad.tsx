@@ -4,6 +4,7 @@ import { QUICK_SCORES, spacing } from '../constants/layout';
 import { teamDisplayName, useT } from '../i18n';
 import type { Team, TeamId } from '../types';
 import { ScoreButton } from './ScoreButton';
+import { useLayoutMetrics } from '../hooks/useLayoutMetrics';
 
 type Props = {
   team: Team;
@@ -14,6 +15,7 @@ type Props = {
 
 export function ScorePad({ team, teamId, onAdd, onCustom }: Props) {
   const { t } = useT();
+  const m = useLayoutMetrics();
   const displayName = teamDisplayName(team, t);
 
   return (
@@ -27,7 +29,7 @@ export function ScorePad({ team, teamId, onAdd, onCustom }: Props) {
             subdued
             onPress={() => onAdd(teamId, pts)}
             accessibilityLabel={t.team.plusForA11y(displayName, pts)}
-            style={styles.cell}
+            style={[styles.cell, { minHeight: m.chipHeight }]}
           />
         ))}
       </View>
@@ -36,7 +38,7 @@ export function ScorePad({ team, teamId, onAdd, onCustom }: Props) {
         color={team.color}
         onPress={() => onCustom(teamId)}
         accessibilityLabel={t.team.customForA11y(displayName)}
-        style={styles.hero}
+        style={[styles.hero, { minHeight: m.heroHeight }]}
       />
     </View>
   );
@@ -56,6 +58,5 @@ const styles = StyleSheet.create({
   },
   hero: {
     marginTop: spacing.sm,
-    minHeight: 52,
   },
 });
