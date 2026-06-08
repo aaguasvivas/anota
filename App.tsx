@@ -16,6 +16,7 @@ import { TeamCard } from './src/components/TeamCard';
 import { WinnerModal } from './src/components/WinnerModal';
 import { colors, teamPalette } from './src/constants/colors';
 import { radii, spacing } from './src/constants/layout';
+import { useLayoutMetrics } from './src/hooks/useLayoutMetrics';
 import { useMatch } from './src/hooks/useMatch';
 import { LanguageProvider, teamDisplayName, useT } from './src/i18n';
 import type { Round, TeamId } from './src/types';
@@ -42,6 +43,7 @@ function Scorekeeper() {
   const { t } = useT();
   const match = useMatch();
   const showWinner = !!match.state.winnerId && !match.state.winnerAcknowledged;
+  const m = useLayoutMetrics();
   const [customFor, setCustomFor] = useState<TeamId | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
@@ -142,7 +144,7 @@ function Scorekeeper() {
         </View>
 
         <View style={styles.body}>
-          <View style={styles.teamRegion}>
+          <View style={[styles.teamRegion, { gap: m.regionGap }]}>
             <TeamCard
               team={match.state.teams.A}
               targetScore={match.state.targetScore}
@@ -174,7 +176,7 @@ function Scorekeeper() {
             />
           </View>
 
-          <View style={styles.teamRegion}>
+          <View style={[styles.teamRegion, { gap: m.regionGap }]}>
             <TeamCard
               team={match.state.teams.B}
               targetScore={match.state.targetScore}
@@ -353,7 +355,7 @@ const styles = StyleSheet.create({
   body: {
     flex: 1,
     paddingHorizontal: spacing.lg,
-    paddingBottom: 64,
+    paddingBottom: spacing.sm,
   },
   teamRegion: {
     gap: spacing.sm,
