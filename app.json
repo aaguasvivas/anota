@@ -13,7 +13,7 @@
       "backgroundColor": "#070D0A"
     },
     "ios": {
-      "supportsTablet": true,
+      "supportsTablet": false,
       "bundleIdentifier": "dev.anota.app"
     },
     "android": {

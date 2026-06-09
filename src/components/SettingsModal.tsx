@@ -57,11 +57,18 @@ export function SettingsModal({
   }
 
   function handleCustomTarget(v: string) {
-    const clean = v.replace(/[^0-9]/g, '').slice(0, 4);
-    setCustomTarget(clean);
-    const num = parseInt(clean, 10);
+    setCustomTarget(v.replace(/[^0-9]/g, '').slice(0, 4));
+  }
+
+  // Commit on blur/submit (not per keystroke), matching TargetPill, so typing an
+  // intermediate value mid-game can't momentarily set a tiny target and trip the
+  // winner modal (e.g. typing "1" toward "150" while a team already has points).
+  function commitCustomTarget() {
+    const num = parseInt(customTarget, 10);
     if (Number.isFinite(num) && num > 0) {
       onTargetChange(num);
+    } else {
+      setCustomTarget(String(state.targetScore));
     }
   }
 
@@ -196,6 +203,8 @@ export function SettingsModal({
               <TextInput
                 value={customTarget}
                 onChangeText={handleCustomTarget}
+                onEndEditing={commitCustomTarget}
+                onSubmitEditing={commitCustomTarget}
                 keyboardType="number-pad"
                 maxLength={4}
                 placeholder="200"
@@ -240,6 +249,7 @@ export function SettingsModal({
             <Pressable
               onPress={() => {
                 commitNames();
+                commitCustomTarget();
                 onClose();
               }}
               accessibilityRole="button"
