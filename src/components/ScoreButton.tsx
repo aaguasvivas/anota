@@ -49,7 +49,11 @@ export function ScoreButton({
 
 const styles = StyleSheet.create({
   base: {
-    flex: 1,
+    // No base `flex`: callers opt into flex via the `cell` style for row
+    // layouts (chips share width equally). A base `flex: 1` sets flexBasis to 0,
+    // which collapses the button's layout box to 0 height when it's a direct
+    // child of an auto-height column (e.g. the full-width hero "+ Points"
+    // button) — making it render outside its box and overflow onto the footer.
     minHeight: 54,
     borderRadius: radii.md,
     alignItems: 'center',
