@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { Animated, StyleSheet, Text, TextStyle, View } from 'react-native';
+import { Animated, StyleSheet, TextStyle, View } from 'react-native';
 
 type Props = {
   value: number;
@@ -33,7 +33,10 @@ export function AnimatedScore({ value, style, glowColor }: Props) {
   }, [value, scale, opacity]);
 
   return (
-    <View>
+    // flexShrink lets a row parent constrain the score so the font can
+    // auto-shrink instead of pushing siblings off the card (e.g. 4-digit
+    // scores with unusually high custom targets).
+    <View style={styles.wrap}>
       {glowColor ? (
         <Animated.View
           pointerEvents="none"
@@ -44,12 +47,22 @@ export function AnimatedScore({ value, style, glowColor }: Props) {
           ]}
         />
       ) : null}
-      <Animated.Text style={[style, { transform: [{ scale }] }]}>{value}</Animated.Text>
+      <Animated.Text
+        style={[style, { transform: [{ scale }] }]}
+        numberOfLines={1}
+        adjustsFontSizeToFit
+        minimumFontScale={0.5}
+      >
+        {value}
+      </Animated.Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  wrap: {
+    flexShrink: 1,
+  },
   glow: {
     borderRadius: 80,
     transform: [{ scale: 1.3 }],

@@ -5,6 +5,7 @@ import { colors } from '../constants/colors';
 import { radii, spacing } from '../constants/layout';
 import { teamDisplayName, useT } from '../i18n';
 import type { Team } from '../types';
+import { tapLight } from '../utils/haptics';
 
 type Props = {
   visible: boolean;
@@ -27,9 +28,11 @@ export function ScoreKeypad({ visible, team, onCancel, onSubmit }: Props) {
   }, [visible]);
 
   function pressDigit(d: string) {
+    tapLight();
     setEntry((prev) => (prev + d).replace(/^0+/, '').slice(0, 3));
   }
   function backspace() {
+    tapLight();
     setEntry((prev) => prev.slice(0, -1));
   }
   function commit() {
