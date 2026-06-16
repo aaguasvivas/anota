@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Anota - Domino Scorekeeper</title>
+  <meta name="description" content="Anota is a fast, no-fuss domino scorekeeper for your table. Keep score for 2-team Dominican dominoes: passes, capicua, target and round history. Private, offline, no ads." />
+  <meta property="og:title" content="Anota - Domino Scorekeeper" />
+  <meta property="og:description" content="The fast, no-fuss scorekeeper for your domino table. Private, offline, no ads." />
+  <style>
+    :root {
+      --bg: #070D0A; --felt: #0F1F18; --card: #122a20;
+      --text: #F4EFE2; --dim: rgba(244,239,226,0.66); --faint: rgba(244,239,226,0.42);
+      --gold: #E6B449; --red: #E63946; --blue: #3B82F6; --hairline: rgba(255,255,255,0.09);
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0; color: var(--text);
+      background: radial-gradient(120% 80% at 50% 0%, #14271D 0%, var(--bg) 60%);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      line-height: 1.6; -webkit-font-smoothing: antialiased;
+    }
+    .wrap { max-width: 960px; margin: 0 auto; padding: 0 22px; }
+    header { padding: 28px 0 8px; }
+    .brand { display: flex; align-items: center; gap: 9px; font-weight: 800; font-size: 24px; letter-spacing: 0.3px; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 10px var(--gold); }
+
+    .hero { display: flex; flex-wrap: wrap; align-items: center; gap: 40px; padding: 56px 0 40px; }
+    .hero-copy { flex: 1 1 360px; }
+    .tag { color: var(--gold); font-weight: 700; letter-spacing: 1.6px; text-transform: uppercase; font-size: 13px; margin-bottom: 14px; }
+    h1 { font-size: 46px; line-height: 1.08; margin: 0 0 16px; letter-spacing: -0.5px; }
+    .lead { font-size: 20px; color: var(--dim); margin: 0 0 28px; max-width: 30em; }
+    .badges { display: flex; flex-wrap: wrap; gap: 12px; }
+    .badge {
+      display: inline-flex; align-items: center; gap: 10px; text-decoration: none;
+      background: #000; color: var(--text); border: 1px solid var(--hairline);
+      border-radius: 13px; padding: 11px 18px; font-weight: 700; font-size: 15px;
+    }
+    .badge small { display: block; font-size: 10px; font-weight: 600; color: var(--faint); letter-spacing: 0.4px; }
+    .badge .store { font-size: 17px; }
+    .soon { color: var(--faint); font-size: 13px; margin-top: 12px; }
+
+    .shot-wrap { flex: 0 0 auto; width: 260px; max-width: 70vw; margin: 0 auto; }
+    .shot {
+      width: 100%; border-radius: 34px; border: 6px solid #0a0a0a;
+      box-shadow: 0 30px 70px rgba(0,0,0,0.55); display: block;
+    }
+
+    .features { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; padding: 24px 0 56px; }
+    .feat { background: var(--card); border: 1px solid var(--hairline); border-radius: 16px; padding: 22px; }
+    .feat h3 { margin: 0 0 6px; font-size: 17px; }
+    .feat p { margin: 0; color: var(--dim); font-size: 15px; }
+    .feat .k { font-size: 12px; font-weight: 800; letter-spacing: 1.2px; text-transform: uppercase; color: var(--gold); margin-bottom: 10px; }
+
+    .privacy-strip {
+      background: var(--card); border: 1px solid var(--hairline); border-radius: 18px;
+      padding: 26px; text-align: center; margin-bottom: 56px;
+    }
+    .privacy-strip h2 { margin: 0 0 8px; font-size: 22px; }
+    .privacy-strip p { margin: 0 0 14px; color: var(--dim); }
+    .link { color: var(--gold); font-weight: 700; text-decoration: none; }
+    .link:hover { text-decoration: underline; }
+
+    footer { border-top: 1px solid var(--hairline); padding: 28px 0 56px; color: var(--faint); font-size: 14px; display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; }
+    footer a { color: var(--dim); text-decoration: none; }
+    footer a:hover { color: var(--gold); }
+
+    @media (max-width: 640px) {
+      h1 { font-size: 36px; }
+      .hero { padding-top: 32px; gap: 28px; }
+      .lead { font-size: 18px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="brand">Anota <span class="dot"></span></div>
+    </header>
+
+    <section class="hero">
+      <div class="hero-copy">
+        <div class="tag">Domino Scorekeeper · Anotador de dominó</div>
+        <h1>Never reach for pen and paper again.</h1>
+        <p class="lead">The fast, no-fuss scorekeeper for your domino table. Tap and the totals add up for you. Built for the Dominican table, fully bilingual, and completely private.</p>
+        <div class="badges">
+          <a class="badge" href="#"><span class="store">&#63743;</span><span><small>Coming soon to the</small>App Store</span></a>
+          <a class="badge" href="#"><span class="store">&#9654;</span><span><small>Coming soon to</small>Google Play</span></a>
+        </div>
+        <p class="soon">Launching soon on iPhone and Android.</p>
+      </div>
+      <div class="shot-wrap">
+        <img class="shot" src="./scoreboard.png" alt="Anota scoreboard: two teams, scores, and round history on one screen" />
+      </div>
+    </section>
+
+    <section class="features">
+      <div class="feat">
+        <div class="k">Fast</div>
+        <h3>Keep score in seconds</h3>
+        <p>Quick chips for 25, 30 and 50, plus an in-app keypad for any pip count. One screen that never scrolls.</p>
+      </div>
+      <div class="feat">
+        <div class="k">Dominican</div>
+        <h3>Capicua and passes built in</h3>
+        <p>Two teams, "Us vs Them" by default. Per-round history, undo, and a celebratory winner moment.</p>
+      </div>
+      <div class="feat">
+        <div class="k">Bilingual</div>
+        <h3>Espanol and English</h3>
+        <p>An authentic Dominican voice, with a one-tap language switch and big, legible scores.</p>
+      </div>
+      <div class="feat">
+        <div class="k">Private</div>
+        <h3>No account, no data</h3>
+        <p>100% local and works offline. No internet needed, no ads, and it collects no data.</p>
+      </div>
+    </section>
+
+    <section class="privacy-strip">
+      <h2>Private by design</h2>
+      <p>Anota keeps everything on your device. It collects no data and needs no account.</p>
+      <a class="link" href="./privacy.html">Read the privacy policy</a>
+    </section>
+
+    <footer>
+      <span>&copy; 2026 Anota. Made for the domino table.</span>
+      <span>
+        <a href="./privacy.html">Privacy</a> &nbsp;·&nbsp;
+        <a href="mailto:adelsonaguasvivas@gmail.com">Contact</a>
+      </span>
+    </footer>
+  </div>
+</body>
+</html>
