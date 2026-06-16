@@ -1,8 +1,8 @@
-# Anota — "Fast & Polished" Implementation Plan
+# Anota - "Fast & Polished" Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Make Anota's score entry instant (hybrid presets + in-app keypad), fix the Keep-Playing winner bug, polish visuals (vector icons, brighter Team B, breathing room), remove dead code, and ship a code-generated app icon — without backend/auth and preserving in-progress games.
+**Goal:** Make Anota's score entry instant (hybrid presets + in-app keypad), fix the Keep-Playing winner bug, polish visuals (vector icons, brighter Team B, breathing room), remove dead code, and ship a code-generated app icon - without backend/auth and preserving in-progress games.
 
 **Architecture:** Extract match logic into a pure, unit-tested reducer (`src/match/reducer.ts`) that `useMatch` wraps. The screen stays a single non-scrolling split view; the per-team pad becomes 3 instant preset chips + a hero "＋ POINTS" button that opens a new in-app `ScoreKeypad` bottom sheet (no OS keyboard). A `winnerAcknowledged` flag fixes the Keep-Playing nag. Icons are rendered from a code-defined SVG via `rsvg-convert`.
 
@@ -15,27 +15,27 @@
 ## File Structure
 
 **New files**
-- `src/match/reducer.ts` — pure match-state functions (createMatch, applyPoints, applyUndo, applyRemoveRound, applyTarget, applyRename, acknowledgeWinner, resetKeepingSettings, detectWinner).
-- `src/match/__tests__/reducer.test.ts` — unit tests for the reducer.
-- `src/components/ScoreKeypad.tsx` — in-app numeric keypad bottom sheet (replaces CustomScoreModal).
-- `jest.config.js` — ts-jest config for pure-logic tests.
-- `scripts/gen-icons.mjs` — code-defined SVG → PNG icon generator.
-- `assets/icon.svg` — generated source of truth for the icon (written by the script).
+- `src/match/reducer.ts` - pure match-state functions (createMatch, applyPoints, applyUndo, applyRemoveRound, applyTarget, applyRename, acknowledgeWinner, resetKeepingSettings, detectWinner).
+- `src/match/__tests__/reducer.test.ts` - unit tests for the reducer.
+- `src/components/ScoreKeypad.tsx` - in-app numeric keypad bottom sheet (replaces CustomScoreModal).
+- `jest.config.js` - ts-jest config for pure-logic tests.
+- `scripts/gen-icons.mjs` - code-defined SVG → PNG icon generator.
+- `assets/icon.svg` - generated source of truth for the icon (written by the script).
 
 **Modified files**
-- `src/types/index.ts` — add `winnerAcknowledged`, remove `Team.accent`.
-- `src/hooks/useMatch.ts` — thin wrapper around the reducer.
-- `src/utils/storage.ts` — lenient validation/migration (drop accent, default winnerAcknowledged).
-- `src/constants/colors.ts` — Team B blue rebalance, drop `accent`/`pip` from palette.
-- `src/constants/layout.ts` — `QUICK_SCORES = [25,30,50]`, remove `PRIMARY_QUICK_SCORES`.
-- `src/components/ScorePad.tsx` — chips + hero button, no header label.
-- `src/components/ScoreButton.tsx` — remove `small`/`labelSmall`.
-- `src/components/TeamCard.tsx` — pencil icon.
-- `src/components/TargetPill.tsx` — pencil icon.
-- `src/components/WinnerModal.tsx` — share icon.
-- `src/i18n/{types,es,en}.ts` — add `team.addPoints`, `chrome.delete`; remove dead keys.
-- `App.tsx` — keypad swap, hydration gate, winner-acknowledged visibility, vector icons.
-- `package.json` — deps + `test` script.
+- `src/types/index.ts` - add `winnerAcknowledged`, remove `Team.accent`.
+- `src/hooks/useMatch.ts` - thin wrapper around the reducer.
+- `src/utils/storage.ts` - lenient validation/migration (drop accent, default winnerAcknowledged).
+- `src/constants/colors.ts` - Team B blue rebalance, drop `accent`/`pip` from palette.
+- `src/constants/layout.ts` - `QUICK_SCORES = [25,30,50]`, remove `PRIMARY_QUICK_SCORES`.
+- `src/components/ScorePad.tsx` - chips + hero button, no header label.
+- `src/components/ScoreButton.tsx` - remove `small`/`labelSmall`.
+- `src/components/TeamCard.tsx` - pencil icon.
+- `src/components/TargetPill.tsx` - pencil icon.
+- `src/components/WinnerModal.tsx` - share icon.
+- `src/i18n/{types,es,en}.ts` - add `team.addPoints`, `chrome.delete`; remove dead keys.
+- `App.tsx` - keypad swap, hydration gate, winner-acknowledged visibility, vector icons.
+- `package.json` - deps + `test` script.
 
 **Deleted**
 - `src/components/CustomScoreModal.tsx`.
@@ -95,7 +95,7 @@ git commit -m "Add @expo/vector-icons + jest/ts-jest test tooling"
 
 ---
 
-## Task 2: Core match logic — types, pure reducer, hook, storage (TDD)
+## Task 2: Core match logic - types, pure reducer, hook, storage (TDD)
 
 This is the atomic core-logic change. It ends with whole-project `tsc` green and the reducer fully tested.
 
@@ -194,7 +194,7 @@ test('undo below target re-arms celebration (acknowledged resets)', () => {
 - [ ] **Step 2: Run tests to verify they fail**
 
 Run: `npm test`
-Expected: FAIL — `Cannot find module '../reducer'`.
+Expected: FAIL - `Cannot find module '../reducer'`.
 
 - [ ] **Step 3: Update the types**
 
@@ -1130,7 +1130,7 @@ In `src/i18n/en.ts`, delete:
 - [ ] **Step 4: Verify type-check (parity + no stale references)**
 
 Run: `npx tsc --noEmit`
-Expected: exit 0. If tsc reports a key still in use, that reference was missed — re-check before deleting.
+Expected: exit 0. If tsc reports a key still in use, that reference was missed - re-check before deleting.
 
 - [ ] **Step 5: Commit**
 
@@ -1218,7 +1218,7 @@ In `src/components/TargetPill.tsx`, add the import:
 ```tsx
 import { Ionicons } from '@expo/vector-icons';
 ```
-Replace BOTH occurrences of the hint glyph (one in the editing branch is absent — only the non-editing branch has it):
+Replace BOTH occurrences of the hint glyph (one in the editing branch is absent - only the non-editing branch has it):
 ```tsx
       <Text style={styles.hint}>✎</Text>
 ```

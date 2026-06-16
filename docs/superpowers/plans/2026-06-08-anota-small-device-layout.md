@@ -1,4 +1,4 @@
-# Anota — Small-Device Responsive Layout Implementation Plan
+# Anota - Small-Device Responsive Layout Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -53,7 +53,7 @@ test('the threshold is the boundary (exclusive below)', () => {
 - [ ] **Step 2: Run tests to verify they fail**
 
 Run: `npm test`
-Expected: FAIL — `Cannot find module '../metrics'`.
+Expected: FAIL - `Cannot find module '../metrics'`.
 
 - [ ] **Step 3: Create the pure helper**
 
@@ -107,7 +107,7 @@ export function computeLayoutMetrics(usableHeight: number): LayoutMetrics {
 - [ ] **Step 4: Run tests to verify they pass**
 
 Run: `npm test`
-Expected: PASS — 13 tests total (10 reducer + 3 metrics).
+Expected: PASS - 13 tests total (10 reducer + 3 metrics).
 
 - [ ] **Step 5: Verify type-check**
 
@@ -150,7 +150,7 @@ export function useLayoutMetrics(): LayoutMetrics {
 - [ ] **Step 2: Verify type-check**
 
 Run: `npx tsc --noEmit`
-Expected: exit 0. (The hook isn't consumed yet — that's fine.)
+Expected: exit 0. (The hook isn't consumed yet - that's fine.)
 
 - [ ] **Step 3: Commit**
 
@@ -161,7 +161,7 @@ git commit -m "Add useLayoutMetrics hook (window height + safe-area driven)"
 
 ---
 
-## Task 3: ScoreButton — accept composed styles
+## Task 3: ScoreButton - accept composed styles
 
 `ScorePad` needs to pass `[styles.cell, { minHeight }]` arrays; widen the prop type.
 
@@ -186,7 +186,7 @@ to:
 ```tsx
   style?: StyleProp<ViewStyle>;
 ```
-(No other change — the component already spreads `style` as the last element of its internal style array, which accepts a `StyleProp`.)
+(No other change - the component already spreads `style` as the last element of its internal style array, which accepts a `StyleProp`.)
 
 - [ ] **Step 2: Verify type-check**
 
@@ -202,7 +202,7 @@ git commit -m "ScoreButton: accept composed StyleProp for responsive heights"
 
 ---
 
-## Task 4: TeamCard — responsive score / tile / progress / padding
+## Task 4: TeamCard - responsive score / tile / progress / padding
 
 **Files:**
 - Modify: `src/components/TeamCard.tsx`
@@ -317,7 +317,7 @@ git commit -m "TeamCard: responsive score/tile/progress/padding via useLayoutMet
 
 ---
 
-## Task 5: ScorePad — responsive chip / hero heights
+## Task 5: ScorePad - responsive chip / hero heights
 
 **Files:**
 - Modify: `src/components/ScorePad.tsx`
@@ -385,7 +385,7 @@ git commit -m "ScorePad: responsive chip/hero heights via useLayoutMetrics"
 
 ---
 
-## Task 6: App — structural fix (drop magic padding, responsive region gap)
+## Task 6: App - structural fix (drop magic padding, responsive region gap)
 
 **Files:**
 - Modify: `App.tsx`
@@ -400,7 +400,7 @@ Immediately after the existing `const showWinner = ...` line (just below `const 
 ```tsx
   const m = useLayoutMetrics();
 ```
-(It's a hook — it must sit with the other hook calls, above the `if (!match.hydrated)` early return. This placement satisfies that.)
+(It's a hook - it must sit with the other hook calls, above the `if (!match.hydrated)` early return. This placement satisfies that.)
 
 - [ ] **Step 2: Apply the responsive region gap to both team regions**
 
@@ -458,7 +458,7 @@ This task needs visual judgment on real renders and is executed by the controlle
 - [ ] **Step 1: Boot simulators and capture screenshots**
 
 With Node 20 (`nvm use`), start the app and open it on each simulator (or use `xcrun simctl` + Expo). Capture a screenshot of the running app on:
-- **iPhone SE (3rd generation)** — the critical case (667pt).
+- **iPhone SE (3rd generation)** - the critical case (667pt).
 - **iPhone 13 mini** (812pt).
 - **iPhone 15** (852pt).
 - **iPhone 15 Pro Max** (932pt).

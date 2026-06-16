@@ -1,4 +1,4 @@
-# Anota — Batch 1: "Fast & Polished" — Design Spec
+# Anota - Batch 1: "Fast & Polished" - Design Spec
 
 **Date:** 2026-05-30
 **Status:** Approved (design); pending spec review
@@ -11,7 +11,7 @@
 ### Problem
 Today the **presets are 1 tap** but the **arbitrary pip-count is ~4 taps** (tap "Other" → modal → OS keyboard → type → Add). In real Dominican play the pip-count (sum of pips left in the losers' + partner's hands, e.g. 17/43/68) is the **most common** entry every hand; the presets (25/30/50) are the *special* cases (passes, capicúa, multi-pass). The app is optimized backwards.
 
-### Approach — Option B (hybrid)
+### Approach - Option B (hybrid)
 On each team's region:
 ```
 [ 25 ]  [ 30 ]  [ 50 ]          ← team-tinted chips · 1 tap = instant add
@@ -23,7 +23,7 @@ On each team's region:
 - Preset set trimmed **5 → 3 (25 / 30 / 50)**. 75/100 are uncommon and just get typed on the keypad. This trim is what frees vertical breathing room.
 
 ### New component: `ScoreKeypad` (replaces `CustomScoreModal`)
-A bottom-sheet, in-app numeric keypad — **no OS keyboard** (this removes ~250ms keyboard animation lag and gives big calculator-style targets; the key "feels like a scorekeeper, not a form" upgrade).
+A bottom-sheet, in-app numeric keypad - **no OS keyboard** (this removes ~250ms keyboard animation lag and gives big calculator-style targets; the key "feels like a scorekeeper, not a form" upgrade).
 
 ```
         Puntos para
@@ -46,7 +46,7 @@ A bottom-sheet, in-app numeric keypad — **no OS keyboard** (this removes ~250m
 - Remove the header label row entirely.
 - Render 3 preset chips from `QUICK_SCORES` (now `[25,30,50]`) as instant-add, team-tinted (subdued) buttons.
 - Render the hero **＋ POINTS** button (team-color fill) → calls `onCustom(teamId)` to open the keypad.
-- Drop `PRIMARY_QUICK_SCORES` usage (no longer needed — the hero button carries the emphasis).
+- Drop `PRIMARY_QUICK_SCORES` usage (no longer needed - the hero button carries the emphasis).
 
 ---
 
@@ -79,7 +79,7 @@ This yields: cross target → modal; Keep playing → acknowledged, keep scoring
 ---
 
 ## 4. Vector icons
-- Add `@expo/vector-icons` (Ionicons; ships with the Expo SDK — `expo install` if not already resolvable).
+- Add `@expo/vector-icons` (Ionicons; ships with the Expo SDK - `expo install` if not already resolvable).
 - Replace text glyphs:
   - Settings `⚙︎` → `settings-outline`
   - Undo `↶` → `arrow-undo-outline`
@@ -100,10 +100,10 @@ This yields: cross target → modal; Keep playing → acknowledged, keep scoring
 ## 6. Delete dead code (verified unreferenced)
 - **i18n** (`types.ts` + `es.ts` + `en.ts`): remove `brand.tagline`, `chrome.ok`, `chrome.reset`, `chrome.footerTagline`, `history.emptyTitle`, and the entire `reset.*` section. Remove `customModal.placeholder` (only consumer was the deleted `CustomScoreModal`).
 - **`Team.accent`**: remove from `types.ts`, `useMatch` (initial + load re-apply), `storage.ts` `isTeam` validation, and `teamPalette`.
-- **`teamPalette.*.pip`**: unused — remove (touched anyway by the blue rebalance).
+- **`teamPalette.*.pip`**: unused - remove (touched anyway by the blue rebalance).
 - **`ScoreButton`**: remove unused `small` / `labelSmall` props + `styles.small`.
 - **`PRIMARY_QUICK_SCORES`** constant: remove (obsolete after §1).
-- **Out of scope / leave as-is:** unused color tokens `feltEdge`, `goldDim`, `redDim`, `blueDim` — palette tokens, harmless, not on the approved list.
+- **Out of scope / leave as-is:** unused color tokens `feltEdge`, `goldDim`, `redDim`, `blueDim` - palette tokens, harmless, not on the approved list.
 
 ### i18n additions
 - `team.addPoints` → ES `"Puntos"`, EN `"Points"` (rendered with a `+` prefix/icon on the hero button).
@@ -128,10 +128,10 @@ This yields: cross target → modal; Keep playing → acknowledged, keep scoring
 
 ---
 
-## 9. Tests (included — minimal)
+## 9. Tests (included - minimal)
 Extract the pure match logic so it is unit-testable and the winner-acknowledged rule is covered.
 
-- **New module** `src/match/reducer.ts` (RN-free — imports only pure constants/types): `createMatch()`, `applyPoints(state, teamId, points)`, `applyUndo(state)`, `applyRemoveRound(state, id)`, `applyTarget(state, target)`, `resetKeepingSettings(state)`, `detectWinner(state)`. `useMatch` becomes a thin `useState` + `setState(reducerFn)` wrapper around these.
+- **New module** `src/match/reducer.ts` (RN-free - imports only pure constants/types): `createMatch()`, `applyPoints(state, teamId, points)`, `applyUndo(state)`, `applyRemoveRound(state, id)`, `applyTarget(state, target)`, `resetKeepingSettings(state)`, `detectWinner(state)`. `useMatch` becomes a thin `useState` + `setState(reducerFn)` wrapper around these.
 - **Tooling (lightweight):** the tested code is RN-free, so use `ts-jest` (not the heavier `jest-expo`). Add devDeps `jest`, `ts-jest`, `@types/jest`; a `jest.config.js` (ts-jest preset, `testMatch` under `src/**`); npm script `"test": "jest"`.
 - **Tests** (`src/match/__tests__/reducer.test.ts`, ~6):
   1. `applyPoints` adds to score and records a round (most-recent-first).
@@ -150,7 +150,7 @@ Render the launch icon **in code** (SVG → PNG via `rsvg-convert`, confirmed av
 
 ### Concept
 - A single **ivory domino tile**, vertical, filling most of the canvas, on a **dark-green felt** radial/linear gradient with a subtle **gold hairline rim + vignette** (matches the in-app palette → cohesive brand).
-- **Face: the double-six** (the most recognizable domino). **Top half pips red `#E63946`, bottom half pips blue `#3B82F6`** — quietly encodes "dominoes" + "two sides keeping score," and the ivory/red/blue trio organically evokes the Dominican flag without literal flag iconography (keeps it clean and universally appealing).
+- **Face: the double-six** (the most recognizable domino). **Top half pips red `#E63946`, bottom half pips blue `#3B82F6`** - quietly encodes "dominoes" + "two sides keeping score," and the ivory/red/blue trio organically evokes the Dominican flag without literal flag iconography (keeps it clean and universally appealing).
 - **No flag/map/star.** Cultural flavor lives in the in-app voice and store listing, not the icon.
 
 ### Legibility caveat
@@ -159,10 +159,10 @@ Render the launch icon **in code** (SVG → PNG via `rsvg-convert`, confirmed av
 ### Deliverables
 - Author `assets/icon.svg` (source of truth, committed).
 - A small reproducible generator `scripts/gen-icons.mjs` (or shell) that rasterizes via `rsvg-convert` to:
-  - `assets/icon.png` — 1024×1024, **opaque**, full-bleed felt bg (iOS requires no alpha).
-  - `assets/adaptive-icon.png` — 1024×1024, **transparent** bg, tile within Android safe zone (~66% centered).
-  - `assets/splash-icon.png` — 1024×1024, tile mark, transparent (Expo `contain` on `#070D0A`).
-  - `assets/favicon.png` — small web icon (regenerated).
+  - `assets/icon.png` - 1024×1024, **opaque**, full-bleed felt bg (iOS requires no alpha).
+  - `assets/adaptive-icon.png` - 1024×1024, **transparent** bg, tile within Android safe zone (~66% centered).
+  - `assets/splash-icon.png` - 1024×1024, tile mark, transparent (Expo `contain` on `#070D0A`).
+  - `assets/favicon.png` - small web icon (regenerated).
 - `app.json` already references these paths + `#070D0A` splash bg; no config change required. (iOS `buildNumber` / release plumbing is a later batch.)
 
 ---

@@ -54,7 +54,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const setLang = useCallback((next: LanguageCode) => {
     setLangState(next);
     AsyncStorage.setItem(STORAGE_KEY, next).catch(() => {
-      // Persistence failures are non-fatal — language stays in memory.
+      // Persistence failures are non-fatal - language stays in memory.
     });
   }, []);
 

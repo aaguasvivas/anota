@@ -11,7 +11,7 @@ type Props = {
   onPressLong?: () => void;
 };
 
-// Compact target indicator. Tap to edit inline — pill becomes a number
+// Compact target indicator. Tap to edit inline - pill becomes a number
 // input. Blur or submit commits; tap outside the pill or hit return ends
 // the edit.
 export function TargetPill({ value, onChange, onPressLong }: Props) {

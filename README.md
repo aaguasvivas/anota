@@ -31,7 +31,7 @@ Built with Expo + React Native + TypeScript.
 npx tsc --noEmit
 ```
 
-Should report nothing — the project is fully typed under `"strict": true`.
+Should report nothing - the project is fully typed under `"strict": true`.
 
 To re-validate the Expo configuration:
 
@@ -45,7 +45,7 @@ npx expo-doctor
 
 ```
 anota/
-├── App.tsx                       # main screen — composes everything
+├── App.tsx                       # main screen - composes everything
 ├── app.json                      # Expo config (dark theme, bundle id, splash)
 └── src/
     ├── components/
@@ -85,6 +85,6 @@ anota/
 ## Notes for extending
 
 - All match logic lives in `useMatch`. Add new behaviors (e.g. "double points", more than two teams) by extending its returned API; the screen reads from it.
-- All user-facing strings live in `src/i18n/{es,en}.ts`. Add a key to `types.ts`, then provide it in both dictionaries — the type system enforces parity.
-- Colors and spacing are centralized in `src/constants/` — change the palette in one place to re-skin.
+- All user-facing strings live in `src/i18n/{es,en}.ts`. Add a key to `types.ts`, then provide it in both dictionaries - the type system enforces parity.
+- Colors and spacing are centralized in `src/constants/` - change the palette in one place to re-skin.
 - The match state is keyed under `@anota:match:v1` in AsyncStorage; the language preference under `@anota:lang:v1`. Bump the key suffix when introducing a breaking schema change.

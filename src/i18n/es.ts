@@ -1,4 +1,4 @@
-// Spanish dictionary — Dominican voice.
+// Spanish dictionary - Dominican voice.
 // Restraint over costume: slang lives on celebratory moments, not chrome.
 
 import type { Dictionary } from './types';
@@ -69,7 +69,7 @@ export const es: Dictionary = {
     newMatch: 'Nueva partida',
     share: 'Compartir',
     shareMessage: (a, b, sa, sb) =>
-      `🁢 Anota — Anotador de dominó\n${a} ${sa} – ${sb} ${b}\n¡${a} ganó!`,
+      `🁢 Anota - Anotador de dominó\n${a} ${sa} – ${sb} ${b}\n¡${a} ganó!`,
   },
   newMatchConfirm: {
     title: '¿Empezar nueva partida?',

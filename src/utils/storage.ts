@@ -61,6 +61,6 @@ export async function saveMatch(state: MatchState): Promise<void> {
   try {
     await AsyncStorage.setItem(KEY, JSON.stringify(state));
   } catch {
-    // Persistence failures are non-fatal — the match continues in memory.
+    // Persistence failures are non-fatal - the match continues in memory.
   }
 }

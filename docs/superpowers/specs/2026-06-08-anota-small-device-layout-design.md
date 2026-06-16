@@ -1,14 +1,14 @@
-# Anota — Small-Device Layout Batch — Design Spec
+# Anota - Small-Device Layout Batch - Design Spec
 
 **Date:** 2026-06-08
 **Status:** Approved (design); pending spec review
-**Goal:** Make the single-screen split layout fit and breathe on **every supported phone down to iPhone SE (667pt)** with **no scrolling, both teams always visible** — replacing the fragile `flex` + magic-`paddingBottom: 64` approach. Purely presentational/responsive; no state, reducer, or behavior changes.
+**Goal:** Make the single-screen split layout fit and breathe on **every supported phone down to iPhone SE (667pt)** with **no scrolling, both teams always visible** - replacing the fragile `flex` + magic-`paddingBottom: 64` approach. Purely presentational/responsive; no state, reducer, or behavior changes.
 
 **Reference:** follows the audit finding that the body mixes a flex container with fixed-pixel content (60pt score, 54pt buttons, fixed margins) and hides overflow behind `paddingBottom: 64` ([App.tsx](../../../App.tsx) body style). On short screens the content exceeds the body box and spills onto the footer.
 
 ---
 
-## Approach (chosen: B — structural flex fix + one responsive size tier)
+## Approach (chosen: B - structural flex fix + one responsive size tier)
 
 Pure flexbox can't fix this alone: flex distributes space but can't shrink text or button heights, so a short screen still clips. Fully-fluid scaling is overengineered and risks awkward sizes. **B** fixes the structure so content can never overflow the footer, and adds a single `compact` size tier (triggered by usable screen height) that scales the big fixed elements down on short phones. The score stays the hero; only spacing, the domino tile, button heights, and the score font flex down on short screens.
 
@@ -28,7 +28,7 @@ The screen stays a flex column inside `SafeAreaView`: `header` (auto) / `body` (
 
 ## 2. Responsive size tier
 
-### Pure helper (unit-tested) — `src/layout/metrics.ts`
+### Pure helper (unit-tested) - `src/layout/metrics.ts`
 RN-free so it can be tested with ts-jest (mirrors the `match/reducer.ts` pattern).
 
 ```ts
@@ -56,7 +56,7 @@ export function computeLayoutMetrics(usableHeight: number): LayoutMetrics {
 }
 ```
 
-### Hook — `src/hooks/useLayoutMetrics.ts`
+### Hook - `src/hooks/useLayoutMetrics.ts`
 Wraps the pure helper with live dimensions + safe-area insets (both already available: `react-native` + `react-native-safe-area-context`).
 
 ```ts
@@ -73,17 +73,17 @@ export function useLayoutMetrics(): LayoutMetrics {
 }
 ```
 
-### Consumption (each consumer calls the hook directly — no prop-drilling, no new context)
-- **`App.tsx`** — `const m = useLayoutMetrics();` apply `m.regionGap` to the `teamRegion` gap (inline style); remove the magic bottom padding (§1).
-- **`TeamCard.tsx`** — `const m = useLayoutMetrics();` drive the score style `fontSize: m.scoreFontSize`, `lineHeight: m.scoreLineHeight`; the `DominoTile size={m.tileSize}`; the `ProgressBar height={m.progressHeight}`; the card `paddingVertical: m.cardPadV`.
-- **`ScorePad.tsx`** — `const m = useLayoutMetrics();` pass the chip height via the existing `style` prop on the preset `ScoreButton`s (`[styles.cell, { minHeight: m.chipHeight }]`) and the hero (`[styles.hero, { minHeight: m.heroHeight }]`). **No change to `ScoreButton`** — a passed `minHeight` in `style` overrides its base `minHeight` via RN style flattening (keeps the Task 7 cleanup intact).
+### Consumption (each consumer calls the hook directly - no prop-drilling, no new context)
+- **`App.tsx`** - `const m = useLayoutMetrics();` apply `m.regionGap` to the `teamRegion` gap (inline style); remove the magic bottom padding (§1).
+- **`TeamCard.tsx`** - `const m = useLayoutMetrics();` drive the score style `fontSize: m.scoreFontSize`, `lineHeight: m.scoreLineHeight`; the `DominoTile size={m.tileSize}`; the `ProgressBar height={m.progressHeight}`; the card `paddingVertical: m.cardPadV`.
+- **`ScorePad.tsx`** - `const m = useLayoutMetrics();` pass the chip height via the existing `style` prop on the preset `ScoreButton`s (`[styles.cell, { minHeight: m.chipHeight }]`) and the hero (`[styles.hero, { minHeight: m.heroHeight }]`). **No change to `ScoreButton`** - a passed `minHeight` in `style` overrides its base `minHeight` via RN style flattening (keeps the Task 7 cleanup intact).
 
 > `useWindowDimensions` + `useSafeAreaInsets` are reactive, so rotation / split-view / device differences update live.
 
 ---
 
 ## 3. RoundStrip (minor)
-The RoundStrip lives inside the `flex:1` divider and already compresses. Apply a small compact tweak only if §4 testing shows it crowding: reduce its `leadsPill` `marginBottom` to `spacing.xs` when compact (it can read `useLayoutMetrics().compact`). Not required unless testing demands it — keep scope tight.
+The RoundStrip lives inside the `flex:1` divider and already compresses. Apply a small compact tweak only if §4 testing shows it crowding: reduce its `leadsPill` `marginBottom` to `spacing.xs` when compact (it can read `useLayoutMetrics().compact`). Not required unless testing demands it - keep scope tight.
 
 ---
 
@@ -99,7 +99,7 @@ The RoundStrip lives inside the `flex:1` divider and already compresses. Apply a
 
 ## Scope guard / out of scope
 - **No scrolling** anywhere. **No** state/reducer/i18n/API changes. **No** new behavior.
-- No landscape-specific design (portrait-locked stays). No second "generous/tall" tier for Pro Max in v1 — the `flex:1` divider already adds breathing room on big phones; a tall tier can come later if wanted.
+- No landscape-specific design (portrait-locked stays). No second "generous/tall" tier for Pro Max in v1 - the `flex:1` divider already adds breathing room on big phones; a tall tier can come later if wanted.
 - Don't restructure unrelated components.
 
 ## Files
