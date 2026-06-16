@@ -22,7 +22,7 @@ type Props = {
 export function TeamCard({ team, targetScore, isLeader, glowColor, onRename }: Props) {
   const { t } = useT();
   const m = useLayoutMetrics();
-  const progress = team.score / targetScore;
+  const progress = Math.min(1, team.score / targetScore);
   const remaining = Math.max(0, targetScore - team.score);
   const name = teamDisplayName(team, t);
   const [topFace, bottomFace] = tileFacesForScore(team.score, targetScore);

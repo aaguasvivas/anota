@@ -81,5 +81,6 @@ export const es: Dictionary = {
     sectionTitle: 'Rondas',
     emptySubtitle: 'Suma puntos y la historia aparece aquí.',
     removeRoundConfirm: (n, name) => `¿Borrar +${n} de ${name}?`,
+    removeHint: 'Mantén presionado para borrar',
   },
 };

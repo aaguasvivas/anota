@@ -29,10 +29,6 @@ export async function hydratePrefs(): Promise<void> {
   }
 }
 
-export function getPrefs(): Prefs {
-  return current;
-}
-
 export function isHapticsMuted(): boolean {
   return current.hapticsMuted;
 }

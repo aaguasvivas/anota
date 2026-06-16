@@ -65,7 +65,7 @@ export function RoundStrip({ rounds, teams, onRequestRemove }: Props) {
                   r.points,
                   teamDisplayName(team, t),
                 )}
-                accessibilityHint={t.history.sectionTitle}
+                accessibilityHint={t.history.removeHint}
                 style={({ pressed }) => [
                   styles.chip,
                   {

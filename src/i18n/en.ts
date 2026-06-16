@@ -78,5 +78,6 @@ export const en: Dictionary = {
     sectionTitle: 'Rounds',
     emptySubtitle: 'Add points and they’ll show up here.',
     removeRoundConfirm: (n, name) => `Remove +${n} from ${name}?`,
+    removeHint: 'Hold to remove',
   },
 };

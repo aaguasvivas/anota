@@ -56,10 +56,8 @@ export function useMatch() {
   const dismissWinner = useCallback(() => setState(acknowledgeWinner), []);
 
   const derived = useMemo(() => {
-    const { teams, targetScore } = state;
+    const { teams } = state;
     return {
-      progressA: Math.min(1, teams.A.score / targetScore),
-      progressB: Math.min(1, teams.B.score / targetScore),
       leader:
         teams.A.score === teams.B.score
           ? null

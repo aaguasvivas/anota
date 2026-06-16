@@ -66,7 +66,7 @@ export function WinnerModal({ visible, state, onNewMatch, onKeepPlaying }: Props
   }
 
   return (
-    <Modal visible={visible} transparent animationType="fade">
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onKeepPlaying}>
       <View style={styles.backdrop}>
         <Animated.View
           style={[

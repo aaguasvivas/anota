@@ -6,7 +6,6 @@ export const colors = {
   bg: '#0B1410',
   bgDeep: '#070D0A',
   felt: '#0F1F18',
-  feltEdge: '#1A2E25',
   hairline: 'rgba(255, 255, 255, 0.08)',
   divider: 'rgba(255, 255, 255, 0.12)',
 
@@ -22,11 +21,8 @@ export const colors = {
 
   // Accents (Dominican-flavored)
   gold: '#E6B449',
-  goldDim: '#7A5E22',
   red: '#E63946',
-  redDim: '#4A1318',
   blue: '#3B82F6',
-  blueDim: '#13243B',
 
   // Status
   danger: '#E5484D',

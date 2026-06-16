@@ -9,8 +9,13 @@ export async function loadMatch(): Promise<MatchState | null> {
     if (!raw) return null;
     const parsed = JSON.parse(raw) as unknown;
     if (!isMatchState(parsed)) return null;
-    // Default the acknowledged flag for matches saved before it existed.
-    return { ...parsed, winnerAcknowledged: parsed.winnerAcknowledged ?? false };
+    // Sanitize/migrate: clamp targetScore to >=1 (self-heal a bad blob) and
+    // default the acknowledged flag for matches saved before it existed.
+    return {
+      ...parsed,
+      targetScore: Math.max(1, Math.floor(parsed.targetScore)),
+      winnerAcknowledged: parsed.winnerAcknowledged ?? false,
+    };
   } catch {
     return null;
   }

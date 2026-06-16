@@ -347,11 +347,6 @@ const styles = StyleSheet.create({
     borderColor: colors.hairline,
     backgroundColor: 'rgba(255,255,255,0.03)',
   },
-  iconBtnText: {
-    color: colors.textDim,
-    fontSize: 13,
-    fontWeight: '700',
-  },
   body: {
     flex: 1,
     paddingHorizontal: spacing.lg,

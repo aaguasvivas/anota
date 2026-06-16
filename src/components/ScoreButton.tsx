@@ -8,7 +8,6 @@ type Props = {
   onPress: () => void;
   color: string;
   style?: StyleProp<ViewStyle>;
-  outline?: boolean;
   // Lower visual weight; team-color tint instead of full fill.
   subdued?: boolean;
   accessibilityLabel?: string;
@@ -19,12 +18,11 @@ export function ScoreButton({
   onPress,
   color,
   style,
-  outline,
   subdued,
   accessibilityLabel,
 }: Props) {
-  const bg = outline ? undefined : subdued ? `${color}26` : color;
-  const labelColor = outline || subdued ? color : colors.tile;
+  const bg = subdued ? `${color}26` : color;
+  const labelColor = subdued ? color : colors.tile;
   return (
     <Pressable
       onPress={onPress}
@@ -32,9 +30,8 @@ export function ScoreButton({
       accessibilityLabel={accessibilityLabel ?? label}
       style={({ pressed }) => [
         styles.base,
-        outline && { borderColor: color, borderWidth: 1.5 },
         subdued && { borderColor: `${color}66`, borderWidth: 1 },
-        bg ? { backgroundColor: bg } : null,
+        { backgroundColor: bg },
         pressed && styles.pressed,
         style,
       ]}

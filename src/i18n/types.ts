@@ -49,6 +49,7 @@ export type Dictionary = {
     sectionTitle: string;
     emptySubtitle: string;
     removeRoundConfirm: (n: number, name: string) => string;
+    removeHint: string;
   };
   winner: {
     phrases: readonly string[];

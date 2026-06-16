@@ -31,14 +31,12 @@ type LanguageContextValue = {
   t: Dictionary;
   setLang: (next: LanguageCode) => void;
   pick: <T>(arr: readonly T[]) => T;
-  ready: boolean;
 };
 
 const LanguageContext = createContext<LanguageContextValue | null>(null);
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const [lang, setLangState] = useState<LanguageCode>(detectDeviceLanguage);
-  const [ready, setReady] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -49,8 +47,6 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
         }
       } catch {
         // fall back to device detection
-      } finally {
-        setReady(true);
       }
     })();
   }, []);
@@ -67,8 +63,8 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const value = useMemo<LanguageContextValue>(
-    () => ({ lang, t: dictionaries[lang], setLang, pick, ready }),
-    [lang, setLang, pick, ready],
+    () => ({ lang, t: dictionaries[lang], setLang, pick }),
+    [lang, setLang, pick],
   );
 
   return (
