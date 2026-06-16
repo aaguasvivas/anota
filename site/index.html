@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Anota - Domino Scorekeeper</title>
+  <title>Anota - Domino Scorekeeper / Anotador de dominó</title>
   <meta name="description" content="Anota is a fast, no-fuss domino scorekeeper for your table. Keep score for 2-team Dominican dominoes: passes, capicúa, target and round history. Private, offline, no ads." />
   <meta property="og:title" content="Anota - Domino Scorekeeper" />
   <meta property="og:description" content="The fast, no-fuss scorekeeper for your domino table. Private, offline, no ads." />
@@ -11,7 +11,7 @@
     :root {
       --bg: #070D0A; --felt: #0F1F18; --card: #122a20;
       --text: #F4EFE2; --dim: rgba(244,239,226,0.66); --faint: rgba(244,239,226,0.42);
-      --gold: #E6B449; --red: #E63946; --blue: #3B82F6; --hairline: rgba(255,255,255,0.09);
+      --gold: #E6B449; --hairline: rgba(255,255,255,0.09);
     }
     * { box-sizing: border-box; }
     html { scroll-behavior: smooth; }
@@ -22,11 +22,18 @@
       line-height: 1.6; -webkit-font-smoothing: antialiased;
     }
     .wrap { max-width: 960px; margin: 0 auto; padding: 0 22px; }
-    header { padding: 28px 0 8px; }
+    header { display: flex; align-items: center; justify-content: space-between; padding: 24px 0 8px; }
     .brand { display: flex; align-items: center; gap: 9px; font-weight: 800; font-size: 24px; letter-spacing: 0.3px; }
     .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 10px var(--gold); }
 
-    .hero { display: flex; flex-wrap: wrap; align-items: center; gap: 40px; padding: 56px 0 40px; }
+    .lang-switch { display: inline-flex; border: 1px solid var(--hairline); border-radius: 999px; overflow: hidden; }
+    .lang-switch button {
+      background: transparent; color: var(--dim); border: 0; cursor: pointer;
+      font-weight: 800; font-size: 13px; letter-spacing: 0.6px; padding: 7px 14px;
+    }
+    .lang-switch button.active { background: var(--gold); color: #10130E; }
+
+    .hero { display: flex; flex-wrap: wrap; align-items: center; gap: 40px; padding: 52px 0 40px; }
     .hero-copy { flex: 1 1 360px; }
     .tag { color: var(--gold); font-weight: 700; letter-spacing: 1.6px; text-transform: uppercase; font-size: 13px; margin-bottom: 14px; }
     h1 { font-size: 46px; line-height: 1.08; margin: 0 0 16px; letter-spacing: -0.5px; }
@@ -42,10 +49,7 @@
     .soon { color: var(--faint); font-size: 13px; margin-top: 12px; }
 
     .shot-wrap { flex: 0 0 auto; width: 260px; max-width: 70vw; margin: 0 auto; }
-    .shot {
-      width: 100%; border-radius: 34px; border: 6px solid #0a0a0a;
-      box-shadow: 0 30px 70px rgba(0,0,0,0.55); display: block;
-    }
+    .shot { width: 100%; border-radius: 34px; border: 6px solid #0a0a0a; box-shadow: 0 30px 70px rgba(0,0,0,0.55); display: block; }
 
     .features { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; padding: 24px 0 56px; }
     .feat { background: var(--card); border: 1px solid var(--hairline); border-radius: 16px; padding: 22px; }
@@ -53,22 +57,19 @@
     .feat p { margin: 0; color: var(--dim); font-size: 15px; }
     .feat .k { font-size: 12px; font-weight: 800; letter-spacing: 1.2px; text-transform: uppercase; color: var(--gold); margin-bottom: 10px; }
 
-    .privacy-strip {
-      background: var(--card); border: 1px solid var(--hairline); border-radius: 18px;
-      padding: 26px; text-align: center; margin-bottom: 56px;
-    }
+    .privacy-strip { background: var(--card); border: 1px solid var(--hairline); border-radius: 18px; padding: 26px; text-align: center; margin-bottom: 48px; }
     .privacy-strip h2 { margin: 0 0 8px; font-size: 22px; }
     .privacy-strip p { margin: 0 0 14px; color: var(--dim); }
     .link { color: var(--gold); font-weight: 700; text-decoration: none; }
     .link:hover { text-decoration: underline; }
 
-    footer { border-top: 1px solid var(--hairline); padding: 28px 0 56px; color: var(--faint); font-size: 14px; display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; }
+    footer { border-top: 1px solid var(--hairline); padding: 26px 0 56px; color: var(--faint); font-size: 14px; display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; }
     footer a { color: var(--dim); text-decoration: none; }
     footer a:hover { color: var(--gold); }
 
     @media (max-width: 640px) {
       h1 { font-size: 36px; }
-      .hero { padding-top: 32px; gap: 28px; }
+      .hero { padding-top: 28px; gap: 26px; }
       .lead { font-size: 18px; }
     }
   </style>
@@ -77,60 +78,100 @@
   <div class="wrap">
     <header>
       <div class="brand">Anota <span class="dot"></span></div>
+      <div class="lang-switch" role="group" aria-label="Language">
+        <button data-lang="en" type="button">EN</button>
+        <button data-lang="es" type="button">ES</button>
+      </div>
     </header>
 
-    <section class="hero">
-      <div class="hero-copy">
-        <div class="tag">Domino Scorekeeper · Anotador de dominó</div>
-        <h1>Never reach for pen and paper again.</h1>
-        <p class="lead">The fast, no-fuss scorekeeper for your domino table. Tap and the totals add up for you. Built for the Dominican table, fully bilingual, and completely private.</p>
-        <div class="badges">
-          <a class="badge" href="#"><span class="store">&#63743;</span><span><small>Coming soon to the</small>App Store</span></a>
-          <a class="badge" href="#"><span class="store">&#9654;</span><span><small>Coming soon to</small>Google Play</span></a>
+    <!-- ============ ENGLISH ============ -->
+    <div id="en">
+      <section class="hero">
+        <div class="hero-copy">
+          <div class="tag">Domino Scorekeeper</div>
+          <h1>Never reach for pen and paper again.</h1>
+          <p class="lead">The fast, no-fuss scorekeeper for your domino table. Tap and the totals add up for you. Built for the Dominican table, fully bilingual, and completely private.</p>
+          <div class="badges">
+            <a class="badge" href="#"><span class="store">&#63743;</span><span><small>Coming soon to the</small>App Store</span></a>
+            <a class="badge" href="#"><span class="store">&#9654;</span><span><small>Coming soon to</small>Google Play</span></a>
+          </div>
+          <p class="soon">Launching soon on iPhone and Android.</p>
         </div>
-        <p class="soon">Launching soon on iPhone and Android.</p>
-      </div>
-      <div class="shot-wrap">
-        <img class="shot" src="./scoreboard.png" alt="Anota scoreboard: two teams, scores, and round history on one screen" />
-      </div>
-    </section>
+        <div class="shot-wrap">
+          <img class="shot" src="./scoreboard.png" alt="Anota scoreboard: two teams, scores, and round history on one screen" />
+        </div>
+      </section>
+      <section class="features">
+        <div class="feat"><div class="k">Fast</div><h3>Keep score in seconds</h3><p>Quick chips for 25, 30 and 50, plus an in-app keypad for any pip count. One screen that never scrolls.</p></div>
+        <div class="feat"><div class="k">Dominican</div><h3>Capicúa and passes built in</h3><p>Two teams, "Us vs Them" by default. Per-round history, undo, and a celebratory winner moment.</p></div>
+        <div class="feat"><div class="k">Bilingual</div><h3>Español and English</h3><p>An authentic Dominican voice, with a one-tap language switch and big, legible scores.</p></div>
+        <div class="feat"><div class="k">Private</div><h3>No account, no data</h3><p>100% local and works offline. No internet needed, no ads, and it collects no data.</p></div>
+      </section>
+      <section class="privacy-strip">
+        <h2>Private by design</h2>
+        <p>Anota keeps everything on your device. It collects no data and needs no account.</p>
+        <a class="link" href="./privacy.html">Read the privacy policy</a>
+      </section>
+    </div>
 
-    <section class="features">
-      <div class="feat">
-        <div class="k">Fast</div>
-        <h3>Keep score in seconds</h3>
-        <p>Quick chips for 25, 30 and 50, plus an in-app keypad for any pip count. One screen that never scrolls.</p>
-      </div>
-      <div class="feat">
-        <div class="k">Dominican</div>
-        <h3>Capicúa and passes built in</h3>
-        <p>Two teams, "Us vs Them" by default. Per-round history, undo, and a celebratory winner moment.</p>
-      </div>
-      <div class="feat">
-        <div class="k">Bilingual</div>
-        <h3>Español and English</h3>
-        <p>An authentic Dominican voice, with a one-tap language switch and big, legible scores.</p>
-      </div>
-      <div class="feat">
-        <div class="k">Private</div>
-        <h3>No account, no data</h3>
-        <p>100% local and works offline. No internet needed, no ads, and it collects no data.</p>
-      </div>
-    </section>
-
-    <section class="privacy-strip">
-      <h2>Private by design</h2>
-      <p>Anota keeps everything on your device. It collects no data and needs no account.</p>
-      <a class="link" href="./privacy.html">Read the privacy policy</a>
-    </section>
+    <!-- ============ ESPAÑOL ============ -->
+    <div id="es" hidden>
+      <section class="hero">
+        <div class="hero-copy">
+          <div class="tag">Anotador de dominó</div>
+          <h1>Olvídate del lápiz y el papel.</h1>
+          <p class="lead">El anotador de dominó rápido y sin enredos para tu mesa. Tú tocas y la app saca los totales. Hecho para la mesa dominicana, totalmente bilingüe y completamente privado.</p>
+          <div class="badges">
+            <a class="badge" href="#"><span class="store">&#63743;</span><span><small>Pronto en la</small>App Store</span></a>
+            <a class="badge" href="#"><span class="store">&#9654;</span><span><small>Pronto en</small>Google Play</span></a>
+          </div>
+          <p class="soon">Pronto en iPhone y Android.</p>
+        </div>
+        <div class="shot-wrap">
+          <img class="shot" src="./scoreboard.png" alt="Marcador de Anota: dos equipos, puntos e historial de rondas en una pantalla" />
+        </div>
+      </section>
+      <section class="features">
+        <div class="feat"><div class="k">Rápido</div><h3>Anota en segundos</h3><p>Fichas rápidas para 25, 30 y 50, y un teclado dentro de la app para cualquier cantidad de puntos. Una pantalla que no hace scroll.</p></div>
+        <div class="feat"><div class="k">Dominicano</div><h3>Capicúa y pasos incluidos</h3><p>Dos equipos, "Nosotros vs Ellos" por defecto. Historial por ronda, deshacer y una celebración al ganar.</p></div>
+        <div class="feat"><div class="k">Bilingüe</div><h3>Español e inglés</h3><p>Voz dominicana auténtica, cambio de idioma con un toque y puntos grandes y legibles.</p></div>
+        <div class="feat"><div class="k">Privado</div><h3>Sin cuenta, sin datos</h3><p>100% local y funciona sin internet. Sin anuncios y no recoge datos.</p></div>
+      </section>
+      <section class="privacy-strip">
+        <h2>Privada de verdad</h2>
+        <p>Anota guarda todo en tu dispositivo. No recoge datos y no necesita cuenta.</p>
+        <a class="link" href="./privacy.html">Lee la política de privacidad</a>
+      </section>
+    </div>
 
     <footer>
       <span>&copy; 2026 Anota. Made for the domino table.</span>
       <span>
-        <a href="./privacy.html">Privacy</a> &nbsp;·&nbsp;
+        <a href="./privacy.html">Privacy / Privacidad</a> &nbsp;&middot;&nbsp;
         <a href="mailto:adelsonaguasvivas@gmail.com">Contact</a>
       </span>
     </footer>
   </div>
+
+  <script>
+    (function () {
+      var en = document.getElementById('en');
+      var es = document.getElementById('es');
+      var btns = document.querySelectorAll('.lang-switch button');
+      function setLang(l) {
+        var isEs = l === 'es';
+        es.hidden = !isEs;
+        en.hidden = isEs;
+        document.documentElement.lang = l;
+        btns.forEach(function (b) { b.classList.toggle('active', b.dataset.lang === l); });
+        try { localStorage.setItem('anota-lang', l); } catch (e) {}
+      }
+      var saved;
+      try { saved = localStorage.getItem('anota-lang'); } catch (e) {}
+      var def = saved || ((navigator.language || '').toLowerCase().indexOf('es') === 0 ? 'es' : 'en');
+      setLang(def);
+      btns.forEach(function (b) { b.addEventListener('click', function () { setLang(b.dataset.lang); }); });
+    })();
+  </script>
 </body>
 </html>
