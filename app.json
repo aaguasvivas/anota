@@ -30,6 +30,12 @@
     },
     "plugins": [
       "expo-localization"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "2498385a-d1cf-4513-a0c1-3cdc8f1d3410"
+      }
+    },
+    "owner": "aaguasvivas"
   }
 }
