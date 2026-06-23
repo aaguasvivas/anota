@@ -1,8 +1,10 @@
 import React from 'react';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
-import { colors } from '../constants/colors';
 import { radii, spacing } from '../constants/layout';
 import { useT } from '../i18n';
+import { useTheme } from '../theme/ThemeProvider';
+import { useThemedStyles } from '../theme/makeStyles';
+import { Theme } from '../theme/themes';
 
 type Props = {
   visible: boolean;
@@ -26,6 +28,7 @@ export function ConfirmDialog({
   onCancel,
 }: Props) {
   const { t } = useT();
+  const styles = useThemedStyles(makeStyles);
   const confirm = confirmLabel ?? t.chrome.confirm;
   const cancel = cancelLabel ?? t.chrome.cancel;
   return (
@@ -71,7 +74,8 @@ export function ConfirmDialog({
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (theme: Theme) =>
+  StyleSheet.create({
   backdrop: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.65)',
@@ -82,20 +86,20 @@ const styles = StyleSheet.create({
   card: {
     width: '100%',
     maxWidth: 360,
-    backgroundColor: colors.felt,
+    backgroundColor: theme.felt,
     borderRadius: radii.xl,
     borderWidth: 1,
-    borderColor: colors.hairline,
+    borderColor: theme.hairline,
     padding: spacing.xl,
   },
   title: {
-    color: colors.text,
+    color: theme.text,
     fontSize: 18,
     fontWeight: '800',
     letterSpacing: 0.2,
   },
   message: {
-    color: colors.textDim,
+    color: theme.textDim,
     fontSize: 14,
     marginTop: spacing.sm,
     lineHeight: 20,
@@ -112,25 +116,25 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   cancel: {
-    backgroundColor: colors.bgDeep,
+    backgroundColor: theme.bgDeep,
     borderWidth: 1,
-    borderColor: colors.hairline,
+    borderColor: theme.hairline,
   },
   cancelText: {
-    color: colors.textDim,
+    color: theme.textDim,
     fontWeight: '700',
     fontSize: 14,
   },
   primary: {
-    backgroundColor: colors.gold,
+    backgroundColor: theme.gold,
   },
   primaryText: {
-    color: colors.tileInk,
+    color: theme.tileInk,
     fontWeight: '800',
     fontSize: 14,
   },
   destructive: {
-    backgroundColor: colors.danger,
+    backgroundColor: theme.danger,
   },
   destructiveText: {
     color: '#fff',
