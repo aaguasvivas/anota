@@ -2,11 +2,17 @@
   "expo": {
     "name": "Anota",
     "slug": "anota",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
     "newArchEnabled": true,
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/2498385a-d1cf-4513-a0c1-3cdc8f1d3410"
+    },
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
@@ -33,7 +39,8 @@
     },
     "plugins": [
       "expo-localization",
-      "expo-font"
+      "expo-font",
+      "react-native-iap"
     ],
     "extra": {
       "eas": {
