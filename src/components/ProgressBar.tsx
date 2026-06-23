@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { Animated, StyleSheet, View } from 'react-native';
-import { colors } from '../constants/colors';
+import { useThemedStyles } from '../theme/makeStyles';
+import { Theme } from '../theme/themes';
 
 type Props = {
   progress: number; // 0..1
@@ -10,6 +11,7 @@ type Props = {
 };
 
 export function ProgressBar({ progress, color, glowColor, height = 8 }: Props) {
+  const styles = useThemedStyles(makeStyles);
   const anim = useRef(new Animated.Value(progress)).current;
 
   useEffect(() => {
@@ -46,13 +48,14 @@ export function ProgressBar({ progress, color, glowColor, height = 8 }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  track: {
-    width: '100%',
-    backgroundColor: colors.hairline,
-    overflow: 'hidden',
-  },
-  fill: {
-    height: '100%',
-  },
-});
+const makeStyles = (theme: Theme) =>
+  StyleSheet.create({
+    track: {
+      width: '100%',
+      backgroundColor: theme.hairline,
+      overflow: 'hidden',
+    },
+    fill: {
+      height: '100%',
+    },
+  });
