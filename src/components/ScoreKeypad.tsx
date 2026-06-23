@@ -1,9 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect, useState } from 'react';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
-import { colors } from '../constants/colors';
 import { radii, spacing } from '../constants/layout';
 import { teamDisplayName, useT } from '../i18n';
+import { useTheme } from '../theme/ThemeProvider';
+import { useThemedStyles } from '../theme/makeStyles';
+import { Theme } from '../theme/themes';
 import type { Team } from '../types';
 import { tapLight } from '../utils/haptics';
 
@@ -18,8 +20,10 @@ const DIGITS = ['1', '2', '3', '4', '5', '6', '7', '8', '9'] as const;
 
 export function ScoreKeypad({ visible, team, onCancel, onSubmit }: Props) {
   const { t } = useT();
+  const theme = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const [entry, setEntry] = useState('');
-  const color = team?.color ?? colors.gold;
+  const color = team ? theme.teams[team.id].color : theme.gold;
   const name = team ? teamDisplayName(team, t) : '';
   const canAdd = parseInt(entry, 10) > 0;
 
@@ -81,7 +85,7 @@ export function ScoreKeypad({ visible, team, onCancel, onSubmit }: Props) {
               style={({ pressed }) => [styles.key, pressed && styles.keyPressed]}
               android_ripple={{ color: 'rgba(255,255,255,0.12)' }}
             >
-              <Ionicons name="backspace-outline" size={26} color={colors.textDim} />
+              <Ionicons name="backspace-outline" size={26} color={theme.textDim} />
             </Pressable>
             <Pressable
               onPress={() => pressDigit('0')}
@@ -104,7 +108,7 @@ export function ScoreKeypad({ visible, team, onCancel, onSubmit }: Props) {
                 pressed && canAdd && styles.keyPressed,
               ]}
             >
-              <Text style={[styles.addText, { color: canAdd ? colors.tileInk : colors.textFaint }]}>
+              <Text style={[styles.addText, { color: canAdd ? theme.tileInk : theme.textFaint }]}>
                 {t.chrome.add}
               </Text>
             </Pressable>
@@ -125,14 +129,15 @@ export function ScoreKeypad({ visible, team, onCancel, onSubmit }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (theme: Theme) =>
+  StyleSheet.create({
   backdrop: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.6)',
     justifyContent: 'flex-end',
   },
   sheet: {
-    backgroundColor: colors.felt,
+    backgroundColor: theme.felt,
     borderTopLeftRadius: radii.xl,
     borderTopRightRadius: radii.xl,
     borderWidth: 1,
@@ -144,12 +149,12 @@ const styles = StyleSheet.create({
     width: 44,
     height: 5,
     borderRadius: 3,
-    backgroundColor: colors.divider,
+    backgroundColor: theme.divider,
     alignSelf: 'center',
     marginBottom: spacing.md,
   },
   title: {
-    color: colors.textDim,
+    color: theme.textDim,
     fontSize: 12,
     letterSpacing: 1.2,
     textTransform: 'uppercase',
@@ -188,14 +193,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: 'rgba(255,255,255,0.04)',
     borderWidth: 1,
-    borderColor: colors.hairline,
+    borderColor: theme.hairline,
   },
   keyPressed: {
     transform: [{ scale: 0.96 }],
     opacity: 0.85,
   },
   keyText: {
-    color: colors.text,
+    color: theme.text,
     fontSize: 26,
     fontWeight: '700',
     fontVariant: ['tabular-nums'],
@@ -211,7 +216,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xs,
   },
   cancelText: {
-    color: colors.textDim,
+    color: theme.textDim,
     fontSize: 14,
     fontWeight: '700',
     letterSpacing: 0.3,
