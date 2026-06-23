@@ -11,9 +11,11 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { colors, teamPalette } from '../constants/colors';
 import { radii, spacing, TARGET_PRESETS } from '../constants/layout';
 import { useT } from '../i18n';
+import { useTheme } from '../theme/ThemeProvider';
+import { useThemedStyles } from '../theme/makeStyles';
+import { Theme } from '../theme/themes';
 import type { MatchState, TeamId } from '../types';
 import { isHapticsMuted, setHapticsMuted, subscribePrefs } from '../utils/preferences';
 
@@ -35,6 +37,8 @@ export function SettingsModal({
   onResetMatch,
 }: Props) {
   const { t, lang, setLang } = useT();
+  const theme = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const [nameA, setNameA] = useState(state.teams.A.name);
   const [nameB, setNameB] = useState(state.teams.B.name);
   const [customTarget, setCustomTarget] = useState(String(state.targetScore));
@@ -135,28 +139,28 @@ export function SettingsModal({
               {t.settings.namesSection}
             </Text>
             <View style={styles.teamRow}>
-              <View style={[styles.swatch, { backgroundColor: teamPalette.A.color }]} />
+              <View style={[styles.swatch, { backgroundColor: theme.teams.A.color }]} />
               <TextInput
                 value={nameA}
                 onChangeText={setNameA}
                 onBlur={commitNames}
                 maxLength={24}
                 placeholder={t.team.defaultA}
-                placeholderTextColor={colors.textFaint}
+                placeholderTextColor={theme.textFaint}
                 style={styles.input}
                 returnKeyType="done"
                 onSubmitEditing={commitNames}
               />
             </View>
             <View style={styles.teamRow}>
-              <View style={[styles.swatch, { backgroundColor: teamPalette.B.color }]} />
+              <View style={[styles.swatch, { backgroundColor: theme.teams.B.color }]} />
               <TextInput
                 value={nameB}
                 onChangeText={setNameB}
                 onBlur={commitNames}
                 maxLength={24}
                 placeholder={t.team.defaultB}
-                placeholderTextColor={colors.textFaint}
+                placeholderTextColor={theme.textFaint}
                 style={styles.input}
                 returnKeyType="done"
                 onSubmitEditing={commitNames}
@@ -208,7 +212,7 @@ export function SettingsModal({
                 keyboardType="number-pad"
                 maxLength={4}
                 placeholder="200"
-                placeholderTextColor={colors.textFaint}
+                placeholderTextColor={theme.textFaint}
                 style={[styles.input, { textAlign: 'right' }]}
                 returnKeyType="done"
               />
@@ -228,8 +232,8 @@ export function SettingsModal({
                   setHapticsOn(v);
                   setHapticsMuted(!v);
                 }}
-                trackColor={{ false: colors.bgDeep, true: colors.gold }}
-                thumbColor={hapticsOn ? colors.text : colors.textDim}
+                trackColor={{ false: theme.bgDeep, true: theme.gold }}
+                thumbColor={hapticsOn ? theme.text : theme.textDim}
                 accessibilityLabel={t.settings.hapticsLabel}
               />
             </View>
@@ -268,27 +272,28 @@ export function SettingsModal({
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (theme: Theme) =>
+  StyleSheet.create({
   backdrop: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.55)',
     justifyContent: 'flex-end',
   },
   sheet: {
-    backgroundColor: colors.felt,
+    backgroundColor: theme.felt,
     borderTopLeftRadius: radii.xl,
     borderTopRightRadius: radii.xl,
     borderTopWidth: 1,
     borderLeftWidth: 1,
     borderRightWidth: 1,
-    borderColor: colors.hairline,
+    borderColor: theme.hairline,
     maxHeight: '88%',
   },
   handle: {
     width: 44,
     height: 5,
     borderRadius: 3,
-    backgroundColor: colors.divider,
+    backgroundColor: theme.divider,
     alignSelf: 'center',
     marginTop: 10,
     marginBottom: 4,
@@ -298,14 +303,14 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.xxl + 16,
   },
   title: {
-    color: colors.text,
+    color: theme.text,
     fontSize: 22,
     fontWeight: '800',
     marginBottom: spacing.xl,
     letterSpacing: 0.2,
   },
   sectionLabel: {
-    color: colors.textDim,
+    color: theme.textDim,
     fontSize: 11,
     letterSpacing: 1.4,
     textTransform: 'uppercase',
@@ -321,30 +326,30 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: radii.md,
     alignItems: 'center',
-    backgroundColor: colors.bgDeep,
+    backgroundColor: theme.bgDeep,
     borderWidth: 1,
-    borderColor: colors.hairline,
+    borderColor: theme.hairline,
   },
   langChipActive: {
-    backgroundColor: colors.gold,
-    borderColor: colors.gold,
+    backgroundColor: theme.gold,
+    borderColor: theme.gold,
   },
   langChipText: {
-    color: colors.textDim,
+    color: theme.textDim,
     fontSize: 14,
     fontWeight: '800',
     letterSpacing: 0.4,
   },
   langChipTextActive: {
-    color: colors.tileInk,
+    color: theme.tileInk,
   },
   teamRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.bgDeep,
+    backgroundColor: theme.bgDeep,
     borderRadius: radii.md,
     borderWidth: 1,
-    borderColor: colors.hairline,
+    borderColor: theme.hairline,
     paddingHorizontal: spacing.md,
     marginBottom: spacing.sm,
   },
@@ -356,7 +361,7 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    color: colors.text,
+    color: theme.text,
     fontSize: 17,
     fontWeight: '600',
     paddingVertical: 14,
@@ -370,25 +375,25 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderRadius: radii.md,
     alignItems: 'center',
-    backgroundColor: colors.bgDeep,
+    backgroundColor: theme.bgDeep,
     borderWidth: 1,
-    borderColor: colors.hairline,
+    borderColor: theme.hairline,
   },
   targetChipActive: {
-    backgroundColor: colors.gold,
-    borderColor: colors.gold,
+    backgroundColor: theme.gold,
+    borderColor: theme.gold,
   },
   targetChipText: {
-    color: colors.textDim,
+    color: theme.textDim,
     fontSize: 16,
     fontWeight: '800',
     fontVariant: ['tabular-nums'],
   },
   targetChipTextActive: {
-    color: colors.tileInk,
+    color: theme.tileInk,
   },
   customLabel: {
-    color: colors.textDim,
+    color: theme.textDim,
     fontSize: 13,
     fontWeight: '700',
     letterSpacing: 0.4,
@@ -398,10 +403,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: colors.bgDeep,
+    backgroundColor: theme.bgDeep,
     borderRadius: radii.md,
     borderWidth: 1,
-    borderColor: colors.hairline,
+    borderColor: theme.hairline,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.md,
   },
@@ -410,13 +415,13 @@ const styles = StyleSheet.create({
     paddingRight: spacing.md,
   },
   toggleLabel: {
-    color: colors.text,
+    color: theme.text,
     fontSize: 15,
     fontWeight: '700',
     letterSpacing: 0.2,
   },
   toggleHint: {
-    color: colors.textFaint,
+    color: theme.textFaint,
     fontSize: 12,
     marginTop: 2,
     letterSpacing: 0.2,
@@ -431,20 +436,20 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(229, 72, 77, 0.08)',
   },
   resetText: {
-    color: colors.danger,
+    color: theme.danger,
     fontWeight: '700',
     fontSize: 14,
     letterSpacing: 0.4,
   },
   doneBtn: {
     marginTop: spacing.lg,
-    backgroundColor: colors.gold,
+    backgroundColor: theme.gold,
     paddingVertical: 16,
     borderRadius: radii.md,
     alignItems: 'center',
   },
   doneText: {
-    color: colors.tileInk,
+    color: theme.tileInk,
     fontWeight: '800',
     fontSize: 16,
     letterSpacing: 0.4,
