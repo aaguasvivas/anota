@@ -1,9 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
-import { colors } from '../constants/colors';
 import { radii } from '../constants/layout';
 import { useT } from '../i18n';
+import { useTheme } from '../theme/ThemeProvider';
+import { useThemedStyles } from '../theme/makeStyles';
+import { Theme } from '../theme/themes';
 
 type Props = {
   value: number;
@@ -16,6 +18,8 @@ type Props = {
 // the edit.
 export function TargetPill({ value, onChange, onPressLong }: Props) {
   const { t } = useT();
+  const theme = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(String(value));
   const ref = useRef<TextInput | null>(null);
@@ -73,50 +77,51 @@ export function TargetPill({ value, onChange, onPressLong }: Props) {
     >
       <Text style={styles.label}>{t.chrome.target.toUpperCase()}</Text>
       <Text style={styles.value}>{value}</Text>
-      <Ionicons name="pencil" size={11} color={colors.gold} style={styles.hint} />
+      <Ionicons name="pencil" size={11} color={theme.gold} style={styles.hint} />
     </Pressable>
   );
 }
 
-const styles = StyleSheet.create({
-  pill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(230, 180, 73, 0.1)',
-    borderColor: 'rgba(230, 180, 73, 0.4)',
-    borderWidth: 1,
-    borderRadius: radii.pill,
-    paddingVertical: 5,
-    paddingHorizontal: 12,
-    gap: 7,
-  },
-  pillEditing: {
-    backgroundColor: 'rgba(230, 180, 73, 0.18)',
-    borderColor: colors.gold,
-  },
-  label: {
-    color: colors.gold,
-    fontSize: 10,
-    fontWeight: '800',
-    letterSpacing: 1.2,
-    textTransform: 'uppercase',
-  },
-  value: {
-    color: colors.text,
-    fontSize: 15,
-    fontWeight: '800',
-    fontVariant: ['tabular-nums'],
-  },
-  hint: {
-    opacity: 0.7,
-  },
-  input: {
-    color: colors.text,
-    fontSize: 15,
-    fontWeight: '800',
-    fontVariant: ['tabular-nums'],
-    minWidth: 38,
-    padding: 0,
-    textAlign: 'left',
-  },
-});
+const makeStyles = (theme: Theme) =>
+  StyleSheet.create({
+    pill: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: `${theme.gold}1A`,
+      borderColor: `${theme.gold}66`,
+      borderWidth: 1,
+      borderRadius: radii.pill,
+      paddingVertical: 5,
+      paddingHorizontal: 12,
+      gap: 7,
+    },
+    pillEditing: {
+      backgroundColor: `${theme.gold}2E`,
+      borderColor: theme.gold,
+    },
+    label: {
+      color: theme.gold,
+      fontSize: 10,
+      fontWeight: '800',
+      letterSpacing: 1.2,
+      textTransform: 'uppercase',
+    },
+    value: {
+      color: theme.text,
+      fontSize: 15,
+      fontWeight: '800',
+      fontVariant: ['tabular-nums'],
+    },
+    hint: {
+      opacity: 0.7,
+    },
+    input: {
+      color: theme.text,
+      fontSize: 15,
+      fontWeight: '800',
+      fontVariant: ['tabular-nums'],
+      minWidth: 38,
+      padding: 0,
+      textAlign: 'left',
+    },
+  });
