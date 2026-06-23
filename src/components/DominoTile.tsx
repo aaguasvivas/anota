@@ -1,6 +1,7 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
-import { colors } from '../constants/colors';
+import { useThemedStyles } from '../theme/makeStyles';
+import { Theme } from '../theme/themes';
 
 type Props = {
   top: number; // 0-6
@@ -46,6 +47,7 @@ const PIP_LAYOUTS: Record<number, [number, number][]> = {
 };
 
 function Half({ value, pipColor, size }: { value: number; pipColor: string; size: number }) {
+  const styles = useThemedStyles(makeStyles);
   const face = PIP_LAYOUTS[Math.max(0, Math.min(6, value))] ?? [];
   const pipSize = size * 0.16;
   return (
@@ -80,6 +82,7 @@ function Half({ value, pipColor, size }: { value: number; pipColor: string; size
 }
 
 export function DominoTile({ top, bottom, pipColor, size = 56 }: Props) {
+  const styles = useThemedStyles(makeStyles);
   return (
     <View
       style={[
@@ -94,32 +97,33 @@ export function DominoTile({ top, bottom, pipColor, size = 56 }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  tile: {
-    backgroundColor: colors.tile,
-    borderColor: colors.tileShadow,
-    borderWidth: 1,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOpacity: 0.4,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 4,
-  },
-  half: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-  },
-  divider: {
-    height: 2,
-    backgroundColor: colors.tileShadow,
-    opacity: 0.7,
-  },
-  pipCell: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
+const makeStyles = (theme: Theme) =>
+  StyleSheet.create({
+    tile: {
+      backgroundColor: theme.tile,
+      borderColor: theme.tileShadow,
+      borderWidth: 1,
+      overflow: 'hidden',
+      shadowColor: '#000',
+      shadowOpacity: 0.4,
+      shadowRadius: 8,
+      shadowOffset: { width: 0, height: 4 },
+      elevation: 4,
+    },
+    half: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+    },
+    divider: {
+      height: 2,
+      backgroundColor: theme.tileShadow,
+      opacity: 0.7,
+    },
+    pipCell: {
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+  });
 
 // Pick a stable-looking face based on score so the tile feels alive.
 export function tileFacesForScore(score: number, targetScore: number): [number, number] {
