@@ -44,6 +44,9 @@ export type Dictionary = {
     hapticsLabel: string;
     hapticsHint: string;
     resetMatch: string;
+    themeSection: string;
+    themeNames: { classic: string; midnight: string; mahogany: string; casino: string; bone: string; carbon: string };
+    themeLockedTag: string;
   };
   history: {
     sectionTitle: string;

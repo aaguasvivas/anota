@@ -46,6 +46,9 @@ export const en: Dictionary = {
     hapticsLabel: 'Vibrate on tap',
     hapticsHint: 'Turn off if it’s bothering the table.',
     resetMatch: 'Reset match',
+    themeSection: 'Theme',
+    themeNames: { classic: 'Classic Felt', midnight: 'Midnight', mahogany: 'Mahogany', casino: 'Casino Red', bone: 'Bone', carbon: 'Carbon' },
+    themeLockedTag: 'Pro',
   },
   winner: {
     phrases: [

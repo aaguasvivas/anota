@@ -48,6 +48,9 @@ export const es: Dictionary = {
     hapticsLabel: 'Vibración al tocar',
     hapticsHint: 'Apágala si molesta a la mesa.',
     resetMatch: 'Reiniciar la partida',
+    themeSection: 'Tema',
+    themeNames: { classic: 'Fieltro clásico', midnight: 'Medianoche', mahogany: 'Caoba', casino: 'Rojo casino', bone: 'Hueso', carbon: 'Carbón' },
+    themeLockedTag: 'Pro',
   },
   winner: {
     phrases: [
