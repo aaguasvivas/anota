@@ -1,7 +1,7 @@
 import React from 'react';
 import { Pressable, StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-native';
-import { colors } from '../constants/colors';
 import { radii } from '../constants/layout';
+import { useTheme } from '../theme/ThemeProvider';
 
 type Props = {
   label: string;
@@ -21,8 +21,9 @@ export function ScoreButton({
   subdued,
   accessibilityLabel,
 }: Props) {
+  const theme = useTheme();
   const bg = subdued ? `${color}26` : color;
-  const labelColor = subdued ? color : colors.tile;
+  const labelColor = subdued ? color : theme.tile;
   return (
     <Pressable
       onPress={onPress}
