@@ -7,6 +7,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
 import { ConfirmDialog } from './src/components/ConfirmDialog';
+import { ProSheet } from './src/components/ProSheet';
 import { ScoreKeypad } from './src/components/ScoreKeypad';
 import { RoundStrip } from './src/components/RoundStrip';
 import { ScorePad } from './src/components/ScorePad';
@@ -18,6 +19,7 @@ import { radii, spacing } from './src/constants/layout';
 import { useLayoutMetrics } from './src/hooks/useLayoutMetrics';
 import { useMatch } from './src/hooks/useMatch';
 import { LanguageProvider, teamDisplayName, useT } from './src/i18n';
+import { endIap, initIap, restorePro } from './src/iap/purchases';
 import { useThemedStyles } from './src/theme/makeStyles';
 import { ThemeProvider, useTheme, useThemeControls } from './src/theme/ThemeProvider';
 import { Theme } from './src/theme/themes';
@@ -47,7 +49,7 @@ function Scorekeeper() {
   const { t } = useT();
   const theme = useTheme();
   const styles = useThemedStyles(makeStyles);
-  const { hydrated: themeHydrated } = useThemeControls();
+  const { hydrated: themeHydrated, setProUnlocked } = useThemeControls();
   const match = useMatch();
   const showWinner = !!match.state.winnerId && !match.state.winnerAcknowledged;
   const m = useLayoutMetrics();
@@ -55,10 +57,28 @@ function Scorekeeper() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
   const [roundToRemove, setRoundToRemove] = useState<Round | null>(null);
+  const [proOpen, setProOpen] = useState(false);
 
   useEffect(() => {
     hydratePrefs();
   }, []);
+
+  // Start the store connection and silently re-light a prior purchase on
+  // launch. Only ever set Pro to true here: a flaky network must never revoke
+  // a real purchase.
+  useEffect(() => {
+    let active = true;
+    initIap().then(async () => {
+      const owned = await restorePro();
+      if (active && owned) {
+        setProUnlocked(true);
+      }
+    });
+    return () => {
+      active = false;
+      endIap();
+    };
+  }, [setProUnlocked]);
 
   // Celebrate when an (unacknowledged) winner appears.
   useEffect(() => {
@@ -269,8 +289,10 @@ function Scorekeeper() {
           setSettingsOpen(false);
           setConfirmReset(true);
         }}
-        onRequestPro={() => {}}
+        onRequestPro={() => setProOpen(true)}
       />
+
+      <ProSheet visible={proOpen} onClose={() => setProOpen(false)} />
 
       <ConfirmDialog
         visible={confirmReset}
