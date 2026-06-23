@@ -176,7 +176,6 @@ function Scorekeeper() {
               team={match.state.teams.A}
               targetScore={match.state.targetScore}
               isLeader={match.leader === 'A'}
-              glowColor={theme.teams.A.glow}
               onRename={openRename}
             />
             <View style={styles.padWrap}>
@@ -208,7 +207,6 @@ function Scorekeeper() {
               team={match.state.teams.B}
               targetScore={match.state.targetScore}
               isLeader={match.leader === 'B'}
-              glowColor={theme.teams.B.glow}
               onRename={openRename}
             />
             <View style={styles.padWrap}>

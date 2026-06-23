@@ -437,9 +437,9 @@ const makeStyles = (theme: Theme) =>
     paddingVertical: 14,
     borderRadius: radii.md,
     borderWidth: 1,
-    borderColor: 'rgba(229, 72, 77, 0.5)',
+    borderColor: `${theme.danger}80`,
     alignItems: 'center',
-    backgroundColor: 'rgba(229, 72, 77, 0.08)',
+    backgroundColor: `${theme.danger}14`,
   },
   resetText: {
     color: theme.danger,

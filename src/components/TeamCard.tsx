@@ -17,7 +17,6 @@ type Props = {
   team: Team;
   targetScore: number;
   isLeader: boolean;
-  glowColor: string;
   onRename: () => void;
 };
 

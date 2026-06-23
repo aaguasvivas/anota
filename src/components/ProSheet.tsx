@@ -21,13 +21,17 @@ export function ProSheet({ visible, onClose }: Props) {
   const [price, setPrice] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [notFound, setNotFound] = useState(false);
+  const [success, setSuccess] = useState<'thanks' | 'restored' | null>(null);
 
   // Fetch the real localized price each time the sheet opens. Until it
   // resolves (or if the store is unreachable) fall back to the list price.
+  // Also reset transient state so a reopened sheet never shows a stale
+  // success message or "not found" hint from a previous session.
   useEffect(() => {
     if (!visible) return;
     let active = true;
     setNotFound(false);
+    setSuccess(null);
     getProPriceLabel().then((label) => {
       if (active && label) setPrice(label);
     });
@@ -47,7 +51,7 @@ export function ProSheet({ visible, onClose }: Props) {
       const owned = await buyPro();
       if (owned) {
         setProUnlocked(true);
-        onClose();
+        setSuccess('thanks');
       }
     } catch {
       // User cancelled or the purchase failed; stay silent and let them retry.
@@ -64,7 +68,7 @@ export function ProSheet({ visible, onClose }: Props) {
       const owned = await restorePro();
       if (owned) {
         setProUnlocked(true);
-        onClose();
+        setSuccess('restored');
       } else {
         setNotFound(true);
       }
@@ -83,40 +87,62 @@ export function ProSheet({ visible, onClose }: Props) {
           <Text style={styles.title}>{t.pro.title}</Text>
           <Text style={styles.blurb}>{t.pro.blurb}</Text>
 
-          <Pressable
-            onPress={handleBuy}
-            disabled={pending}
-            accessibilityRole="button"
-            accessibilityLabel={buyLabel}
-            style={({ pressed }) => [
-              styles.buyBtn,
-              pressed && { opacity: 0.85 },
-              pending && { opacity: 0.7 },
-            ]}
-          >
-            <Text style={styles.buyText}>{pending ? t.pro.buying : buyLabel}</Text>
-          </Pressable>
+          {success ? (
+            <>
+              <Text style={styles.success}>
+                {success === 'thanks' ? t.pro.thanks : t.pro.restored}
+              </Text>
 
-          {notFound ? <Text style={styles.notFound}>{t.pro.notFound}</Text> : null}
+              <Pressable
+                onPress={onClose}
+                accessibilityRole="button"
+                accessibilityLabel={t.pro.close}
+                style={({ pressed }) => [
+                  styles.buyBtn,
+                  pressed && { opacity: 0.85 },
+                ]}
+              >
+                <Text style={styles.buyText}>{t.pro.close}</Text>
+              </Pressable>
+            </>
+          ) : (
+            <>
+              <Pressable
+                onPress={handleBuy}
+                disabled={pending}
+                accessibilityRole="button"
+                accessibilityLabel={buyLabel}
+                style={({ pressed }) => [
+                  styles.buyBtn,
+                  pressed && { opacity: 0.85 },
+                  pending && { opacity: 0.7 },
+                ]}
+              >
+                <Text style={styles.buyText}>{pending ? t.pro.buying : buyLabel}</Text>
+              </Pressable>
 
-          <Pressable
-            onPress={handleRestore}
-            disabled={pending}
-            accessibilityRole="button"
-            accessibilityLabel={t.pro.restore}
-            style={({ pressed }) => [styles.linkBtn, pressed && { opacity: 0.6 }]}
-          >
-            <Text style={styles.linkText}>{t.pro.restore}</Text>
-          </Pressable>
+              {notFound ? <Text style={styles.notFound}>{t.pro.notFound}</Text> : null}
 
-          <Pressable
-            onPress={onClose}
-            accessibilityRole="button"
-            accessibilityLabel={t.pro.close}
-            style={({ pressed }) => [styles.linkBtn, pressed && { opacity: 0.6 }]}
-          >
-            <Text style={styles.closeText}>{t.pro.close}</Text>
-          </Pressable>
+              <Pressable
+                onPress={handleRestore}
+                disabled={pending}
+                accessibilityRole="button"
+                accessibilityLabel={t.pro.restore}
+                style={({ pressed }) => [styles.linkBtn, pressed && { opacity: 0.6 }]}
+              >
+                <Text style={styles.linkText}>{t.pro.restore}</Text>
+              </Pressable>
+
+              <Pressable
+                onPress={onClose}
+                accessibilityRole="button"
+                accessibilityLabel={t.pro.close}
+                style={({ pressed }) => [styles.linkBtn, pressed && { opacity: 0.6 }]}
+              >
+                <Text style={styles.closeText}>{t.pro.close}</Text>
+              </Pressable>
+            </>
+          )}
         </View>
       </View>
     </Modal>
@@ -171,6 +197,14 @@ const makeStyles = (theme: Theme) =>
       fontSize: 13,
       textAlign: 'center',
       marginTop: spacing.md,
+    },
+    success: {
+      color: theme.gold,
+      fontSize: 15,
+      fontWeight: '700',
+      textAlign: 'center',
+      lineHeight: 22,
+      marginTop: spacing.xl,
     },
     linkBtn: {
       marginTop: spacing.md,
