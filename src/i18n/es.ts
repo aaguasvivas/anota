@@ -86,4 +86,15 @@ export const es: Dictionary = {
     removeRoundConfirm: (n, name) => `¿Borrar +${n} de ${name}?`,
     removeHint: 'Mantén presionado para borrar',
   },
+  pro: {
+    title: 'Anota Pro',
+    blurb: 'Desbloquea todos los temas y apoya la app. Pago único, sin suscripción.',
+    buy: 'Desbloquear por {price}',
+    buying: 'Desbloqueando...',
+    restore: 'Restaurar compra',
+    restored: 'Compra restaurada. Disfruta tus temas.',
+    notFound: 'No se encontró ninguna compra.',
+    thanks: 'Gracias por apoyar Anota.',
+    close: 'Cerrar',
+  },
 };

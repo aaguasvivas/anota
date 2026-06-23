@@ -83,4 +83,15 @@ export const en: Dictionary = {
     removeRoundConfirm: (n, name) => `Remove +${n} from ${name}?`,
     removeHint: 'Hold to remove',
   },
+  pro: {
+    title: 'Anota Pro',
+    blurb: 'Unlock every theme and support the app. One time, no subscription.',
+    buy: 'Unlock for {price}',
+    buying: 'Unlocking...',
+    restore: 'Restore purchase',
+    restored: 'Purchase restored. Enjoy your themes.',
+    notFound: 'No purchase found to restore.',
+    thanks: 'Thank you for supporting Anota.',
+    close: 'Close',
+  },
 };

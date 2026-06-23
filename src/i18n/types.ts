@@ -67,6 +67,17 @@ export type Dictionary = {
     message: string;
     confirm: string;
   };
+  pro: {
+    title: string;
+    blurb: string;
+    buy: string;
+    buying: string;
+    restore: string;
+    restored: string;
+    notFound: string;
+    thanks: string;
+    close: string;
+  };
 };
 
 export type LanguageCode = 'es' | 'en';
