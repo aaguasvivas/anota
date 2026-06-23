@@ -2,9 +2,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useMemo, useRef } from 'react';
 import { Animated, Modal, Pressable, Share, StyleSheet, Text, View } from 'react-native';
-import { colors } from '../constants/colors';
 import { radii, spacing } from '../constants/layout';
 import { teamDisplayName, useT } from '../i18n';
+import { useTheme } from '../theme/ThemeProvider';
+import { useThemedStyles } from '../theme/makeStyles';
+import { Theme } from '../theme/themes';
 import type { MatchState, Team } from '../types';
 import { DominoTile } from './DominoTile';
 
@@ -17,6 +19,8 @@ type Props = {
 
 export function WinnerModal({ visible, state, onNewMatch, onKeepPlaying }: Props) {
   const { t, pick } = useT();
+  const theme = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const scale = useRef(new Animated.Value(0.6)).current;
   const opacity = useRef(new Animated.Value(0)).current;
 
@@ -46,6 +50,7 @@ export function WinnerModal({ visible, state, onNewMatch, onKeepPlaying }: Props
   const winnerId = state.winnerId;
   if (!winnerId) return null;
   const winner: Team = state.teams[winnerId];
+  const winnerColor = theme.teams[winner.id].color;
   const loser: Team = winnerId === 'A' ? state.teams.B : state.teams.A;
   const winnerName = teamDisplayName(winner, t);
   const loserName = teamDisplayName(loser, t);
@@ -71,14 +76,14 @@ export function WinnerModal({ visible, state, onNewMatch, onKeepPlaying }: Props
         <Animated.View
           style={[
             styles.card,
-            { opacity, transform: [{ scale }], borderColor: winner.color },
+            { opacity, transform: [{ scale }], borderColor: winnerColor },
           ]}
         >
           <LinearGradient
             colors={[
-              `${winner.color}33`,
+              `${winnerColor}33`,
               'rgba(0,0,0,0)',
-              `${winner.color}22`,
+              `${winnerColor}22`,
             ]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
@@ -86,21 +91,21 @@ export function WinnerModal({ visible, state, onNewMatch, onKeepPlaying }: Props
           />
 
           <View style={styles.tileRow}>
-            <DominoTile top={6} bottom={6} pipColor={winner.color} size={42} />
+            <DominoTile top={6} bottom={6} pipColor={winnerColor} size={42} />
           </View>
 
-          <Text style={[styles.phrase, { color: winner.color }]}>{phrase}</Text>
+          <Text style={[styles.phrase, { color: winnerColor }]}>{phrase}</Text>
           <Text style={styles.subtitle}>{subtitle}</Text>
 
           <View style={styles.scoreBlock}>
             <Text style={styles.winnerName} numberOfLines={1}>
               {winnerName}
             </Text>
-            <Text style={[styles.winnerScore, { color: winner.color }]}>{winner.score}</Text>
+            <Text style={[styles.winnerScore, { color: winnerColor }]}>{winner.score}</Text>
             <View style={styles.versus}>
-              <View style={[styles.divider, { backgroundColor: `${winner.color}55` }]} />
+              <View style={[styles.divider, { backgroundColor: `${winnerColor}55` }]} />
               <Text style={styles.vsText}>{t.chrome.vs}</Text>
-              <View style={[styles.divider, { backgroundColor: `${winner.color}55` }]} />
+              <View style={[styles.divider, { backgroundColor: `${winnerColor}55` }]} />
             </View>
             <Text style={styles.loserLine}>
               {loserName}  ·  {loser.score}
@@ -125,7 +130,7 @@ export function WinnerModal({ visible, state, onNewMatch, onKeepPlaying }: Props
               accessibilityLabel={t.winner.newMatch}
               style={({ pressed }) => [
                 styles.primaryBtn,
-                { backgroundColor: winner.color },
+                { backgroundColor: winnerColor },
                 pressed && { opacity: 0.85 },
               ]}
             >
@@ -141,7 +146,7 @@ export function WinnerModal({ visible, state, onNewMatch, onKeepPlaying }: Props
             style={styles.shareBtn}
           >
             <View style={styles.shareInner}>
-              <Ionicons name="share-outline" size={15} color={colors.gold} />
+              <Ionicons name="share-outline" size={15} color={theme.gold} />
               <Text style={styles.shareText}>{t.winner.share}</Text>
             </View>
           </Pressable>
@@ -151,7 +156,8 @@ export function WinnerModal({ visible, state, onNewMatch, onKeepPlaying }: Props
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (theme: Theme) =>
+  StyleSheet.create({
   backdrop: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.75)',
@@ -162,7 +168,7 @@ const styles = StyleSheet.create({
   card: {
     width: '100%',
     maxWidth: 380,
-    backgroundColor: colors.felt,
+    backgroundColor: theme.felt,
     borderRadius: radii.xl,
     borderWidth: 1.5,
     padding: spacing.xl,
@@ -183,7 +189,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   subtitle: {
-    color: colors.textDim,
+    color: theme.textDim,
     textAlign: 'center',
     marginTop: 4,
     fontSize: 14,
@@ -196,7 +202,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xl,
   },
   winnerName: {
-    color: colors.text,
+    color: theme.text,
     fontSize: 20,
     fontWeight: '700',
     letterSpacing: 0.3,
@@ -220,14 +226,14 @@ const styles = StyleSheet.create({
     height: 1,
   },
   vsText: {
-    color: colors.textDim,
+    color: theme.textDim,
     fontSize: 11,
     letterSpacing: 1.5,
     fontWeight: '700',
     textTransform: 'uppercase',
   },
   loserLine: {
-    color: colors.textDim,
+    color: theme.textDim,
     fontSize: 14,
     fontWeight: '600',
     letterSpacing: 0.4,
@@ -243,7 +249,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   primaryText: {
-    color: colors.tileInk,
+    color: theme.tileInk,
     fontSize: 15,
     fontWeight: '800',
     letterSpacing: 0.3,
@@ -253,12 +259,12 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     borderRadius: radii.md,
     borderWidth: 1,
-    borderColor: colors.hairline,
+    borderColor: theme.hairline,
     alignItems: 'center',
-    backgroundColor: colors.bgDeep,
+    backgroundColor: theme.bgDeep,
   },
   secondaryText: {
-    color: colors.textDim,
+    color: theme.textDim,
     fontSize: 14,
     fontWeight: '700',
     letterSpacing: 0.3,
@@ -269,7 +275,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xs,
   },
   shareText: {
-    color: colors.gold,
+    color: theme.gold,
     fontSize: 13,
     fontWeight: '700',
     letterSpacing: 0.6,
