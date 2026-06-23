@@ -5,6 +5,7 @@ import { teamDisplayName, useT } from '../i18n';
 import type { Team, TeamId } from '../types';
 import { ScoreButton } from './ScoreButton';
 import { useLayoutMetrics } from '../hooks/useLayoutMetrics';
+import { useTheme } from '../theme/ThemeProvider';
 
 type Props = {
   team: Team;
@@ -15,8 +16,10 @@ type Props = {
 
 export function ScorePad({ team, teamId, onAdd, onCustom }: Props) {
   const { t } = useT();
+  const theme = useTheme();
   const m = useLayoutMetrics();
   const displayName = teamDisplayName(team, t);
+  const color = theme.teams[teamId].color;
 
   return (
     <View style={styles.wrap}>
@@ -25,7 +28,7 @@ export function ScorePad({ team, teamId, onAdd, onCustom }: Props) {
           <ScoreButton
             key={pts}
             label={`+${pts}`}
-            color={team.color}
+            color={color}
             subdued
             onPress={() => onAdd(teamId, pts)}
             accessibilityLabel={t.team.plusForA11y(displayName, pts)}
@@ -35,7 +38,7 @@ export function ScorePad({ team, teamId, onAdd, onCustom }: Props) {
       </View>
       <ScoreButton
         label={`+ ${t.team.addPoints}`}
-        color={team.color}
+        color={color}
         onPress={() => onCustom(teamId)}
         accessibilityLabel={t.team.customForA11y(displayName)}
         style={[styles.hero, { minHeight: m.heroHeight }]}
