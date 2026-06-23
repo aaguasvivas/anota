@@ -12,6 +12,7 @@ import {
   View,
 } from 'react-native';
 import { radii, spacing, TARGET_PRESETS } from '../constants/layout';
+import { ThemePicker } from './ThemePicker';
 import { useT } from '../i18n';
 import { useTheme } from '../theme/ThemeProvider';
 import { useThemedStyles } from '../theme/makeStyles';
@@ -26,6 +27,7 @@ type Props = {
   onRename: (teamId: TeamId, name: string) => void;
   onTargetChange: (target: number) => void;
   onResetMatch: () => void;
+  onRequestPro: () => void;
 };
 
 export function SettingsModal({
@@ -35,6 +37,7 @@ export function SettingsModal({
   onRename,
   onTargetChange,
   onResetMatch,
+  onRequestPro,
 }: Props) {
   const { t, lang, setLang } = useT();
   const theme = useTheme();
@@ -237,6 +240,9 @@ export function SettingsModal({
                 accessibilityLabel={t.settings.hapticsLabel}
               />
             </View>
+
+            <Text style={[styles.sectionLabel, { marginTop: spacing.xl }]}>{t.settings.themeSection}</Text>
+            <ThemePicker onRequestPro={onRequestPro} />
 
             <Pressable
               onPress={onResetMatch}

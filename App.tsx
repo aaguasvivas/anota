@@ -269,6 +269,7 @@ function Scorekeeper() {
           setSettingsOpen(false);
           setConfirmReset(true);
         }}
+        onRequestPro={() => {}}
       />
 
       <ConfirmDialog
