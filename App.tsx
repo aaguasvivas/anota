@@ -19,6 +19,7 @@ import { radii, spacing } from './src/constants/layout';
 import { useLayoutMetrics } from './src/hooks/useLayoutMetrics';
 import { useMatch } from './src/hooks/useMatch';
 import { LanguageProvider, teamDisplayName, useT } from './src/i18n';
+import { ThemeProvider, useTheme, useThemeControls } from './src/theme/ThemeProvider';
 import type { Round, TeamId } from './src/types';
 import {
   notifySuccess,
@@ -31,9 +32,11 @@ import { hydratePrefs } from './src/utils/preferences';
 export default function App() {
   return (
     <SafeAreaProvider>
-      <LanguageProvider>
-        <Scorekeeper />
-      </LanguageProvider>
+      <ThemeProvider>
+        <LanguageProvider>
+          <Scorekeeper />
+        </LanguageProvider>
+      </ThemeProvider>
     </SafeAreaProvider>
   );
 }
@@ -41,6 +44,7 @@ export default function App() {
 function Scorekeeper() {
   useKeepAwake();
   const { t } = useT();
+  const { hydrated: themeHydrated } = useThemeControls();
   const match = useMatch();
   const showWinner = !!match.state.winnerId && !match.state.winnerAcknowledged;
   const m = useLayoutMetrics();
@@ -89,7 +93,7 @@ function Scorekeeper() {
       )
     : '';
 
-  if (!match.hydrated) {
+  if (!match.hydrated || !themeHydrated) {
     return (
       <View style={styles.root}>
         <LinearGradient
