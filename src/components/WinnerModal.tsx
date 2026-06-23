@@ -1,14 +1,17 @@
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import * as Sharing from 'expo-sharing';
 import React, { useEffect, useMemo, useRef } from 'react';
 import { Animated, Modal, Pressable, Share, StyleSheet, Text, View } from 'react-native';
+import { captureRef } from 'react-native-view-shot';
 import { radii, spacing } from '../constants/layout';
 import { teamDisplayName, useT } from '../i18n';
-import { useTheme } from '../theme/ThemeProvider';
+import { useTheme, useThemeControls } from '../theme/ThemeProvider';
 import { useThemedStyles } from '../theme/makeStyles';
-import { Theme } from '../theme/themes';
+import { getTheme, Theme } from '../theme/themes';
 import type { MatchState, Team } from '../types';
 import { DominoTile } from './DominoTile';
+import { ShareCard } from './ShareCard';
 
 type Props = {
   visible: boolean;
@@ -20,9 +23,13 @@ type Props = {
 export function WinnerModal({ visible, state, onNewMatch, onKeepPlaying }: Props) {
   const { t, pick } = useT();
   const theme = useTheme();
+  const { proUnlocked } = useThemeControls();
   const styles = useThemedStyles(makeStyles);
   const scale = useRef(new Animated.Value(0.6)).current;
   const opacity = useRef(new Animated.Value(0)).current;
+  const cardRef = useRef<View>(null);
+  // Free users always share the Classic Felt card; Pro shares the active theme.
+  const cardTheme = proUnlocked ? theme : getTheme('classic');
 
   const phrase = useMemo(() => pick(t.winner.phrases), [visible, t, pick]);
   const subtitle = useMemo(() => pick(t.winner.subtitles), [visible, t, pick]);
@@ -57,6 +64,12 @@ export function WinnerModal({ visible, state, onNewMatch, onKeepPlaying }: Props
 
   async function shareResult() {
     try {
+      const uri = await captureRef(cardRef, { format: 'png', quality: 1 });
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(uri);
+        return;
+      }
+      // fallback to text if the platform share sheet is unavailable
       await Share.share({
         message: t.winner.shareMessage(
           winnerName,
@@ -66,13 +79,25 @@ export function WinnerModal({ visible, state, onNewMatch, onKeepPlaying }: Props
         ),
       });
     } catch {
-      // user cancelled
+      // user cancelled or capture failed; no-op
     }
   }
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onKeepPlaying}>
       <View style={styles.backdrop}>
+        <View collapsable={false} style={{ position: 'absolute', left: -9999, top: 0 }}>
+          <View ref={cardRef} collapsable={false}>
+            <ShareCard
+              theme={cardTheme}
+              winnerName={winnerName}
+              loserName={loserName}
+              winnerScore={winner.score}
+              loserScore={loser.score}
+              winnerId={winner.id}
+            />
+          </View>
+        </View>
         <Animated.View
           style={[
             styles.card,
