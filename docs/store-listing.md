@@ -207,7 +207,7 @@ Gratis. Descarga Anota y olvídate del papel.
 ---
 
 ## Age rating
-**Apple 4+ / Google Play "Everyone".** No objectionable content: no violence, profanity, sexual or suggestive content, no gambling or simulated gambling (it tracks points for casual and family matches, not wagers), no user-generated content, no chat, no ads, no in-app purchases, no data collection, no web browsing. The only outbound action is an optional user-initiated share of the final score.
+**Apple 4+ / Google Play "Everyone".** No objectionable content: no violence, profanity, sexual or suggestive content, no gambling or simulated gambling (it tracks points for casual and family matches, not wagers), no user-generated content, no chat, no ads, no data collection, no web browsing. As of v1.1 there is one optional non-consumable in-app purchase (Anota Pro, cosmetic themes); it is purely cosmetic and does not affect the 4+ / Everyone rating. The only outbound action is an optional user-initiated share of the final score.
 
 ## Apple Guideline 4.2 (minimum functionality), App Review note
 > Anota is a focused local scorekeeper for in-person 2-team Dominican-style domino matches. It is not a game and not a thin web wrapper. Native functionality includes: two large always-visible team scoreboards on a single non-scrolling screen; quick-add preset chips (25/30/50) plus a custom in-app number keypad for arbitrary pip counts; a selectable or custom target (100/150/200/custom); per-round history with one-tap undo and long-press round removal; a celebratory winner state with native share; Keep-Awake during play; mutable haptics; a dark felt theme; and full Spanish and English localization with an authentic Dominican voice. Differentiators versus existing domino score apps: a true 2-team Dominican (2-vs-2) model with capicúa and passes as first-class presets; complete on-device privacy (100% local, no account, no network, no ads, collects no data); and genuine bilingual ES/EN. All data stays on the device and the app makes no server calls.
@@ -216,3 +216,18 @@ Gratis. Descarga Anota y olvídate del papel.
 - App Store device availability: iPhone only (app.json `supportsTablet:false`, portrait). Do not market iPad support.
 - Host `docs/privacy.html` at a public URL before filling the privacy-policy field.
 - Privacy answers: App Store nutrition label is "Data Not Collected"; Play Data Safety is "No data collected or shared".
+- The optional Anota Pro purchase does not change the privacy answers. Payments are handled by the App Store / Play Store, and the app itself still collects and transmits no data, so the nutrition label stays "Data Not Collected".
+
+---
+
+## Version 1.1 "What's New" (release notes)
+
+**English:**
+```
+Make Anota yours. New themes to dress up your table, a redesigned share card for your final score, and a one-time Anota Pro unlock to support the app. Still free, still private, still no ads.
+```
+
+**Español:**
+```
+Haz Anota tuya. Nuevos temas para vestir tu mesa, una tarjeta rediseñada para compartir el marcador final y un desbloqueo único de Anota Pro para apoyar la app. Sigue siendo gratis, privada y sin anuncios.
+```
