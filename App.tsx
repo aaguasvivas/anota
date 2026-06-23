@@ -14,12 +14,13 @@ import { SettingsModal } from './src/components/SettingsModal';
 import { TargetPill } from './src/components/TargetPill';
 import { TeamCard } from './src/components/TeamCard';
 import { WinnerModal } from './src/components/WinnerModal';
-import { colors, teamPalette } from './src/constants/colors';
 import { radii, spacing } from './src/constants/layout';
 import { useLayoutMetrics } from './src/hooks/useLayoutMetrics';
 import { useMatch } from './src/hooks/useMatch';
 import { LanguageProvider, teamDisplayName, useT } from './src/i18n';
+import { useThemedStyles } from './src/theme/makeStyles';
 import { ThemeProvider, useTheme, useThemeControls } from './src/theme/ThemeProvider';
+import { Theme } from './src/theme/themes';
 import type { Round, TeamId } from './src/types';
 import {
   notifySuccess,
@@ -44,6 +45,8 @@ export default function App() {
 function Scorekeeper() {
   useKeepAwake();
   const { t } = useT();
+  const theme = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const { hydrated: themeHydrated } = useThemeControls();
   const match = useMatch();
   const showWinner = !!match.state.winnerId && !match.state.winnerAcknowledged;
@@ -97,12 +100,12 @@ function Scorekeeper() {
     return (
       <View style={styles.root}>
         <LinearGradient
-          colors={[colors.bg, colors.felt, colors.bgDeep]}
+          colors={[theme.bg, theme.felt, theme.bgDeep]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={StyleSheet.absoluteFill}
         />
-        <StatusBar style="light" />
+        <StatusBar style={theme.isLight ? 'dark' : 'light'} />
       </View>
     );
   }
@@ -110,12 +113,12 @@ function Scorekeeper() {
   return (
     <View style={styles.root}>
       <LinearGradient
-        colors={[colors.bg, colors.felt, colors.bgDeep]}
+        colors={[theme.bg, theme.felt, theme.bgDeep]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={StyleSheet.absoluteFill}
       />
-      <StatusBar style="light" />
+      <StatusBar style={theme.isLight ? 'dark' : 'light'} />
       <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
         <View style={styles.header}>
           <View style={styles.brand}>
@@ -143,7 +146,7 @@ function Scorekeeper() {
             accessibilityRole="button"
             accessibilityLabel={t.chrome.settings}
           >
-            <Ionicons name="settings-outline" size={18} color={colors.textDim} />
+            <Ionicons name="settings-outline" size={18} color={theme.textDim} />
           </Pressable>
         </View>
 
@@ -153,7 +156,7 @@ function Scorekeeper() {
               team={match.state.teams.A}
               targetScore={match.state.targetScore}
               isLeader={match.leader === 'A'}
-              glowColor={teamPalette.A.glow}
+              glowColor={theme.teams.A.glow}
               onRename={openRename}
             />
             <View style={styles.padWrap}>
@@ -185,7 +188,7 @@ function Scorekeeper() {
               team={match.state.teams.B}
               targetScore={match.state.targetScore}
               isLeader={match.leader === 'B'}
-              glowColor={teamPalette.B.glow}
+              glowColor={theme.teams.B.glow}
               onRename={openRename}
             />
             <View style={styles.padWrap}>
@@ -220,7 +223,7 @@ function Scorekeeper() {
             ]}
           >
             <View style={styles.footerBtnInner}>
-              <Ionicons name="arrow-undo-outline" size={16} color={colors.textDim} />
+              <Ionicons name="arrow-undo-outline" size={16} color={theme.textDim} />
               <Text style={styles.footerBtnText}>{t.chrome.undo}</Text>
             </View>
           </Pressable>
@@ -237,7 +240,7 @@ function Scorekeeper() {
             ]}
           >
             <View style={styles.footerBtnInner}>
-              <Ionicons name="reload-outline" size={16} color={colors.textDim} />
+              <Ionicons name="reload-outline" size={16} color={theme.textDim} />
               <Text style={styles.footerBtnText}>{t.chrome.newMatch}</Text>
             </View>
           </Pressable>
@@ -304,10 +307,11 @@ function Scorekeeper() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (theme: Theme) =>
+  StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: colors.bgDeep,
+    backgroundColor: theme.bgDeep,
   },
   safe: {
     flex: 1,
@@ -327,7 +331,7 @@ const styles = StyleSheet.create({
     gap: 5,
   },
   brandWord: {
-    color: colors.text,
+    color: theme.text,
     fontSize: 20,
     fontWeight: '800',
     letterSpacing: 0.4,
@@ -336,9 +340,9 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: colors.gold,
+    backgroundColor: theme.gold,
     marginLeft: 3,
-    shadowColor: colors.gold,
+    shadowColor: theme.gold,
     shadowOpacity: 0.9,
     shadowRadius: 6,
     shadowOffset: { width: 0, height: 0 },
@@ -348,7 +352,7 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: radii.pill,
     borderWidth: 1,
-    borderColor: colors.hairline,
+    borderColor: theme.hairline,
     backgroundColor: 'rgba(255,255,255,0.03)',
   },
   body: {
@@ -380,12 +384,12 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: radii.md,
     borderWidth: 1,
-    borderColor: colors.hairline,
+    borderColor: theme.hairline,
     backgroundColor: 'rgba(255,255,255,0.03)',
     alignItems: 'center',
   },
   footerBtnText: {
-    color: colors.textDim,
+    color: theme.textDim,
     fontWeight: '800',
     fontSize: 14,
     letterSpacing: 0.4,
