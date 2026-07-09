@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { radii, spacing } from '../constants/layout';
 import { useT } from '../i18n';
 import { buyPro, getProPriceLabel, restorePro } from '../iap/purchases';
@@ -53,8 +53,11 @@ export function ProSheet({ visible, onClose }: Props) {
         setProUnlocked(true);
         setSuccess('thanks');
       }
-    } catch {
-      // User cancelled or the purchase failed; stay silent and let them retry.
+    } catch (e: any) {
+      const code = e?.code ?? '';
+      if (code !== 'E_USER_CANCELLED') {
+        Alert.alert('Purchase could not start', `${code ? code + ': ' : ''}${e?.message ?? String(e)}`);
+      }
     } finally {
       setPending(false);
     }

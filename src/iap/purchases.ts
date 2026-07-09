@@ -71,6 +71,13 @@ export async function restorePro(): Promise<boolean> {
 }
 
 export async function buyPro(): Promise<boolean> {
+  // v15 requires the product to be loaded before a purchase can be presented.
+  // Load it here so a missing/unpropagated product fails with a clear signal
+  // instead of a silent no-op.
+  const products = await fetchProducts({ skus: [PRO_PRODUCT_ID], type: 'in-app' });
+  if (!products || products.length === 0) {
+    throw new Error('No product returned for dev.anota.pro (StoreKit empty)');
+  }
   await requestPurchase({
     request: {
       apple: { sku: PRO_PRODUCT_ID },
