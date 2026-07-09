@@ -1,10 +1,11 @@
-// Native in-app purchase wrapper for the single "Anota Pro" unlock.
-// All react-native-iap (v15, Nitro) specifics live here so the rest of the app
-// stays simple. There is no third-party purchase server: ownership is read back
-// from the store itself, which keeps the privacy story intact.
+// Native in-app purchase wrapper for the single "Anota Pro" unlock, built on
+// expo-iap (the Expo-supported library). No third-party purchase server:
+// ownership is read back from the store, keeping the privacy story intact.
 //
-// Every store call is wrapped in a timeout so a wedged native connection can
-// never freeze the app; it fails cleanly with a readable reason instead.
+// The purchase RESULT is delivered through the event listeners, not the return
+// value of requestPurchase. buyPro fires the purchase and settles when a
+// listener reports success or failure. Every store call has a timeout so a
+// wedged connection can never freeze the app.
 import {
   endConnection,
   fetchProducts,
@@ -14,18 +15,25 @@ import {
   purchaseErrorListener,
   purchaseUpdatedListener,
   requestPurchase,
-  type Purchase,
-} from 'react-native-iap';
+} from 'expo-iap';
 
 export const PRO_PRODUCT_ID = 'dev.anota.pro';
 
-// Bump this when publishing a diagnostic OTA so we can confirm on-device that
-// the update actually applied.
-export const IAP_DIAG = 'd2';
-
-let updateSub: ReturnType<typeof purchaseUpdatedListener> | null = null;
-let errorSub: ReturnType<typeof purchaseErrorListener> | null = null;
+let updateSub: { remove: () => void } | null = null;
+let errorSub: { remove: () => void } | null = null;
 let connected = false;
+
+// When a purchase is in flight, the listeners settle this resolver.
+let pendingBuy: ((owned: boolean) => void) | null = null;
+function settleBuy(owned: boolean) {
+  const cb = pendingBuy;
+  pendingBuy = null;
+  cb?.(owned);
+}
+
+function isProId(value: unknown): boolean {
+  return value === PRO_PRODUCT_ID;
+}
 
 function withTimeout<T>(p: Promise<T>, ms: number, label: string): Promise<T> {
   return Promise.race([
@@ -45,17 +53,22 @@ async function ensureConnected(): Promise<void> {
 export async function initIap(): Promise<void> {
   try {
     await ensureConnected();
-    // Always finish delivered transactions so the store queue stays clean,
-    // even if the purchase arrives outside an active buy flow.
-    updateSub = purchaseUpdatedListener((purchase: Purchase) => {
-      finishTransaction({ purchase, isConsumable: false }).catch(() => {});
+    updateSub = purchaseUpdatedListener(async (purchase: any) => {
+      try {
+        await finishTransaction({ purchase, isConsumable: false });
+      } catch {
+        // Non-fatal; ownership is still confirmed below.
+      }
+      if (isProId(purchase?.productId) || isProId(purchase?.id)) {
+        settleBuy(true);
+      }
     });
     errorSub = purchaseErrorListener(() => {
-      // Errors (including user cancellation) are handled at the call site.
+      // Any error, including user cancellation, ends the in-flight buy.
+      settleBuy(false);
     });
   } catch {
-    // Store unavailable (no network, simulator without StoreKit, etc.).
-    // The app stays fully usable for free; Pro just cannot be bought right now.
+    // Store unavailable; the app stays fully usable for free.
   }
 }
 
@@ -80,14 +93,10 @@ export async function getProPriceLabel(): Promise<string | null> {
       10000,
       'fetchProducts',
     );
-    return products?.[0]?.displayPrice ?? null;
+    return (products?.[0] as any)?.displayPrice ?? null;
   } catch {
     return null;
   }
-}
-
-function ownsPro(purchases: Purchase[]): boolean {
-  return purchases.some((p) => p.productId === PRO_PRODUCT_ID);
 }
 
 export async function restorePro(): Promise<boolean> {
@@ -98,43 +107,46 @@ export async function restorePro(): Promise<boolean> {
       10000,
       'getAvailablePurchases',
     );
-    return ownsPro(purchases ?? []);
+    return (purchases ?? []).some(
+      (p: any) => isProId(p?.productId) || isProId(p?.id),
+    );
   } catch {
     return false;
   }
 }
 
 export async function buyPro(): Promise<boolean> {
-  // Make sure the store connection is live before anything else.
   await ensureConnected();
-
-  // v15 requires the product to be loaded before a purchase can be presented.
-  const products = await withTimeout(
+  // Load the product first; some stores require it before a purchase.
+  await withTimeout(
     Promise.resolve(fetchProducts({ skus: [PRO_PRODUCT_ID], type: 'in-app' })),
     10000,
     'fetchProducts',
   );
-  if (!products || products.length === 0) {
-    throw new Error('No product returned for dev.anota.pro (StoreKit empty)');
-  }
 
-  await withTimeout(
+  return new Promise<boolean>((resolve) => {
+    let settled = false;
+    const timer = setTimeout(() => {
+      if (settled) return;
+      settled = true;
+      pendingBuy = null;
+      resolve(false);
+    }, 120000);
+    pendingBuy = (owned: boolean) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      resolve(owned);
+    };
+    // Fire the purchase; the result arrives via the listeners in initIap.
     Promise.resolve(
       requestPurchase({
         request: {
           apple: { sku: PRO_PRODUCT_ID },
-          ios: { sku: PRO_PRODUCT_ID },
-          android: { skus: [PRO_PRODUCT_ID] },
           google: { skus: [PRO_PRODUCT_ID] },
         },
         type: 'in-app',
       }),
-    ),
-    120000,
-    'requestPurchase',
-  );
-
-  // Ownership from the store is the source of truth; confirm rather than trust
-  // the request return shape.
-  return restorePro();
+    ).catch(() => settleBuy(false));
+  });
 }

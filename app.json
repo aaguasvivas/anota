@@ -2,7 +2,7 @@
   "expo": {
     "name": "Anota",
     "slug": "anota",
-    "version": "1.1.0",
+    "version": "1.1.1",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
@@ -40,7 +40,7 @@
     "plugins": [
       "expo-localization",
       "expo-font",
-      "react-native-iap"
+      "expo-iap"
     ],
     "extra": {
       "eas": {

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Alert, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { radii, spacing } from '../constants/layout';
 import { useT } from '../i18n';
-import { buyPro, getProPriceLabel, IAP_DIAG, restorePro } from '../iap/purchases';
+import { buyPro, getProPriceLabel, restorePro } from '../iap/purchases';
 import { useTheme, useThemeControls } from '../theme/ThemeProvider';
 import { useThemedStyles } from '../theme/makeStyles';
 import { Theme } from '../theme/themes';
@@ -146,7 +146,6 @@ export function ProSheet({ visible, onClose }: Props) {
               </Pressable>
             </>
           )}
-          <Text style={styles.diag}>build {IAP_DIAG}</Text>
         </View>
       </View>
     </Modal>
@@ -224,12 +223,5 @@ const makeStyles = (theme: Theme) =>
       color: theme.textFaint,
       fontWeight: '700',
       fontSize: 14,
-    },
-    diag: {
-      color: theme.textFaint,
-      fontSize: 10,
-      textAlign: 'center',
-      marginTop: spacing.md,
-      opacity: 0.5,
     },
   });
