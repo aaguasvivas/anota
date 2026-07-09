@@ -2,8 +2,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useKeepAwake } from 'expo-keep-awake';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
-import React, { useEffect, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
 import { ConfirmDialog } from './src/components/ConfirmDialog';
@@ -19,7 +19,7 @@ import { radii, spacing } from './src/constants/layout';
 import { useLayoutMetrics } from './src/hooks/useLayoutMetrics';
 import { useMatch } from './src/hooks/useMatch';
 import { LanguageProvider, teamDisplayName, useT } from './src/i18n';
-import { endIap, initIap, restorePro } from './src/iap/purchases';
+import { buyPro, endIap, initIap, restorePro, setProCallbacks } from './src/iap/purchases';
 import { useThemedStyles } from './src/theme/makeStyles';
 import { ThemeProvider, useTheme, useThemeControls } from './src/theme/ThemeProvider';
 import { Theme } from './src/theme/themes';
@@ -68,6 +68,12 @@ function Scorekeeper() {
   // a real purchase.
   useEffect(() => {
     let active = true;
+    // A successful purchase unlocks Pro even after the sheet is dismissed; any
+    // real error surfaces to the user instead of silently failing.
+    setProCallbacks(
+      () => setProUnlocked(true),
+      (message) => Alert.alert('Purchase problem', message),
+    );
     initIap().then(async () => {
       const owned = await restorePro();
       if (active && owned) {
@@ -76,9 +82,23 @@ function Scorekeeper() {
     });
     return () => {
       active = false;
+      setProCallbacks(null, null);
       endIap();
     };
   }, [setProUnlocked]);
+
+  // Buying must happen from a clean screen: iOS cannot present the App Store
+  // payment sheet on top of the Settings + Pro modals, which looks like a
+  // freeze. Close both, let them dismiss, then start the purchase.
+  const startProPurchase = useCallback(() => {
+    setProOpen(false);
+    setSettingsOpen(false);
+    setTimeout(() => {
+      buyPro().catch((e: any) =>
+        Alert.alert('Purchase problem', String(e?.message ?? e)),
+      );
+    }, 600);
+  }, []);
 
   // Celebrate when an (unacknowledged) winner appears.
   useEffect(() => {
@@ -290,7 +310,7 @@ function Scorekeeper() {
         onRequestPro={() => setProOpen(true)}
       />
 
-      <ProSheet visible={proOpen} onClose={() => setProOpen(false)} />
+      <ProSheet visible={proOpen} onClose={() => setProOpen(false)} onBuy={startProPurchase} />
 
       <ConfirmDialog
         visible={confirmReset}

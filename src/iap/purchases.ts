@@ -31,6 +31,18 @@ function settleBuy(owned: boolean) {
   cb?.(owned);
 }
 
+// App-level hooks so a purchase result reaches the theme state and the user
+// even when the Pro sheet has been dismissed to let StoreKit present.
+let onProOwned: (() => void) | null = null;
+let onProError: ((message: string) => void) | null = null;
+export function setProCallbacks(
+  owned: (() => void) | null,
+  error: ((message: string) => void) | null,
+): void {
+  onProOwned = owned;
+  onProError = error;
+}
+
 function isProId(value: unknown): boolean {
   return value === PRO_PRODUCT_ID;
 }
@@ -61,11 +73,18 @@ export async function initIap(): Promise<void> {
       }
       if (isProId(purchase?.productId) || isProId(purchase?.id)) {
         settleBuy(true);
+        onProOwned?.();
       }
     });
-    errorSub = purchaseErrorListener(() => {
+    errorSub = purchaseErrorListener((error: any) => {
       // Any error, including user cancellation, ends the in-flight buy.
       settleBuy(false);
+      const code = String(error?.code ?? '');
+      const message = String(error?.message ?? '');
+      const cancelled = /cancel/i.test(code) || /cancel/i.test(message);
+      if (!cancelled) {
+        onProError?.(code ? `${code}: ${message}` : message || 'Purchase failed');
+      }
     });
   } catch {
     // Store unavailable; the app stays fully usable for free.

@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { Alert, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { radii, spacing } from '../constants/layout';
 import { useT } from '../i18n';
-import { buyPro, getProPriceLabel, restorePro } from '../iap/purchases';
+import { getProPriceLabel, restorePro } from '../iap/purchases';
 import { useTheme, useThemeControls } from '../theme/ThemeProvider';
 import { useThemedStyles } from '../theme/makeStyles';
 import { Theme } from '../theme/themes';
@@ -10,11 +10,12 @@ import { Theme } from '../theme/themes';
 type Props = {
   visible: boolean;
   onClose: () => void;
+  onBuy: () => void;
 };
 
 const FALLBACK_PRICE = '$2.99';
 
-export function ProSheet({ visible, onClose }: Props) {
+export function ProSheet({ visible, onClose, onBuy }: Props) {
   const { t } = useT();
   const styles = useThemedStyles(makeStyles);
   const { setProUnlocked } = useThemeControls();
@@ -42,26 +43,6 @@ export function ProSheet({ visible, onClose }: Props) {
 
   const resolvedPrice = price ?? FALLBACK_PRICE;
   const buyLabel = t.pro.buy.replace('{price}', resolvedPrice);
-
-  async function handleBuy() {
-    if (pending) return;
-    setNotFound(false);
-    setPending(true);
-    try {
-      const owned = await buyPro();
-      if (owned) {
-        setProUnlocked(true);
-        setSuccess('thanks');
-      }
-    } catch (e: any) {
-      const code = e?.code ?? '';
-      if (code !== 'E_USER_CANCELLED') {
-        Alert.alert('Purchase could not start', `${code ? code + ': ' : ''}${e?.message ?? String(e)}`);
-      }
-    } finally {
-      setPending(false);
-    }
-  }
 
   async function handleRestore() {
     if (pending) return;
@@ -111,17 +92,15 @@ export function ProSheet({ visible, onClose }: Props) {
           ) : (
             <>
               <Pressable
-                onPress={handleBuy}
-                disabled={pending}
+                onPress={onBuy}
                 accessibilityRole="button"
                 accessibilityLabel={buyLabel}
                 style={({ pressed }) => [
                   styles.buyBtn,
                   pressed && { opacity: 0.85 },
-                  pending && { opacity: 0.7 },
                 ]}
               >
-                <Text style={styles.buyText}>{pending ? t.pro.buying : buyLabel}</Text>
+                <Text style={styles.buyText}>{buyLabel}</Text>
               </Pressable>
 
               {notFound ? <Text style={styles.notFound}>{t.pro.notFound}</Text> : null}
