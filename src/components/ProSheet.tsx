@@ -1,21 +1,34 @@
-import React, { useEffect, useState } from 'react';
-import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import {
+  Alert,
+  Animated,
+  BackHandler,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { radii, spacing } from '../constants/layout';
 import { useT } from '../i18n';
-import { getProPriceLabel, restorePro } from '../iap/purchases';
-import { useTheme, useThemeControls } from '../theme/ThemeProvider';
+import { buyPro, getProPriceLabel, restorePro } from '../iap/purchases';
+import { useThemeControls } from '../theme/ThemeProvider';
 import { useThemedStyles } from '../theme/makeStyles';
 import { Theme } from '../theme/themes';
 
 type Props = {
   visible: boolean;
   onClose: () => void;
-  onBuy: () => void;
 };
 
 const FALLBACK_PRICE = '$2.99';
 
-export function ProSheet({ visible, onClose, onBuy }: Props) {
+// Deliberately NOT a react-native Modal. Stacking or swapping native iOS
+// modals is unreliable on the new architecture: UIKit can refuse the
+// presentation ("already presenting"), which leaves an invisible layer that
+// swallows every touch until the app is killed. This overlay is a plain view
+// inside the root, so nothing is ever presented over the Settings modal, and
+// StoreKit gets a clean screen to present the payment sheet on.
+export function ProSheet({ visible, onClose }: Props) {
   const { t } = useT();
   const styles = useThemedStyles(makeStyles);
   const { setProUnlocked } = useThemeControls();
@@ -23,6 +36,28 @@ export function ProSheet({ visible, onClose, onBuy }: Props) {
   const [pending, setPending] = useState(false);
   const [notFound, setNotFound] = useState(false);
   const [success, setSuccess] = useState<'thanks' | 'restored' | null>(null);
+  const opacity = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (visible) {
+      opacity.setValue(0);
+      Animated.timing(opacity, {
+        toValue: 1,
+        duration: 160,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [visible, opacity]);
+
+  // The Modal used to handle Android's back button; the overlay does it here.
+  useEffect(() => {
+    if (!visible) return;
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      onClose();
+      return true;
+    });
+    return () => sub.remove();
+  }, [visible, onClose]);
 
   // Fetch the real localized price each time the sheet opens. Until it
   // resolves (or if the store is unreachable) fall back to the list price.
@@ -44,6 +79,26 @@ export function ProSheet({ visible, onClose, onBuy }: Props) {
   const resolvedPrice = price ?? FALLBACK_PRICE;
   const buyLabel = t.pro.buy.replace('{price}', resolvedPrice);
 
+  // The sheet stays on screen while StoreKit works, so it owns the pending
+  // state. Success also arrives through the global purchase listener, which
+  // covers the case where the user closes the sheet mid-purchase.
+  async function handleBuy() {
+    if (pending) return;
+    setNotFound(false);
+    setPending(true);
+    try {
+      const owned = await buyPro();
+      if (owned) {
+        setProUnlocked(true);
+        setSuccess('thanks');
+      }
+    } catch (e: any) {
+      Alert.alert('Purchase problem', String(e?.message ?? e));
+    } finally {
+      setPending(false);
+    }
+  }
+
   async function handleRestore() {
     if (pending) return;
     setNotFound(false);
@@ -63,78 +118,84 @@ export function ProSheet({ visible, onClose, onBuy }: Props) {
     }
   }
 
+  if (!visible) return null;
+
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <View style={styles.backdrop}>
-        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
-        <View style={styles.card}>
-          <Text style={styles.title}>{t.pro.title}</Text>
-          <Text style={styles.blurb}>{t.pro.blurb}</Text>
+    <Animated.View style={[styles.backdrop, { opacity }]}>
+      <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
+      <View style={styles.card}>
+        <Text style={styles.title}>{t.pro.title}</Text>
+        <Text style={styles.blurb}>{t.pro.blurb}</Text>
 
-          {success ? (
-            <>
-              <Text style={styles.success}>
-                {success === 'thanks' ? t.pro.thanks : t.pro.restored}
+        {success ? (
+          <>
+            <Text style={styles.success}>
+              {success === 'thanks' ? t.pro.thanks : t.pro.restored}
+            </Text>
+
+            <Pressable
+              onPress={onClose}
+              accessibilityRole="button"
+              accessibilityLabel={t.pro.close}
+              style={({ pressed }) => [
+                styles.buyBtn,
+                pressed && { opacity: 0.85 },
+              ]}
+            >
+              <Text style={styles.buyText}>{t.pro.close}</Text>
+            </Pressable>
+          </>
+        ) : (
+          <>
+            <Pressable
+              onPress={handleBuy}
+              disabled={pending}
+              accessibilityRole="button"
+              accessibilityLabel={buyLabel}
+              style={({ pressed }) => [
+                styles.buyBtn,
+                pressed && { opacity: 0.85 },
+                pending && { opacity: 0.7 },
+              ]}
+            >
+              <Text style={styles.buyText}>
+                {pending ? t.pro.buying : buyLabel}
               </Text>
+            </Pressable>
 
-              <Pressable
-                onPress={onClose}
-                accessibilityRole="button"
-                accessibilityLabel={t.pro.close}
-                style={({ pressed }) => [
-                  styles.buyBtn,
-                  pressed && { opacity: 0.85 },
-                ]}
-              >
-                <Text style={styles.buyText}>{t.pro.close}</Text>
-              </Pressable>
-            </>
-          ) : (
-            <>
-              <Pressable
-                onPress={onBuy}
-                accessibilityRole="button"
-                accessibilityLabel={buyLabel}
-                style={({ pressed }) => [
-                  styles.buyBtn,
-                  pressed && { opacity: 0.85 },
-                ]}
-              >
-                <Text style={styles.buyText}>{buyLabel}</Text>
-              </Pressable>
+            {notFound ? <Text style={styles.notFound}>{t.pro.notFound}</Text> : null}
 
-              {notFound ? <Text style={styles.notFound}>{t.pro.notFound}</Text> : null}
+            <Pressable
+              onPress={handleRestore}
+              disabled={pending}
+              accessibilityRole="button"
+              accessibilityLabel={t.pro.restore}
+              style={({ pressed }) => [styles.linkBtn, pressed && { opacity: 0.6 }]}
+            >
+              <Text style={styles.linkText}>{t.pro.restore}</Text>
+            </Pressable>
 
-              <Pressable
-                onPress={handleRestore}
-                disabled={pending}
-                accessibilityRole="button"
-                accessibilityLabel={t.pro.restore}
-                style={({ pressed }) => [styles.linkBtn, pressed && { opacity: 0.6 }]}
-              >
-                <Text style={styles.linkText}>{t.pro.restore}</Text>
-              </Pressable>
-
-              <Pressable
-                onPress={onClose}
-                accessibilityRole="button"
-                accessibilityLabel={t.pro.close}
-                style={({ pressed }) => [styles.linkBtn, pressed && { opacity: 0.6 }]}
-              >
-                <Text style={styles.closeText}>{t.pro.close}</Text>
-              </Pressable>
-            </>
-          )}
-        </View>
+            <Pressable
+              onPress={onClose}
+              accessibilityRole="button"
+              accessibilityLabel={t.pro.close}
+              style={({ pressed }) => [styles.linkBtn, pressed && { opacity: 0.6 }]}
+            >
+              <Text style={styles.closeText}>{t.pro.close}</Text>
+            </Pressable>
+          </>
+        )}
       </View>
-    </Modal>
+    </Animated.View>
   );
 }
 
 const makeStyles = (theme: Theme) =>
   StyleSheet.create({
     backdrop: {
-      flex: 1,
+      ...StyleSheet.absoluteFillObject,
+      zIndex: 1000,
+      elevation: 1000,
       backgroundColor: 'rgba(0,0,0,0.65)',
       alignItems: 'center',
       justifyContent: 'center',

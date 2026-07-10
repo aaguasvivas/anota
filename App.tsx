@@ -19,7 +19,7 @@ import { radii, spacing } from './src/constants/layout';
 import { useLayoutMetrics } from './src/hooks/useLayoutMetrics';
 import { useMatch } from './src/hooks/useMatch';
 import { LanguageProvider, teamDisplayName, useT } from './src/i18n';
-import { buyPro, endIap, initIap, restorePro, setProCallbacks } from './src/iap/purchases';
+import { endIap, initIap, restorePro, setProCallbacks } from './src/iap/purchases';
 import { useThemedStyles } from './src/theme/makeStyles';
 import { ThemeProvider, useTheme, useThemeControls } from './src/theme/ThemeProvider';
 import { Theme } from './src/theme/themes';
@@ -87,17 +87,19 @@ function Scorekeeper() {
     };
   }, [setProUnlocked]);
 
-  // Buying must happen from a clean screen: iOS cannot present the App Store
-  // payment sheet on top of the Settings + Pro modals, which looks like a
-  // freeze. Close both, let them dismiss, then start the purchase.
-  const startProPurchase = useCallback(() => {
-    setProOpen(false);
+  // The Pro sheet is a plain overlay, never a second native modal: stacking
+  // modals on the new architecture makes UIKit refuse the presentation and
+  // desyncs native from JS, which froze the app. Settings (the only real
+  // modal) closes, revealing the overlay behind it.
+  const openPro = useCallback(() => {
     setSettingsOpen(false);
-    setTimeout(() => {
-      buyPro().catch((e: any) =>
-        Alert.alert('Purchase problem', String(e?.message ?? e)),
-      );
-    }, 600);
+    setProOpen(true);
+  }, []);
+
+  // Closing the sheet returns to the themes the user was browsing.
+  const closePro = useCallback(() => {
+    setProOpen(false);
+    setSettingsOpen(true);
   }, []);
 
   // Celebrate when an (unacknowledged) winner appears.
@@ -307,10 +309,10 @@ function Scorekeeper() {
           setSettingsOpen(false);
           setConfirmReset(true);
         }}
-        onRequestPro={() => setProOpen(true)}
+        onRequestPro={openPro}
       />
 
-      <ProSheet visible={proOpen} onClose={() => setProOpen(false)} onBuy={startProPurchase} />
+      <ProSheet visible={proOpen} onClose={closePro} />
 
       <ConfirmDialog
         visible={confirmReset}
