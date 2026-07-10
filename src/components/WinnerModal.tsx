@@ -2,7 +2,15 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Sharing from 'expo-sharing';
 import React, { useEffect, useMemo, useRef } from 'react';
-import { Animated, Modal, Pressable, Share, StyleSheet, Text, View } from 'react-native';
+import {
+  Animated,
+  BackHandler,
+  Pressable,
+  Share,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { captureRef } from 'react-native-view-shot';
 import { radii, spacing } from '../constants/layout';
 import { teamDisplayName, useT } from '../i18n';
@@ -20,6 +28,10 @@ type Props = {
   onKeepPlaying: () => void;
 };
 
+// A plain overlay, not a react-native Modal. The keypad submit that wins the
+// match dismisses the ScoreKeypad modal and shows this celebration in the
+// same commit; as an overlay that never stacks UIKit presentations, and the
+// share sheet gets a clean screen to present over.
 export function WinnerModal({ visible, state, onNewMatch, onKeepPlaying }: Props) {
   const { t, pick } = useT();
   const theme = useTheme();
@@ -54,8 +66,18 @@ export function WinnerModal({ visible, state, onNewMatch, onKeepPlaying }: Props
     }
   }, [visible, scale, opacity]);
 
+  // The Modal used to handle Android's back button; the overlay does it here.
+  useEffect(() => {
+    if (!visible) return;
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      onKeepPlaying();
+      return true;
+    });
+    return () => sub.remove();
+  }, [visible, onKeepPlaying]);
+
   const winnerId = state.winnerId;
-  if (!winnerId) return null;
+  if (!visible || !winnerId) return null;
   const winner: Team = state.teams[winnerId];
   const winnerColor = theme.teams[winner.id].color;
   const loser: Team = winnerId === 'A' ? state.teams.B : state.teams.A;
@@ -84,8 +106,7 @@ export function WinnerModal({ visible, state, onNewMatch, onKeepPlaying }: Props
   }
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onKeepPlaying}>
-      <View style={styles.backdrop}>
+    <Animated.View style={[styles.backdrop, { opacity }]}>
         <View collapsable={false} style={{ position: 'absolute', left: -9999, top: 0 }}>
           <View ref={cardRef} collapsable={false}>
             <ShareCard
@@ -176,15 +197,16 @@ export function WinnerModal({ visible, state, onNewMatch, onKeepPlaying }: Props
             </View>
           </Pressable>
         </Animated.View>
-      </View>
-    </Modal>
+    </Animated.View>
   );
 }
 
 const makeStyles = (theme: Theme) =>
   StyleSheet.create({
   backdrop: {
-    flex: 1,
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 1000,
+    elevation: 1000,
     backgroundColor: 'rgba(0,0,0,0.75)',
     alignItems: 'center',
     justifyContent: 'center',

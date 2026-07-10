@@ -1,8 +1,14 @@
-import React from 'react';
-import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import {
+  Animated,
+  BackHandler,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { radii, spacing } from '../constants/layout';
 import { useT } from '../i18n';
-import { useTheme } from '../theme/ThemeProvider';
 import { useThemedStyles } from '../theme/makeStyles';
 import { Theme } from '../theme/themes';
 
@@ -17,6 +23,9 @@ type Props = {
   onCancel: () => void;
 };
 
+// A plain overlay, not a react-native Modal, so it can appear in the same
+// commit that dismisses the Settings modal (reset-from-settings) without
+// stacking UIKit presentations; see no-stacked-rn-modals in ProSheet.
 export function ConfirmDialog({
   visible,
   title,
@@ -29,55 +38,80 @@ export function ConfirmDialog({
 }: Props) {
   const { t } = useT();
   const styles = useThemedStyles(makeStyles);
+  const opacity = useRef(new Animated.Value(0)).current;
   const confirm = confirmLabel ?? t.chrome.confirm;
   const cancel = cancelLabel ?? t.chrome.cancel;
+
+  useEffect(() => {
+    if (visible) {
+      opacity.setValue(0);
+      Animated.timing(opacity, {
+        toValue: 1,
+        duration: 160,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [visible, opacity]);
+
+  // The Modal used to handle Android's back button; the overlay does it here.
+  useEffect(() => {
+    if (!visible) return;
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      onCancel();
+      return true;
+    });
+    return () => sub.remove();
+  }, [visible, onCancel]);
+
+  if (!visible) return null;
+
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel}>
-      <View style={styles.backdrop}>
-        <Pressable style={StyleSheet.absoluteFill} onPress={onCancel} />
-        <View style={styles.card}>
-          <Text style={styles.title}>{title}</Text>
-          {message ? <Text style={styles.message}>{message}</Text> : null}
-          <View style={styles.row}>
-            <Pressable
-              onPress={onCancel}
-              accessibilityRole="button"
-              accessibilityLabel={cancel}
-              style={({ pressed }) => [
-                styles.btn,
-                styles.cancel,
-                pressed && { opacity: 0.6 },
-              ]}
+    <Animated.View style={[styles.backdrop, { opacity }]}>
+      <Pressable style={StyleSheet.absoluteFill} onPress={onCancel} />
+      <View style={styles.card}>
+        <Text style={styles.title}>{title}</Text>
+        {message ? <Text style={styles.message}>{message}</Text> : null}
+        <View style={styles.row}>
+          <Pressable
+            onPress={onCancel}
+            accessibilityRole="button"
+            accessibilityLabel={cancel}
+            style={({ pressed }) => [
+              styles.btn,
+              styles.cancel,
+              pressed && { opacity: 0.6 },
+            ]}
+          >
+            <Text style={styles.cancelText}>{cancel}</Text>
+          </Pressable>
+          <Pressable
+            onPress={onConfirm}
+            accessibilityRole="button"
+            accessibilityLabel={confirm}
+            style={({ pressed }) => [
+              styles.btn,
+              destructive ? styles.destructive : styles.primary,
+              pressed && { opacity: 0.85 },
+            ]}
+          >
+            <Text
+              style={destructive ? styles.destructiveText : styles.primaryText}
             >
-              <Text style={styles.cancelText}>{cancel}</Text>
-            </Pressable>
-            <Pressable
-              onPress={onConfirm}
-              accessibilityRole="button"
-              accessibilityLabel={confirm}
-              style={({ pressed }) => [
-                styles.btn,
-                destructive ? styles.destructive : styles.primary,
-                pressed && { opacity: 0.85 },
-              ]}
-            >
-              <Text
-                style={destructive ? styles.destructiveText : styles.primaryText}
-              >
-                {confirm}
-              </Text>
-            </Pressable>
-          </View>
+              {confirm}
+            </Text>
+          </Pressable>
         </View>
       </View>
-    </Modal>
+    </Animated.View>
   );
 }
 
 const makeStyles = (theme: Theme) =>
   StyleSheet.create({
   backdrop: {
-    flex: 1,
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 1000,
+    elevation: 1000,
     backgroundColor: 'rgba(0,0,0,0.65)',
     alignItems: 'center',
     justifyContent: 'center',
