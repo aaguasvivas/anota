@@ -28,6 +28,7 @@ type Props = {
   onTargetChange: (target: number) => void;
   onResetMatch: () => void;
   onRequestPro: () => void;
+  showRemoveAds: boolean;
 };
 
 export function SettingsModal({
@@ -38,6 +39,7 @@ export function SettingsModal({
   onTargetChange,
   onResetMatch,
   onRequestPro,
+  showRemoveAds,
 }: Props) {
   const { t, lang, setLang } = useT();
   const theme = useTheme();
@@ -244,6 +246,22 @@ export function SettingsModal({
             <Text style={[styles.sectionLabel, { marginTop: spacing.xl }]}>{t.settings.themeSection}</Text>
             <ThemePicker onRequestPro={onRequestPro} />
 
+            {showRemoveAds ? (
+              <Pressable
+                onPress={onRequestPro}
+                accessibilityRole="button"
+                accessibilityLabel={t.settings.removeAdsRow}
+                style={({ pressed }) => [
+                  styles.resetBtn,
+                  pressed && { opacity: 0.7 },
+                ]}
+              >
+                <Text style={styles.removeAdsText}>
+                  {t.settings.removeAdsRow}
+                </Text>
+              </Pressable>
+            ) : null}
+
             <Pressable
               onPress={onResetMatch}
               accessibilityRole="button"
@@ -443,6 +461,12 @@ const makeStyles = (theme: Theme) =>
   },
   resetText: {
     color: theme.danger,
+    fontWeight: '700',
+    fontSize: 14,
+    letterSpacing: 0.4,
+  },
+  removeAdsText: {
+    color: theme.gold,
     fontWeight: '700',
     fontSize: 14,
     letterSpacing: 0.4,

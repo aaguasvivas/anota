@@ -49,6 +49,7 @@ export const en: Dictionary = {
     themeSection: 'Theme',
     themeNames: { classic: 'Classic Felt', midnight: 'Midnight', mahogany: 'Mahogany', casino: 'Casino Red', bone: 'Bone', carbon: 'Carbon' },
     themeLockedTag: 'Pro',
+    removeAdsRow: 'Remove ads',
   },
   winner: {
     phrases: [
@@ -85,13 +86,16 @@ export const en: Dictionary = {
   },
   pro: {
     title: 'Anota Pro',
-    blurb: 'Unlock every theme and support the app. One time, no subscription.',
-    buy: 'Unlock for {price}',
-    buying: 'Unlocking...',
-    restore: 'Restore purchase',
-    restored: 'Purchase restored. Enjoy your themes.',
+    blurb: 'One-time purchases, no subscription. Pro is the whole package.',
+    buyPro: 'Anota Pro {price}',
+    proIncludes: 'Every theme, and no ads. Best value.',
+    buyRemoveAds: 'Just remove ads {price}',
+    buying: 'Working...',
+    restore: 'Restore purchases',
+    restored: 'Purchases restored. Enjoy.',
     notFound: 'No purchase found to restore.',
     thanks: 'Thank you for supporting Anota.',
+    thanksNoAds: 'Done, no more ads. Thank you.',
     close: 'Close',
   },
 };

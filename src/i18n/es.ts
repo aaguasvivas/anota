@@ -51,6 +51,7 @@ export const es: Dictionary = {
     themeSection: 'Tema',
     themeNames: { classic: 'Fieltro clásico', midnight: 'Medianoche', mahogany: 'Caoba', casino: 'Rojo casino', bone: 'Hueso', carbon: 'Carbón' },
     themeLockedTag: 'Pro',
+    removeAdsRow: 'Quitar anuncios',
   },
   winner: {
     phrases: [
@@ -88,13 +89,16 @@ export const es: Dictionary = {
   },
   pro: {
     title: 'Anota Pro',
-    blurb: 'Desbloquea todos los temas y apoya la app. Pago único, sin suscripción.',
-    buy: 'Desbloquear por {price}',
-    buying: 'Desbloqueando...',
-    restore: 'Restaurar compra',
-    restored: 'Compra restaurada. Disfruta tus temas.',
+    blurb: 'Pago único, sin suscripción. Pro trae todo.',
+    buyPro: 'Anota Pro {price}',
+    proIncludes: 'Todos los temas y sin anuncios. Lo mejor.',
+    buyRemoveAds: 'Solo quitar anuncios {price}',
+    buying: 'En eso...',
+    restore: 'Restaurar compras',
+    restored: 'Compras restauradas. Disfruta.',
     notFound: 'No se encontró ninguna compra.',
     thanks: 'Gracias por apoyar Anota.',
+    thanksNoAds: 'Listo, sin anuncios. Gracias.',
     close: 'Cerrar',
   },
 };

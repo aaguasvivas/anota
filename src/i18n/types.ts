@@ -47,6 +47,7 @@ export type Dictionary = {
     themeSection: string;
     themeNames: { classic: string; midnight: string; mahogany: string; casino: string; bone: string; carbon: string };
     themeLockedTag: string;
+    removeAdsRow: string;
   };
   history: {
     sectionTitle: string;
@@ -70,12 +71,15 @@ export type Dictionary = {
   pro: {
     title: string;
     blurb: string;
-    buy: string;
+    buyPro: string;
+    proIncludes: string;
+    buyRemoveAds: string;
     buying: string;
     restore: string;
     restored: string;
     notFound: string;
     thanks: string;
+    thanksNoAds: string;
     close: string;
   };
 };

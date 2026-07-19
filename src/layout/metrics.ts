@@ -15,7 +15,24 @@ export type LayoutMetrics = {
 // iPhone SE (~647 usable) -> compact and iPhone 13 mini and larger -> normal.
 export const COMPACT_HEIGHT_THRESHOLD = 700;
 
+// Below this we squeeze further: an SE with the ad banner loaded has roughly
+// 587 usable points, and the compact profile alone no longer fits.
+export const SQUEEZE_HEIGHT_THRESHOLD = 620;
+
 export function computeLayoutMetrics(usableHeight: number): LayoutMetrics {
+  if (usableHeight < SQUEEZE_HEIGHT_THRESHOLD) {
+    return {
+      compact: true,
+      scoreFontSize: 40,
+      scoreLineHeight: 44,
+      tileSize: 15,
+      chipHeight: 38,
+      heroHeight: 38,
+      progressHeight: 3,
+      regionGap: 3,
+      cardPadV: 4,
+    };
+  }
   const compact = usableHeight < COMPACT_HEIGHT_THRESHOLD;
   return compact
     ? {

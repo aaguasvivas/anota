@@ -1,9 +1,10 @@
-// Native in-app purchase wrapper for the single "Anota Pro" unlock, built on
-// expo-iap (the Expo-supported library). No third-party purchase server:
-// ownership is read back from the store, keeping the privacy story intact.
+// Native in-app purchase wrapper for Anota's one-time unlocks ("Anota Pro"
+// and "Remove Ads"), built on expo-iap (the Expo-supported library). No
+// third-party purchase server: ownership is read back from the store, keeping
+// the privacy story intact.
 //
 // The purchase RESULT is delivered through the event listeners, not the return
-// value of requestPurchase. buyPro fires the purchase and settles when a
+// value of requestPurchase. buyProduct fires the purchase and settles when a
 // listener reports success or failure. Every store call has a timeout so a
 // wedged connection can never freeze the app.
 import {
@@ -17,34 +18,45 @@ import {
   requestPurchase,
 } from 'expo-iap';
 
-export const PRO_PRODUCT_ID = 'dev.anota.pro';
+import { ALL_PRODUCT_IDS, asProductId, type ProductId } from './products';
+
+export {
+  PRO_PRODUCT_ID,
+  REMOVE_ADS_PRODUCT_ID,
+  type ProductId,
+} from './products';
 
 let updateSub: { remove: () => void } | null = null;
 let errorSub: { remove: () => void } | null = null;
 let connected = false;
 
-// When a purchase is in flight, the listeners settle this resolver.
-let pendingBuy: ((owned: boolean) => void) | null = null;
-function settleBuy(owned: boolean) {
-  const cb = pendingBuy;
+// When a purchase is in flight, the listeners settle this resolver. Only the
+// product being bought settles it; ownership of anything else that arrives
+// (say, a restore racing in) still reaches the app through onOwned.
+let pendingBuy: { sku: ProductId; settle: (owned: boolean) => void } | null =
+  null;
+function settleBuy(sku: ProductId | null, owned: boolean) {
+  if (!pendingBuy) return;
+  if (sku !== null && pendingBuy.sku !== sku) return;
+  const { settle } = pendingBuy;
   pendingBuy = null;
-  cb?.(owned);
+  settle(owned);
 }
 
-// App-level hooks so a purchase result reaches the theme state and the user
-// even when the Pro sheet has been dismissed to let StoreKit present.
-let onProOwned: (() => void) | null = null;
-let onProError: ((message: string) => void) | null = null;
-export function setProCallbacks(
-  owned: (() => void) | null,
+// App-level hooks so a purchase result reaches entitlement state and the user
+// even when the paywall sheet has been dismissed to let StoreKit present.
+let onOwned: ((id: ProductId) => void) | null = null;
+let onPurchaseError: ((message: string) => void) | null = null;
+export function setPurchaseCallbacks(
+  owned: ((id: ProductId) => void) | null,
   error: ((message: string) => void) | null,
 ): void {
-  onProOwned = owned;
-  onProError = error;
+  onOwned = owned;
+  onPurchaseError = error;
 }
 
-function isProId(value: unknown): boolean {
-  return value === PRO_PRODUCT_ID;
+function purchasedId(purchase: any): ProductId | null {
+  return asProductId(purchase?.productId) ?? asProductId(purchase?.id);
 }
 
 function withTimeout<T>(p: Promise<T>, ms: number, label: string): Promise<T> {
@@ -71,19 +83,22 @@ export async function initIap(): Promise<void> {
       } catch {
         // Non-fatal; ownership is still confirmed below.
       }
-      if (isProId(purchase?.productId) || isProId(purchase?.id)) {
-        settleBuy(true);
-        onProOwned?.();
+      const id = purchasedId(purchase);
+      if (id) {
+        settleBuy(id, true);
+        onOwned?.(id);
       }
     });
     errorSub = purchaseErrorListener((error: any) => {
       // Any error, including user cancellation, ends the in-flight buy.
-      settleBuy(false);
+      settleBuy(null, false);
       const code = String(error?.code ?? '');
       const message = String(error?.message ?? '');
       const cancelled = /cancel/i.test(code) || /cancel/i.test(message);
       if (!cancelled) {
-        onProError?.(code ? `${code}: ${message}` : message || 'Purchase failed');
+        onPurchaseError?.(
+          code ? `${code}: ${message}` : message || 'Purchase failed',
+        );
       }
     });
   } catch {
@@ -104,21 +119,29 @@ export async function endIap(): Promise<void> {
   }
 }
 
-export async function getProPriceLabel(): Promise<string | null> {
+export async function getPriceLabels(): Promise<
+  Partial<Record<ProductId, string>>
+> {
   try {
     await ensureConnected();
     const products = await withTimeout(
-      Promise.resolve(fetchProducts({ skus: [PRO_PRODUCT_ID], type: 'in-app' })),
+      Promise.resolve(fetchProducts({ skus: ALL_PRODUCT_IDS, type: 'in-app' })),
       10000,
       'fetchProducts',
     );
-    return (products?.[0] as any)?.displayPrice ?? null;
+    const labels: Partial<Record<ProductId, string>> = {};
+    for (const p of products ?? []) {
+      const id = asProductId((p as any)?.id) ?? asProductId((p as any)?.productId);
+      const price = (p as any)?.displayPrice;
+      if (id && typeof price === 'string') labels[id] = price;
+    }
+    return labels;
   } catch {
-    return null;
+    return {};
   }
 }
 
-export async function restorePro(): Promise<boolean> {
+export async function restoreOwned(): Promise<ProductId[]> {
   try {
     await ensureConnected();
     const purchases = await withTimeout(
@@ -126,19 +149,22 @@ export async function restorePro(): Promise<boolean> {
       10000,
       'getAvailablePurchases',
     );
-    return (purchases ?? []).some(
-      (p: any) => isProId(p?.productId) || isProId(p?.id),
-    );
+    const owned = new Set<ProductId>();
+    for (const p of purchases ?? []) {
+      const id = purchasedId(p);
+      if (id) owned.add(id);
+    }
+    return [...owned];
   } catch {
-    return false;
+    return [];
   }
 }
 
-export async function buyPro(): Promise<boolean> {
+export async function buyProduct(sku: ProductId): Promise<boolean> {
   await ensureConnected();
   // Load the product first; some stores require it before a purchase.
   await withTimeout(
-    Promise.resolve(fetchProducts({ skus: [PRO_PRODUCT_ID], type: 'in-app' })),
+    Promise.resolve(fetchProducts({ skus: [sku], type: 'in-app' })),
     10000,
     'fetchProducts',
   );
@@ -151,21 +177,24 @@ export async function buyPro(): Promise<boolean> {
       pendingBuy = null;
       resolve(false);
     }, 120000);
-    pendingBuy = (owned: boolean) => {
-      if (settled) return;
-      settled = true;
-      clearTimeout(timer);
-      resolve(owned);
+    pendingBuy = {
+      sku,
+      settle: (owned: boolean) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        resolve(owned);
+      },
     };
     // Fire the purchase; the result arrives via the listeners in initIap.
     Promise.resolve(
       requestPurchase({
         request: {
-          apple: { sku: PRO_PRODUCT_ID },
-          google: { skus: [PRO_PRODUCT_ID] },
+          apple: { sku },
+          google: { skus: [sku] },
         },
         type: 'in-app',
       }),
-    ).catch(() => settleBuy(false));
+    ).catch(() => settleBuy(sku, false));
   });
 }

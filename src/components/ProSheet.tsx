@@ -9,8 +9,15 @@ import {
   View,
 } from 'react-native';
 import { radii, spacing } from '../constants/layout';
+import { useAdsRemoved } from '../ads/AdsRemovedProvider';
 import { useT } from '../i18n';
-import { buyPro, getProPriceLabel, restorePro } from '../iap/purchases';
+import {
+  buyProduct,
+  getPriceLabels,
+  PRO_PRODUCT_ID,
+  REMOVE_ADS_PRODUCT_ID,
+  restoreOwned,
+} from '../iap/purchases';
 import { useThemeControls } from '../theme/ThemeProvider';
 import { useThemedStyles } from '../theme/makeStyles';
 import { Theme } from '../theme/themes';
@@ -20,7 +27,8 @@ type Props = {
   onClose: () => void;
 };
 
-const FALLBACK_PRICE = '$2.99';
+const FALLBACK_PRO_PRICE = '$2.99';
+const FALLBACK_REMOVE_ADS_PRICE = '$1.99';
 
 // Deliberately NOT a react-native Modal. Stacking or swapping native iOS
 // modals is unreliable on the new architecture: UIKit can refuse the
@@ -32,10 +40,16 @@ export function ProSheet({ visible, onClose }: Props) {
   const { t } = useT();
   const styles = useThemedStyles(makeStyles);
   const { setProUnlocked } = useThemeControls();
-  const [price, setPrice] = useState<string | null>(null);
-  const [pending, setPending] = useState(false);
+  const { setAdsRemoved } = useAdsRemoved();
+  const [proPrice, setProPrice] = useState<string | null>(null);
+  const [removeAdsPrice, setRemoveAdsPrice] = useState<string | null>(null);
+  const [pending, setPending] = useState<'pro' | 'ads' | 'restore' | null>(
+    null,
+  );
   const [notFound, setNotFound] = useState(false);
-  const [success, setSuccess] = useState<'thanks' | 'restored' | null>(null);
+  const [success, setSuccess] = useState<
+    'thanks' | 'thanksNoAds' | 'restored' | null
+  >(null);
   const opacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -59,8 +73,8 @@ export function ProSheet({ visible, onClose }: Props) {
     return () => sub.remove();
   }, [visible, onClose]);
 
-  // Fetch the real localized price each time the sheet opens. Until it
-  // resolves (or if the store is unreachable) fall back to the list price.
+  // Fetch the real localized prices each time the sheet opens. Until they
+  // resolve (or if the store is unreachable) fall back to the list prices.
   // Also reset transient state so a reopened sheet never shows a stale
   // success message or "not found" hint from a previous session.
   useEffect(() => {
@@ -68,26 +82,36 @@ export function ProSheet({ visible, onClose }: Props) {
     let active = true;
     setNotFound(false);
     setSuccess(null);
-    getProPriceLabel().then((label) => {
-      if (active && label) setPrice(label);
+    getPriceLabels().then((labels) => {
+      if (!active) return;
+      if (labels[PRO_PRODUCT_ID]) setProPrice(labels[PRO_PRODUCT_ID]);
+      if (labels[REMOVE_ADS_PRODUCT_ID]) {
+        setRemoveAdsPrice(labels[REMOVE_ADS_PRODUCT_ID]);
+      }
     });
     return () => {
       active = false;
     };
   }, [visible]);
 
-  const resolvedPrice = price ?? FALLBACK_PRICE;
-  const buyLabel = t.pro.buy.replace('{price}', resolvedPrice);
+  const proLabel = t.pro.buyPro.replace(
+    '{price}',
+    proPrice ?? FALLBACK_PRO_PRICE,
+  );
+  const removeAdsLabel = t.pro.buyRemoveAds.replace(
+    '{price}',
+    removeAdsPrice ?? FALLBACK_REMOVE_ADS_PRICE,
+  );
 
   // The sheet stays on screen while StoreKit works, so it owns the pending
   // state. Success also arrives through the global purchase listener, which
   // covers the case where the user closes the sheet mid-purchase.
-  async function handleBuy() {
+  async function handleBuyPro() {
     if (pending) return;
     setNotFound(false);
-    setPending(true);
+    setPending('pro');
     try {
-      const owned = await buyPro();
+      const owned = await buyProduct(PRO_PRODUCT_ID);
       if (owned) {
         setProUnlocked(true);
         setSuccess('thanks');
@@ -95,18 +119,36 @@ export function ProSheet({ visible, onClose }: Props) {
     } catch (e: any) {
       Alert.alert('Purchase problem', String(e?.message ?? e));
     } finally {
-      setPending(false);
+      setPending(null);
+    }
+  }
+
+  async function handleBuyRemoveAds() {
+    if (pending) return;
+    setNotFound(false);
+    setPending('ads');
+    try {
+      const owned = await buyProduct(REMOVE_ADS_PRODUCT_ID);
+      if (owned) {
+        setAdsRemoved(true);
+        setSuccess('thanksNoAds');
+      }
+    } catch (e: any) {
+      Alert.alert('Purchase problem', String(e?.message ?? e));
+    } finally {
+      setPending(null);
     }
   }
 
   async function handleRestore() {
     if (pending) return;
     setNotFound(false);
-    setPending(true);
+    setPending('restore');
     try {
-      const owned = await restorePro();
-      if (owned) {
-        setProUnlocked(true);
+      const owned = await restoreOwned();
+      if (owned.includes(PRO_PRODUCT_ID)) setProUnlocked(true);
+      if (owned.includes(REMOVE_ADS_PRODUCT_ID)) setAdsRemoved(true);
+      if (owned.length > 0) {
         setSuccess('restored');
       } else {
         setNotFound(true);
@@ -114,7 +156,7 @@ export function ProSheet({ visible, onClose }: Props) {
     } catch {
       setNotFound(true);
     } finally {
-      setPending(false);
+      setPending(null);
     }
   }
 
@@ -130,7 +172,11 @@ export function ProSheet({ visible, onClose }: Props) {
         {success ? (
           <>
             <Text style={styles.success}>
-              {success === 'thanks' ? t.pro.thanks : t.pro.restored}
+              {success === 'thanks'
+                ? t.pro.thanks
+                : success === 'thanksNoAds'
+                  ? t.pro.thanksNoAds
+                  : t.pro.restored}
             </Text>
 
             <Pressable
@@ -148,18 +194,35 @@ export function ProSheet({ visible, onClose }: Props) {
         ) : (
           <>
             <Pressable
-              onPress={handleBuy}
-              disabled={pending}
+              onPress={handleBuyPro}
+              disabled={pending !== null}
               accessibilityRole="button"
-              accessibilityLabel={buyLabel}
+              accessibilityLabel={proLabel}
               style={({ pressed }) => [
                 styles.buyBtn,
                 pressed && { opacity: 0.85 },
-                pending && { opacity: 0.7 },
+                pending !== null && { opacity: 0.7 },
               ]}
             >
               <Text style={styles.buyText}>
-                {pending ? t.pro.buying : buyLabel}
+                {pending === 'pro' ? t.pro.buying : proLabel}
+              </Text>
+            </Pressable>
+            <Text style={styles.includes}>{t.pro.proIncludes}</Text>
+
+            <Pressable
+              onPress={handleBuyRemoveAds}
+              disabled={pending !== null}
+              accessibilityRole="button"
+              accessibilityLabel={removeAdsLabel}
+              style={({ pressed }) => [
+                styles.altBtn,
+                pressed && { opacity: 0.85 },
+                pending !== null && { opacity: 0.7 },
+              ]}
+            >
+              <Text style={styles.altText}>
+                {pending === 'ads' ? t.pro.buying : removeAdsLabel}
               </Text>
             </Pressable>
 
@@ -167,12 +230,14 @@ export function ProSheet({ visible, onClose }: Props) {
 
             <Pressable
               onPress={handleRestore}
-              disabled={pending}
+              disabled={pending !== null}
               accessibilityRole="button"
               accessibilityLabel={t.pro.restore}
               style={({ pressed }) => [styles.linkBtn, pressed && { opacity: 0.6 }]}
             >
-              <Text style={styles.linkText}>{t.pro.restore}</Text>
+              <Text style={styles.linkText}>
+                {pending === 'restore' ? t.pro.buying : t.pro.restore}
+              </Text>
             </Pressable>
 
             <Pressable
@@ -233,6 +298,27 @@ const makeStyles = (theme: Theme) =>
       color: theme.tileInk,
       fontWeight: '800',
       fontSize: 15,
+      letterSpacing: 0.2,
+    },
+    includes: {
+      color: theme.textDim,
+      fontSize: 12,
+      textAlign: 'center',
+      marginTop: spacing.sm,
+    },
+    altBtn: {
+      marginTop: spacing.md,
+      paddingVertical: 13,
+      borderRadius: radii.md,
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: theme.hairline,
+      backgroundColor: 'rgba(255,255,255,0.04)',
+    },
+    altText: {
+      color: theme.text,
+      fontWeight: '700',
+      fontSize: 14,
       letterSpacing: 0.2,
     },
     notFound: {

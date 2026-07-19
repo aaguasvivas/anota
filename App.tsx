@@ -6,6 +6,12 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
+import { initAds } from './src/ads/ads';
+import {
+  AdsRemovedProvider,
+  useAdsRemoved,
+} from './src/ads/AdsRemovedProvider';
+import { BannerSlot } from './src/ads/BannerSlot';
 import { ConfirmDialog } from './src/components/ConfirmDialog';
 import { ProSheet } from './src/components/ProSheet';
 import { ScoreKeypad } from './src/components/ScoreKeypad';
@@ -19,7 +25,13 @@ import { radii, spacing } from './src/constants/layout';
 import { useLayoutMetrics } from './src/hooks/useLayoutMetrics';
 import { useMatch } from './src/hooks/useMatch';
 import { LanguageProvider, teamDisplayName, useT } from './src/i18n';
-import { endIap, initIap, restorePro, setProCallbacks } from './src/iap/purchases';
+import {
+  endIap,
+  initIap,
+  PRO_PRODUCT_ID,
+  restoreOwned,
+  setPurchaseCallbacks,
+} from './src/iap/purchases';
 import { useThemedStyles } from './src/theme/makeStyles';
 import { ThemeProvider, useTheme, useThemeControls } from './src/theme/ThemeProvider';
 import { Theme } from './src/theme/themes';
@@ -36,9 +48,11 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <ThemeProvider>
-        <LanguageProvider>
-          <Scorekeeper />
-        </LanguageProvider>
+        <AdsRemovedProvider>
+          <LanguageProvider>
+            <Scorekeeper />
+          </LanguageProvider>
+        </AdsRemovedProvider>
       </ThemeProvider>
     </SafeAreaProvider>
   );
@@ -49,43 +63,73 @@ function Scorekeeper() {
   const { t } = useT();
   const theme = useTheme();
   const styles = useThemedStyles(makeStyles);
-  const { hydrated: themeHydrated, setProUnlocked } = useThemeControls();
+  const {
+    hydrated: themeHydrated,
+    proUnlocked,
+    setProUnlocked,
+  } = useThemeControls();
+  const {
+    adsRemoved,
+    setAdsRemoved,
+    hydrated: adsHydrated,
+  } = useAdsRemoved();
   const match = useMatch();
   const showWinner = !!match.state.winnerId && !match.state.winnerAcknowledged;
-  const m = useLayoutMetrics();
   const [customFor, setCustomFor] = useState<TeamId | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
   const [roundToRemove, setRoundToRemove] = useState<Round | null>(null);
   const [proOpen, setProOpen] = useState(false);
 
+  // Pro includes ad removal; the standalone purchase only removes ads.
+  const adFree = adsRemoved || proUnlocked;
+  const [adsReady, setAdsReady] = useState(false);
+  const [bannerHeight, setBannerHeight] = useState(0);
+  const showBanner = adsReady && !adFree;
+  const m = useLayoutMetrics(showBanner ? bannerHeight : 0);
+
   useEffect(() => {
     hydratePrefs();
   }, []);
 
-  // Start the store connection and silently re-light a prior purchase on
-  // launch. Only ever set Pro to true here: a flaky network must never revoke
-  // a real purchase.
+  // Start the store connection and silently re-light prior purchases on
+  // launch. Only ever set entitlements to true here: a flaky network must
+  // never revoke a real purchase.
   useEffect(() => {
     let active = true;
-    // A successful purchase unlocks Pro even after the sheet is dismissed; any
+    const grant = (id: string) => {
+      if (id === PRO_PRODUCT_ID) setProUnlocked(true);
+      else setAdsRemoved(true);
+    };
+    // A successful purchase unlocks even after the sheet is dismissed; any
     // real error surfaces to the user instead of silently failing.
-    setProCallbacks(
-      () => setProUnlocked(true),
-      (message) => Alert.alert('Purchase problem', message),
+    setPurchaseCallbacks(grant, (message) =>
+      Alert.alert('Purchase problem', message),
     );
     initIap().then(async () => {
-      const owned = await restorePro();
-      if (active && owned) {
-        setProUnlocked(true);
-      }
+      const owned = await restoreOwned();
+      if (active) owned.forEach(grant);
     });
     return () => {
       active = false;
-      setProCallbacks(null, null);
+      setPurchaseCallbacks(null, null);
       endIap();
     };
-  }, [setProUnlocked]);
+  }, [setProUnlocked, setAdsRemoved]);
+
+  // Start the ads SDK only for users who have not paid ads away. Buyers never
+  // see the consent flow or a single SDK request. Once ready, the banner slot
+  // mounts; it unmounts the instant an unlock lands.
+  useEffect(() => {
+    if (!adsHydrated || !themeHydrated || adFree || adsReady) return;
+    let active = true;
+    initAds().then((ok) => {
+      if (active && ok) setAdsReady(true);
+    });
+    return () => {
+      active = false;
+    };
+  }, [adsHydrated, themeHydrated, adFree, adsReady]);
 
   // The Pro sheet is a plain overlay, never a second native modal: stacking
   // modals on the new architecture makes UIKit refuse the presentation and
@@ -138,7 +182,7 @@ function Scorekeeper() {
       )
     : '';
 
-  if (!match.hydrated || !themeHydrated) {
+  if (!match.hydrated || !themeHydrated || !adsHydrated) {
     return (
       <View style={styles.root}>
         <LinearGradient
@@ -285,6 +329,8 @@ function Scorekeeper() {
             </View>
           </Pressable>
         </View>
+
+        <BannerSlot enabled={showBanner} onHeight={setBannerHeight} />
       </SafeAreaView>
 
       <ScoreKeypad
@@ -310,6 +356,7 @@ function Scorekeeper() {
           setConfirmReset(true);
         }}
         onRequestPro={openPro}
+        showRemoveAds={!adFree}
       />
 
       <ProSheet visible={proOpen} onClose={closePro} />
