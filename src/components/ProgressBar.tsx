@@ -23,9 +23,14 @@ export function ProgressBar({ progress, color, glowColor, height = 8 }: Props) {
     }).start();
   }, [progress, anim]);
 
+  // Clamp: the bouncy spring overshoots its target, and an unclamped
+  // interpolation lets a reset-to-zero dip below 0%. A negative percent width
+  // falls back to auto sizing, which paints the bar momentarily FULL before it
+  // settles, reading as a fill-then-drain flash on "New match".
   const widthInterpolate = anim.interpolate({
     inputRange: [0, 1],
     outputRange: ['0%', '100%'],
+    extrapolate: 'clamp',
   });
 
   return (

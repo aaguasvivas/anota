@@ -10,9 +10,12 @@ import {
   TestIds,
 } from 'react-native-google-mobile-ads';
 
-// TODO(release): replace with the real AdMob banner ad unit id before
-// shipping v1.2. TestIds serves Google's sample ads.
-export const BANNER_AD_UNIT_ID = TestIds.ADAPTIVE_BANNER;
+// Real unit in release; Google's sample unit in dev. Simulators are always
+// auto-registered as test devices, so release builds on a sim still serve
+// test creatives instead of billable impressions.
+export const BANNER_AD_UNIT_ID = __DEV__
+  ? TestIds.ADAPTIVE_BANNER
+  : 'ca-app-pub-4879291425090726/4560153532';
 
 const MAX_RETRIES = 5;
 const RETRY_MS = 60000;
