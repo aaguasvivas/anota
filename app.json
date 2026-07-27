@@ -45,7 +45,7 @@
         "react-native-google-mobile-ads",
         {
           "iosAppId": "ca-app-pub-4879291425090726~5387215705",
-          "userTrackingUsageDescription": "This lets Anota show ads that are more relevant to you. Your scores never leave your phone.",
+          "userTrackingUsageDescription": "This lets Anota show ads that are more relevant to you. Your scores never leave your device.",
           "skAdNetworkItems": [
             "cstr6suwn9.skadnetwork",
             "4fzdc2evr5.skadnetwork",
@@ -98,6 +98,12 @@
             "97r2b46745.skadnetwork",
             "3qcr597p9d.skadnetwork"
           ]
+        }
+      ],
+      [
+        "expo-tracking-transparency",
+        {
+          "userTrackingPermission": "This lets Anota show ads that are more relevant to you. Your scores never leave your device."
         }
       ]
     ],
