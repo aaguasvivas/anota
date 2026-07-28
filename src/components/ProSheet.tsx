@@ -117,7 +117,7 @@ export function ProSheet({ visible, onClose }: Props) {
         setSuccess('thanks');
       }
     } catch (e: any) {
-      Alert.alert('Purchase problem', String(e?.message ?? e));
+      Alert.alert(t.pro.errorTitle, t.pro.storeError);
     } finally {
       setPending(null);
     }
@@ -134,7 +134,7 @@ export function ProSheet({ visible, onClose }: Props) {
         setSuccess('thanksNoAds');
       }
     } catch (e: any) {
-      Alert.alert('Purchase problem', String(e?.message ?? e));
+      Alert.alert(t.pro.errorTitle, t.pro.storeError);
     } finally {
       setPending(null);
     }

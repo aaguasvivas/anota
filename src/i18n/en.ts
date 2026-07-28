@@ -97,5 +97,8 @@ export const en: Dictionary = {
     thanks: 'Thank you for supporting Anota.',
     thanksNoAds: 'Done, no more ads. Thank you.',
     close: 'Close',
+    errorTitle: 'Purchase problem',
+    storeError:
+      'The App Store could not complete the purchase. Please try again in a moment.',
   },
 };

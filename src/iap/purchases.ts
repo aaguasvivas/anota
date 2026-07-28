@@ -162,12 +162,18 @@ export async function restoreOwned(): Promise<ProductId[]> {
 
 export async function buyProduct(sku: ProductId): Promise<boolean> {
   await ensureConnected();
-  // Load the product first; some stores require it before a purchase.
-  await withTimeout(
-    Promise.resolve(fetchProducts({ skus: [sku], type: 'in-app' })),
-    10000,
-    'fetchProducts',
-  );
+  // Warm the product first; some stores want it loaded before a purchase.
+  // Best-effort only: a slow or failed catalog fetch must not block the
+  // purchase attempt itself.
+  try {
+    await withTimeout(
+      Promise.resolve(fetchProducts({ skus: [sku], type: 'in-app' })),
+      10000,
+      'fetchProducts',
+    );
+  } catch {
+    // Proceed; requestPurchase surfaces any real store problem.
+  }
 
   return new Promise<boolean>((resolve) => {
     let settled = false;

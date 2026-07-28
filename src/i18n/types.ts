@@ -81,6 +81,8 @@ export type Dictionary = {
     thanks: string;
     thanksNoAds: string;
     close: string;
+    errorTitle: string;
+    storeError: string;
   };
 };
 

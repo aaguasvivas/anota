@@ -61,6 +61,10 @@ export default function App() {
 function Scorekeeper() {
   useKeepAwake();
   const { t } = useT();
+  // The purchase callbacks are registered once on mount; read strings through
+  // a ref so a language switch never bounces the store connection.
+  const tRef = React.useRef(t);
+  tRef.current = t;
   const theme = useTheme();
   const styles = useThemedStyles(makeStyles);
   const {
@@ -102,9 +106,10 @@ function Scorekeeper() {
       else setAdsRemoved(true);
     };
     // A successful purchase unlocks even after the sheet is dismissed; any
-    // real error surfaces to the user instead of silently failing.
-    setPurchaseCallbacks(grant, (message) =>
-      Alert.alert('Purchase problem', message),
+    // real error surfaces to the user instead of silently failing. Friendly
+    // copy only: raw StoreKit codes confused users (and App Review).
+    setPurchaseCallbacks(grant, () =>
+      Alert.alert(tRef.current.pro.errorTitle, tRef.current.pro.storeError),
     );
     initIap().then(async () => {
       const owned = await restoreOwned();

@@ -45,6 +45,9 @@ async function start(): Promise<boolean> {
   // "undetermined" and this is a no-op.
   if (Platform.OS === 'ios') {
     try {
+      // Re-check foreground right before the one-shot request: the UMP step
+      // above can take seconds, and a request made while inactive is lost.
+      await whenActive();
       const { status } = await getTrackingPermissionsAsync();
       if (status === 'undetermined') {
         await requestTrackingPermissionsAsync();

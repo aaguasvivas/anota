@@ -100,5 +100,8 @@ export const es: Dictionary = {
     thanks: 'Gracias por apoyar Anota.',
     thanksNoAds: 'Listo, sin anuncios. Gracias.',
     close: 'Cerrar',
+    errorTitle: 'Problema con la compra',
+    storeError:
+      'La App Store no pudo completar la compra. Inténtalo de nuevo en un momento.',
   },
 };
