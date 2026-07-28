@@ -1,7 +1,9 @@
 // Google Mobile Ads bootstrap: gather consent (UMP handles the EEA form),
 // request App Tracking Transparency explicitly, then start the SDK. Follows
 // the same philosophy as the IAP layer: ads can fail forever and the app stays
-// fully usable.
+// fully usable, and NOTHING in this chain may block forever. Every step is
+// bounded; a hung step degrades to non-personalized or no ads, never to a
+// missing ATT prompt.
 import { AppState, Platform } from 'react-native';
 import mobileAds, { AdsConsent } from 'react-native-google-mobile-ads';
 import {
@@ -11,30 +13,56 @@ import {
 
 let startedPromise: Promise<boolean> | null = null;
 
-// iOS pre-warms apps into a background state, and an ATT request made before
-// the app is active is silently swallowed, losing the prompt. Hold the whole
-// consent flow until the app is genuinely foreground.
-function whenActive(): Promise<void> {
+function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
+  return Promise.race([
+    p,
+    new Promise<T>((_resolve, reject) => {
+      setTimeout(() => reject(new Error(`ads step timed out (${ms}ms)`)), ms);
+    }),
+  ]);
+}
+
+// Best-effort wait for the app to be foreground, bounded. iOS pre-warms apps
+// into a background state, where an ATT request can be lost; waiting for
+// 'active' avoids that. But React Native's AppState is not trustworthy on
+// every cold start (iPad compatibility mode can sit on 'unknown' with no
+// transition event ever firing, which silently hung the whole ads flow in
+// 1.2.0 build 8). So: resolve on 'active', or after maxMs, whichever comes
+// first. On modern iOS a queued ATT request presents once the app is truly
+// active anyway, so proceeding is always safe.
+function whenActiveBounded(maxMs: number): Promise<void> {
   if (AppState.currentState === 'active') return Promise.resolve();
   return new Promise((resolve) => {
+    let iv: ReturnType<typeof setInterval> | null = null;
+    let killer: ReturnType<typeof setTimeout> | null = null;
     const sub = AppState.addEventListener('change', (s) => {
-      if (s === 'active') {
-        sub.remove();
-        resolve();
-      }
+      if (s === 'active') done();
     });
+    function done() {
+      if (iv) clearInterval(iv);
+      if (killer) clearTimeout(killer);
+      sub.remove();
+      resolve();
+    }
+    iv = setInterval(() => {
+      if (AppState.currentState === 'active') done();
+    }, 250);
+    killer = setTimeout(done, maxMs);
   });
 }
 
 async function start(): Promise<boolean> {
-  await whenActive();
+  await whenActiveBounded(8000);
   let consentErrored = false;
   try {
-    await AdsConsent.gatherConsent();
+    // UMP fetches consent requirements from Google. On filtered or slow
+    // networks (App Review environments included) this can stall; a stall
+    // must not stop the ATT prompt from appearing.
+    await withTimeout(AdsConsent.gatherConsent(), 15000);
   } catch {
-    // Consent info can be unavailable (offline, or no UMP message configured
-    // yet). Outside the EEA ads may still serve, so fall through and let the
-    // canRequestAds check decide.
+    // Consent info unavailable (offline, blocked, or no UMP message). Outside
+    // the EEA ads may still serve, so fall through and let the canRequestAds
+    // check decide.
     consentErrored = true;
   }
   // Apple requires the ATT prompt BEFORE any data that could track the user
@@ -45,11 +73,10 @@ async function start(): Promise<boolean> {
   // "undetermined" and this is a no-op.
   if (Platform.OS === 'ios') {
     try {
-      // Re-check foreground right before the one-shot request: the UMP step
-      // above can take seconds, and a request made while inactive is lost.
-      await whenActive();
-      const { status } = await getTrackingPermissionsAsync();
+      await whenActiveBounded(4000);
+      const { status } = await withTimeout(getTrackingPermissionsAsync(), 5000);
       if (status === 'undetermined') {
+        // No timeout here: this resolves when the user answers the prompt.
         await requestTrackingPermissionsAsync();
       }
     } catch {
@@ -57,12 +84,12 @@ async function start(): Promise<boolean> {
     }
   }
   try {
-    const info = await AdsConsent.getConsentInfo();
+    const info = await withTimeout(AdsConsent.getConsentInfo(), 5000);
     // Respect an explicit "no": if the consent flow completed and says ads
     // cannot be requested, stay dark. Only fail open when the flow itself
     // errored before producing an answer.
     if (!info.canRequestAds && !consentErrored) return false;
-    await mobileAds().initialize();
+    await withTimeout(mobileAds().initialize(), 15000);
     return true;
   } catch {
     return false;
