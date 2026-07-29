@@ -100,5 +100,7 @@ export const en: Dictionary = {
     errorTitle: 'Purchase problem',
     storeError:
       'The App Store could not complete the purchase. Please try again in a moment.',
+    unavailable:
+      'This purchase is not available right now. Please try again later.',
   },
 };

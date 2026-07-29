@@ -83,6 +83,7 @@ export type Dictionary = {
     close: string;
     errorTitle: string;
     storeError: string;
+    unavailable: string;
   };
 };
 

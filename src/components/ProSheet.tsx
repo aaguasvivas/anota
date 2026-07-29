@@ -15,6 +15,7 @@ import {
   buyProduct,
   getPriceLabels,
   PRO_PRODUCT_ID,
+  PRODUCT_UNAVAILABLE,
   REMOVE_ADS_PRODUCT_ID,
   restoreOwned,
 } from '../iap/purchases';
@@ -103,6 +104,12 @@ export function ProSheet({ visible, onClose }: Props) {
     removeAdsPrice ?? FALLBACK_REMOVE_ADS_PRICE,
   );
 
+  // A product the store does not know about is a configuration problem, not
+  // a payment failure, and saying so plainly beats a generic retry prompt.
+  function messageFor(e: any): string {
+    return e?.code === PRODUCT_UNAVAILABLE ? t.pro.unavailable : t.pro.storeError;
+  }
+
   // The sheet stays on screen while StoreKit works, so it owns the pending
   // state. Success also arrives through the global purchase listener, which
   // covers the case where the user closes the sheet mid-purchase.
@@ -117,7 +124,7 @@ export function ProSheet({ visible, onClose }: Props) {
         setSuccess('thanks');
       }
     } catch (e: any) {
-      Alert.alert(t.pro.errorTitle, t.pro.storeError);
+      Alert.alert(t.pro.errorTitle, messageFor(e));
     } finally {
       setPending(null);
     }
@@ -134,7 +141,7 @@ export function ProSheet({ visible, onClose }: Props) {
         setSuccess('thanksNoAds');
       }
     } catch (e: any) {
-      Alert.alert(t.pro.errorTitle, t.pro.storeError);
+      Alert.alert(t.pro.errorTitle, messageFor(e));
     } finally {
       setPending(null);
     }

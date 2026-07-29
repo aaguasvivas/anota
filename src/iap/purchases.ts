@@ -30,6 +30,17 @@ let updateSub: { remove: () => void } | null = null;
 let errorSub: { remove: () => void } | null = null;
 let connected = false;
 
+// Last raw store error seen, for diagnostics only. Never shown verbatim.
+let lastStoreError = '';
+export function getLastStoreError(): string {
+  return lastStoreError;
+}
+
+// Thrown when the store has no record of a product we asked to buy. This is a
+// configuration problem (App Store Connect), not a payment failure, and it
+// deserves its own message instead of a generic "purchase failed".
+export const PRODUCT_UNAVAILABLE = 'product-unavailable';
+
 // When a purchase is in flight, the listeners settle this resolver. Only the
 // product being bought settles it; ownership of anything else that arrives
 // (say, a restore racing in) still reaches the app through onOwned.
@@ -76,7 +87,10 @@ async function ensureConnected(): Promise<void> {
 
 export async function initIap(): Promise<void> {
   try {
-    await ensureConnected();
+    // Register listeners BEFORE connecting. They do not need an open
+    // connection, and if initConnection is slow or times out we must not be
+    // left with zero listeners: a purchase would then be unable to either
+    // succeed or report failure.
     updateSub = purchaseUpdatedListener(async (purchase: any) => {
       try {
         await finishTransaction({ purchase, isConsumable: false });
@@ -90,17 +104,23 @@ export async function initIap(): Promise<void> {
       }
     });
     errorSub = purchaseErrorListener((error: any) => {
-      // Any error, including user cancellation, ends the in-flight buy.
-      settleBuy(null, false);
       const code = String(error?.code ?? '');
       const message = String(error?.message ?? '');
+      lastStoreError = code ? `${code}: ${message}` : message;
+      // This native event carries EVERY store error, not just purchase ones:
+      // catalog lookups ("query-product"), unavailable store, and so on. Only
+      // an error while a purchase is actually in flight belongs in front of
+      // the user; anything else used to pop a bogus "purchase failed" alert
+      // (which is what App Review saw).
+      if (!pendingBuy) return;
+      // Any error, including user cancellation, ends the in-flight buy.
+      settleBuy(null, false);
       const cancelled = /cancel/i.test(code) || /cancel/i.test(message);
       if (!cancelled) {
-        onPurchaseError?.(
-          code ? `${code}: ${message}` : message || 'Purchase failed',
-        );
+        onPurchaseError?.(lastStoreError || 'Purchase failed');
       }
     });
+    await ensureConnected();
   } catch {
     // Store unavailable; the app stays fully usable for free.
   }
@@ -162,17 +182,30 @@ export async function restoreOwned(): Promise<ProductId[]> {
 
 export async function buyProduct(sku: ProductId): Promise<boolean> {
   await ensureConnected();
-  // Warm the product first; some stores want it loaded before a purchase.
-  // Best-effort only: a slow or failed catalog fetch must not block the
-  // purchase attempt itself.
+  // Confirm the store actually knows this product before trying to buy it.
+  // If it does not (missing or incomplete App Store Connect configuration,
+  // or the product has not propagated yet), requestPurchase fails with an
+  // opaque "Unable to Complete Request"; surfacing that as a payment error
+  // sent us chasing the wrong bug for two review cycles.
+  let known = false;
   try {
-    await withTimeout(
+    const products = await withTimeout(
       Promise.resolve(fetchProducts({ skus: [sku], type: 'in-app' })),
       10000,
       'fetchProducts',
     );
+    known = (products ?? []).some(
+      (p: any) => p?.id === sku || p?.productId === sku,
+    );
   } catch {
-    // Proceed; requestPurchase surfaces any real store problem.
+    // Lookup failed outright (offline, store down). Fall through and let the
+    // purchase attempt decide rather than blocking a possibly-fine buy.
+    known = true;
+  }
+  if (!known) {
+    const err: any = new Error(PRODUCT_UNAVAILABLE);
+    err.code = PRODUCT_UNAVAILABLE;
+    throw err;
   }
 
   return new Promise<boolean>((resolve) => {
