@@ -14,7 +14,7 @@
 | **Name** | `Anota: Domino Scorekeeper` | 25/30 |
 | **Subtitle** | `Score pad: passes & capicúa` | 27/30 |
 | **Keywords** | `scoreboard,scorecard,counter,tracker,dominoes,points,team,Dominican,capicu,kapicu,offline,tally,keeper` | 99/100 |
-| **Promotional text** | `Never reach for pen and paper again. Two big scoreboards, quick 25/30/50 chips, a fast keypad, and one screen that never scrolls. No account, no ads, no data.` | 158/170 |
+| **Promotional text** | `Never reach for pen and paper again. Two big scoreboards, quick 25/30/50 chips, a fast keypad, and one screen that never scrolls. No account, your scores stay on your phone.` | 158/170 |
 | **Category** | Utilities (primary). Optional secondary: Games > Board. Avoid Strategy and gameplay categories. |
 
 > Keyword notes: comma-separated, no spaces, no word repeated from the name or subtitle (Apple indexes name + subtitle + keywords as one bag). The Spanish keyword field uses unaccented forms because Apple's Spanish search is accent-insensitive. `kapicu` is an intentional phonetic spelling of how players type "capicúa".
@@ -49,10 +49,10 @@ LITTLE THINGS THAT MATTER
 • Fully bilingual Spanish and English with an authentic Dominican voice
 
 PRIVATE BY DESIGN
-• 100% local and works offline
-• No account, no internet needed
-• No ads
-• Collects NO data
+• Your scores stay on your device
+• No account, and scoring works with no internet
+• Anota itself collects no data
+• Free with one small banner ad; Remove Ads ($1.99) or Anota Pro ($2.99) turns ads off for good
 
 Whether you call it a score keeper, scoreboard, points counter, score tracker, apunte, anotador or marcador, Anota keeps the count so you can keep playing.
 
@@ -97,10 +97,10 @@ LOS DETALLES QUE IMPORTAN
 • Totalmente bilingüe español e inglés con voz dominicana auténtica
 
 PRIVADA DE VERDAD
-• 100% local y funciona sin internet
-• Sin cuenta, sin conexión
-• Sin anuncios
-• NO recoge datos
+• Tus puntos se quedan en tu dispositivo
+• Sin cuenta, y anotar funciona sin internet
+• Anota en sí no recopila datos
+• Gratis con un banner de anuncios; Quitar anuncios ($1.99) o Anota Pro ($2.99) los apaga para siempre
 
 Llámalo anotador, marcador, contador de puntos, apunte o cartón de apunte: Anota lleva la cuenta para que tú sigas jugando.
 
@@ -147,10 +147,10 @@ LITTLE THINGS THAT MATTER
 • Fully bilingual Spanish and English with an authentic Dominican voice
 
 PRIVATE BY DESIGN
-• 100% local and works offline
-• No account, no internet needed
-• No ads
-• Collects NO data
+• Your scores stay on your device
+• No account, and scoring works with no internet
+• Anota itself collects no data
+• Free with one small banner ad; Remove Ads ($1.99) or Anota Pro ($2.99) turns ads off for good
 
 Anota is a domino score keeper, domino scoreboard, scorecard and score pad in one. It is a paperless domino score sheet for Dominican dominoes, capicúa, passes and team play. Whether you call it apunte, anotador, marcador or score tracker, Anota keeps the count so you can keep playing.
 
@@ -194,10 +194,10 @@ LOS DETALLES QUE IMPORTAN
 • Totalmente bilingüe español e inglés con voz dominicana auténtica
 
 PRIVADA DE VERDAD
-• 100% local y funciona sin internet
-• Sin cuenta, sin conexión
-• Sin anuncios
-• NO recoge datos
+• Tus puntos se quedan en tu dispositivo
+• Sin cuenta, y anotar funciona sin internet
+• Anota en sí no recopila datos
+• Gratis con un banner de anuncios; Quitar anuncios ($1.99) o Anota Pro ($2.99) los apaga para siempre
 
 Anota es anotador de dominó, marcador, cartón de apunte y tablero de puntos en uno. Es un apunte de dominó sin papel para dominó dominicano, capicúa, pasos y juego por parejas. Llámalo apunte, anotador, marcador o contador de puntos: Anota lleva la cuenta para que tú sigas jugando.
 
@@ -207,20 +207,34 @@ Gratis. Descarga Anota y olvídate del papel.
 ---
 
 ## Age rating
-**Apple 4+ / Google Play "Everyone".** No objectionable content: no violence, profanity, sexual or suggestive content, no gambling or simulated gambling (it tracks points for casual and family matches, not wagers), no user-generated content, no chat, no ads, no data collection, no web browsing. As of v1.1 there is one optional non-consumable in-app purchase (Anota Pro, cosmetic themes); it is purely cosmetic and does not affect the 4+ / Everyone rating. The only outbound action is an optional user-initiated share of the final score.
+**Apple 4+ / Google Play "Everyone".** No objectionable content: no violence, profanity, sexual or suggestive content, no gambling or simulated gambling (it tracks points for casual and family matches, not wagers), no user-generated content, no chat, no web browsing. As of v1.2 the free version shows a Google AdMob banner, so the Advertising content descriptor must be answered YES on the Apple age rating questionnaire. As of v1.1 there is one optional non-consumable in-app purchase (Anota Pro, cosmetic themes); it is purely cosmetic and does not affect the 4+ / Everyone rating. The only outbound action is an optional user-initiated share of the final score.
 
 ## Apple Guideline 4.2 (minimum functionality), App Review note
-> Anota is a focused local scorekeeper for in-person 2-team Dominican-style domino matches. It is not a game and not a thin web wrapper. Native functionality includes: two large always-visible team scoreboards on a single non-scrolling screen; quick-add preset chips (25/30/50) plus a custom in-app number keypad for arbitrary pip counts; a selectable or custom target (100/150/200/custom); per-round history with one-tap undo and long-press round removal; a celebratory winner state with native share; Keep-Awake during play; mutable haptics; a dark felt theme; and full Spanish and English localization with an authentic Dominican voice. Differentiators versus existing domino score apps: a true 2-team Dominican (2-vs-2) model with capicúa and passes as first-class presets; complete on-device privacy (100% local, no account, no network, no ads, collects no data); and genuine bilingual ES/EN. All data stays on the device and the app makes no server calls.
+> Anota is a focused local scorekeeper for in-person 2-team Dominican-style domino matches. It is not a game and not a thin web wrapper. Native functionality includes: two large always-visible team scoreboards on a single non-scrolling screen; quick-add preset chips (25/30/50) plus a custom in-app number keypad for arbitrary pip counts; a selectable or custom target (100/150/200/custom); per-round history with one-tap undo and long-press round removal; a celebratory winner state with native share; Keep-Awake during play; mutable haptics; a dark felt theme; and full Spanish and English localization with an authentic Dominican voice. Differentiators versus existing domino score apps: a true 2-team Dominican (2-vs-2) model with capicúa and passes as first-class presets; on-device scores (no account, scoring works with no network, and Anota itself collects no data; the free version serves a Google AdMob banner); and genuine bilingual ES/EN. Match data stays on the device; the only network traffic is Google AdMob ad serving in the free version, which stops entirely once Remove Ads or Anota Pro is purchased.
 
 ## Reminders before submitting
 - App Store device availability: iPhone only (app.json `supportsTablet:false`, portrait). Do not market iPad support.
 - Host `docs/privacy.html` at a public URL before filling the privacy-policy field.
-- Privacy answers: App Store nutrition label is "Data Not Collected"; Play Data Safety is "No data collected or shared".
-- The optional Anota Pro purchase does not change the privacy answers. Payments are handled by the App Store / Play Store, and the app itself still collects and transmits no data, so the nutrition label stays "Data Not Collected".
+- Privacy answers (v1.2 onward, ads shipped): App Store nutrition label declares Device ID (tracking YES, third-party advertising), Usage Data (Product Interaction, Advertising Data) and Diagnostics (Crash, Performance), all not linked to identity except as noted. Play Data Safety must be updated to match before any Play release.
+- Purchases are handled by the App Store / Play Store and Anota never sees payment details. Buying Remove Ads or Anota Pro stops the ads SDK from starting at all, so no ad data is processed for those users.
 
 ---
 
-## Version 1.1 "What's New" (release notes)
+## Version 1.2 "What's New" (release notes)
+
+**English:**
+```
+Anota stays free with a small banner ad. Not your thing? Remove Ads is $1.99, and Anota Pro now includes no ads plus every theme.
+Also: the score bar now resets smoothly on New match.
+```
+
+**Español:**
+```
+Anota sigue gratis con un pequeño banner de anuncios. ¿No lo quieres? Quitar anuncios cuesta $1.99, y Anota Pro ahora incluye sin anuncios y todos los temas.
+Además: la barra de puntos ahora se reinicia suave al empezar otra partida.
+```
+
+## Version 1.1 "What's New" (release notes), historical: ads did not exist yet
 
 **English:**
 ```

@@ -14,7 +14,7 @@ Everything in the app and the listing kit is ready. This is the line-by-line pat
 - Listing copy (EN + ES): docs/store-listing.md
 - Screenshots (6.7", 1290x2796): store-assets/screenshots/marketing/
 - Bundle id / package: dev.anota.app
-- Privacy answers: App Store = "Data Not Collected"; Play Data Safety = "No data collected or shared"
+- Privacy answers (v1.2 onward): App Store declares Device ID (used for tracking, third-party advertising), Usage Data and Diagnostics. Age rating Advertising descriptor = YES. Play Data Safety must be updated to match the AdMob banner before any Play release.
 - Age rating: 4+ / Everyone. Category: Utilities (App Store) / Tools (Play). Device: iPhone only.
 
 ## iOS (run when the Apple approval email arrives)
@@ -42,7 +42,7 @@ eas build --platform android --profile production   # produces an .aab
 In Play Console (play.google.com/console):
 1. Create the app, then on a "Closed testing" track upload the .aab BY HAND the first time (Google requires one manual upload).
 2. Add your 12+ testers (email list or a Google Group), publish the closed test, keep it live 14 consecutive days.
-3. Fill Data Safety as "no data", paste the privacy URL, add the listing copy and screenshots.
+3. Fill Data Safety to match the AdMob banner (device/advertising identifiers collected and shared for advertising), paste the privacy URL, add the listing copy and screenshots.
 4. After 14 days, apply for production access and promote the release.
 5. Future updates can use `eas submit --platform android` (after a one-time Google service-account key setup).
 
