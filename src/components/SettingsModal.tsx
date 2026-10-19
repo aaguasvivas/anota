@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { radii, spacing, TARGET_PRESETS } from '../constants/layout';
 import { ThemePicker } from './ThemePicker';
+import { devRefs } from '../dev/captureHarness';
 import { useT } from '../i18n';
 import { useTheme } from '../theme/ThemeProvider';
 import { useThemedStyles } from '../theme/makeStyles';
@@ -91,6 +92,9 @@ export function SettingsModal({
         <View style={styles.sheet}>
           <View style={styles.handle} />
           <ScrollView
+            ref={(r) => {
+              devRefs.settingsScroll = r;
+            }}
             keyboardShouldPersistTaps="handled"
             contentContainerStyle={styles.body}
           >

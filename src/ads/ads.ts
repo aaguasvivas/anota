@@ -10,6 +10,7 @@ import {
   getTrackingPermissionsAsync,
   requestTrackingPermissionsAsync,
 } from 'expo-tracking-transparency';
+import { CAPTURE_BUILD } from '../dev/captureHarness';
 
 let startedPromise: Promise<boolean> | null = null;
 
@@ -52,6 +53,12 @@ function whenActiveBounded(maxMs: number): Promise<void> {
 }
 
 async function start(): Promise<boolean> {
+  // Capture builds (design screenshots) skip the consent and ATT prompts so
+  // no tap is needed; the banner itself renders exactly as in the store build.
+  if (CAPTURE_BUILD) {
+    await mobileAds().initialize();
+    return true;
+  }
   await whenActiveBounded(8000);
   let consentErrored = false;
   try {

@@ -54,6 +54,8 @@ export function useMatch() {
   }, []);
   const resetMatch = useCallback(() => setState(resetKeepingSettings), []);
   const dismissWinner = useCallback(() => setState(acknowledgeWinner), []);
+  // DEV capture harness: put the match into an exact state for screenshots.
+  const devReplace = useCallback((next: MatchState) => setState(next), []);
 
   const derived = useMemo(() => {
     const { teams } = state;
@@ -75,6 +77,7 @@ export function useMatch() {
     setTargetScore,
     resetMatch,
     dismissWinner,
+    devReplace,
     ...derived,
   };
 }

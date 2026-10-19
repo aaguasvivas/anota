@@ -21,6 +21,7 @@ import { SettingsModal } from './src/components/SettingsModal';
 import { TargetPill } from './src/components/TargetPill';
 import { TeamCard } from './src/components/TeamCard';
 import { WinnerModal } from './src/components/WinnerModal';
+import { useCaptureHarness } from './src/dev/captureHarness';
 import { radii, spacing } from './src/constants/layout';
 import { useLayoutMetrics } from './src/hooks/useLayoutMetrics';
 import { useMatch } from './src/hooks/useMatch';
@@ -60,7 +61,7 @@ export default function App() {
 
 function Scorekeeper() {
   useKeepAwake();
-  const { t } = useT();
+  const { t, setLang } = useT();
   // The purchase callbacks are registered once on mount; read strings through
   // a ref so a language switch never bounces the store connection.
   const tRef = React.useRef(t);
@@ -71,6 +72,7 @@ function Scorekeeper() {
     hydrated: themeHydrated,
     proUnlocked,
     setProUnlocked,
+    setThemeId,
   } = useThemeControls();
   const {
     adsRemoved,
@@ -84,6 +86,24 @@ function Scorekeeper() {
   const [confirmReset, setConfirmReset] = useState(false);
   const [roundToRemove, setRoundToRemove] = useState<Round | null>(null);
   const [proOpen, setProOpen] = useState(false);
+
+  // DEV capture harness (inert in release builds).
+  const matchStateRef = React.useRef(match.state);
+  matchStateRef.current = match.state;
+  useCaptureHarness({
+    setLang,
+    setThemeId,
+    setProUnlocked,
+    setAdsRemoved,
+    replaceMatch: match.devReplace,
+    setOverlay: (o) => {
+      setSettingsOpen(o === 'settings');
+      setCustomFor(o === 'keypadA' ? 'A' : o === 'keypadB' ? 'B' : null);
+      setConfirmReset(o === 'confirmReset');
+      setProOpen(o === 'pro');
+      setRoundToRemove(o === 'removeRound' ? matchStateRef.current.rounds[0] ?? null : null);
+    },
+  });
 
   // Pro includes ad removal; the standalone purchase only removes ads.
   const adFree = adsRemoved || proUnlocked;

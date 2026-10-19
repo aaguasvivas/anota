@@ -105,7 +105,8 @@
         {
           "userTrackingPermission": "This lets Anota show ads that are more relevant to you. Your scores never leave your device."
         }
-      ]
+      ],
+      "./plugins/withMinPodDeploymentTarget"
     ],
     "extra": {
       "eas": {
