@@ -65,7 +65,7 @@ export function ShareCard({
 
   return (
     <View style={[styles.card, { backgroundColor: theme.felt }]}>
-      <Text style={[styles.wordmark, { color: theme.gold }]}>Anota</Text>
+      <Text style={[styles.wordmark, { color: theme.gold }]} allowFontScaling={false}>Anota</Text>
 
       <View style={styles.center}>
         <View style={[styles.tileBody, { backgroundColor: theme.tile, borderColor: theme.tileShadow }]}>
@@ -76,22 +76,36 @@ export function ShareCard({
 
         <View style={styles.board}>
           <View style={styles.row}>
-            <Text style={[styles.nameWin, { color: theme.text }]} numberOfLines={1}>
+            <Text
+              style={[styles.nameWin, { color: theme.text }]}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.5}
+              allowFontScaling={false}
+            >
               {winnerName}
             </Text>
-            <Text style={[styles.scoreWin, { color: winnerColor }]}>{winnerScore}</Text>
+            <Text style={[styles.scoreWin, { color: winnerColor }]} allowFontScaling={false}>{winnerScore}</Text>
           </View>
           <View style={[styles.rowRule, { backgroundColor: theme.divider }]} />
           <View style={styles.row}>
-            <Text style={[styles.nameLose, { color: theme.textDim }]} numberOfLines={1}>
+            <Text
+              style={[styles.nameLose, { color: theme.textDim }]}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.5}
+              allowFontScaling={false}
+            >
               {loserName}
             </Text>
-            <Text style={[styles.scoreLose, { color: theme.textDim }]}>{loserScore}</Text>
+            <Text style={[styles.scoreLose, { color: theme.textDim }]} allowFontScaling={false}>{loserScore}</Text>
           </View>
         </View>
       </View>
 
-      <Text style={[styles.footer, { color: theme.textFaint }]}>anota</Text>
+      <Text style={[styles.footer, { color: theme.textDim }]} allowFontScaling={false}>
+        anota
+      </Text>
     </View>
   );
 }

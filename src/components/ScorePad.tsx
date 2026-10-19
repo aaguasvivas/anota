@@ -2,9 +2,9 @@ import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { QUICK_SCORES, spacing } from '../constants/layout';
 import { teamDisplayName, useT } from '../i18n';
+import type { LayoutMetrics } from '../layout/metrics';
 import type { Team, TeamId } from '../types';
 import { ScoreButton } from './ScoreButton';
-import { useLayoutMetrics } from '../hooks/useLayoutMetrics';
 import { useTheme } from '../theme/ThemeProvider';
 
 type Props = {
@@ -12,12 +12,13 @@ type Props = {
   teamId: TeamId;
   onAdd: (teamId: TeamId, points: number) => void;
   onCustom: (teamId: TeamId) => void;
+  // From App, which is the only place that knows the banner height.
+  metrics: LayoutMetrics;
 };
 
-export function ScorePad({ team, teamId, onAdd, onCustom }: Props) {
+export function ScorePad({ team, teamId, onAdd, onCustom, metrics: m }: Props) {
   const { t } = useT();
   const theme = useTheme();
-  const m = useLayoutMetrics();
   const displayName = teamDisplayName(team, t);
   const color = theme.teams[teamId].color;
 

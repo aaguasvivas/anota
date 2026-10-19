@@ -2,8 +2,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { radii, spacing } from '../constants/layout';
+import { FONT_CAP, radii, spacing } from '../constants/layout';
 import { teamDisplayName, useT } from '../i18n';
+import type { LayoutMetrics } from '../layout/metrics';
 import { useTheme } from '../theme/ThemeProvider';
 import { useThemedStyles } from '../theme/makeStyles';
 import { Theme } from '../theme/themes';
@@ -11,22 +12,23 @@ import type { Team } from '../types';
 import { AnimatedScore } from './AnimatedScore';
 import { DominoTile, tileFacesForScore } from './DominoTile';
 import { ProgressBar } from './ProgressBar';
-import { useLayoutMetrics } from '../hooks/useLayoutMetrics';
 
 type Props = {
   team: Team;
   targetScore: number;
   isLeader: boolean;
   onRename: () => void;
+  // From App, which is the only place that knows the banner height.
+  metrics: LayoutMetrics;
 };
 
-export function TeamCard({ team, targetScore, isLeader, onRename }: Props) {
+export function TeamCard({ team, targetScore, isLeader, onRename, metrics: m }: Props) {
   const { t } = useT();
   const theme = useTheme();
   const styles = useThemedStyles(makeStyles);
   const teamColor = theme.teams[team.id].color;
+  const teamText = theme.teams[team.id].text;
   const teamGlow = theme.teams[team.id].glow;
-  const m = useLayoutMetrics();
   const progress = Math.min(1, team.score / targetScore);
   const remaining = Math.max(0, targetScore - team.score);
   const name = teamDisplayName(team, t);
@@ -61,7 +63,7 @@ export function TeamCard({ team, targetScore, isLeader, onRename }: Props) {
             hitSlop={10}
             accessibilityRole="button"
             accessibilityLabel={name}
-            accessibilityHint={t.settings.namesSection}
+            accessibilityHint={t.team.renameHint}
             style={({ pressed }) => [
               styles.nameWrap,
               pressed && { opacity: 0.6 },
@@ -72,23 +74,30 @@ export function TeamCard({ team, targetScore, isLeader, onRename }: Props) {
               numberOfLines={1}
               adjustsFontSizeToFit
               minimumFontScale={0.6}
+              maxFontSizeMultiplier={FONT_CAP.board}
             >
               {name}
             </Text>
             <Ionicons name="pencil" size={13} color={teamColor} style={styles.editIcon} />
           </Pressable>
           {isLeader ? (
-            <View style={[styles.leaderPill, { borderColor: teamColor }]}>
-              <Text style={[styles.leaderText, { color: teamColor }]}>
+            <View
+              style={[styles.leaderPill, { borderColor: teamColor }]}
+              accessibilityElementsHidden
+              importantForAccessibility="no-hide-descendants"
+            >
+              <Text style={[styles.leaderText, { color: teamText }]} maxFontSizeMultiplier={FONT_CAP.board}>
                 {t.chrome.leader}
               </Text>
             </View>
-          ) : (
-            <View style={styles.leaderPillSpacer} />
-          )}
+          ) : null}
         </View>
 
-        <View style={styles.scoreRow}>
+        <View
+          style={styles.scoreRow}
+          accessible
+          accessibilityLabel={t.team.scoreA11y(name, team.score, targetScore, remaining, isLeader)}
+        >
           <AnimatedScore
             value={team.score}
             style={{
@@ -100,8 +109,16 @@ export function TeamCard({ team, targetScore, isLeader, onRename }: Props) {
             glowColor={teamGlow}
           />
           <View style={styles.targetCol}>
-            <Text style={styles.targetSlash}>/ {targetScore}</Text>
-            <Text style={styles.remaining}>
+            <Text style={styles.targetSlash} maxFontSizeMultiplier={FONT_CAP.numeral}>
+              / {targetScore}
+            </Text>
+            <Text
+              style={styles.remaining}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.85}
+              maxFontSizeMultiplier={FONT_CAP.numeral}
+            >
               {remaining === 0 ? t.team.arrived : t.team.toWin(remaining)}
             </Text>
           </View>
@@ -162,13 +179,10 @@ const makeStyles = (theme: Theme) =>
       borderRadius: radii.pill,
       borderWidth: 1,
     },
-    leaderPillSpacer: {
-      width: 0,
-    },
     leaderText: {
-      fontSize: 10,
+      fontSize: 12,
       fontWeight: '800',
-      letterSpacing: 1.2,
+      letterSpacing: 0.8,
     },
     scoreRow: {
       flexDirection: 'row',
@@ -185,6 +199,7 @@ const makeStyles = (theme: Theme) =>
     targetCol: {
       marginLeft: spacing.sm,
       paddingBottom: 8,
+      flexShrink: 0,
     },
     targetSlash: {
       color: theme.textDim,
@@ -192,9 +207,10 @@ const makeStyles = (theme: Theme) =>
       fontWeight: '600',
     },
     remaining: {
-      color: theme.textFaint,
-      fontSize: 11,
+      color: theme.textDim,
+      fontSize: 14,
+      fontWeight: '700',
       marginTop: 1,
-      letterSpacing: 0.3,
+      letterSpacing: 0.2,
     },
   });

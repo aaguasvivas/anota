@@ -1,11 +1,20 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect, useRef, useState } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
-import { radii } from '../constants/layout';
+import {
+  InputAccessoryView,
+  Keyboard,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
+import { FONT_CAP, radii } from '../constants/layout';
 import { useT } from '../i18n';
 import { useTheme } from '../theme/ThemeProvider';
 import { useThemedStyles } from '../theme/makeStyles';
-import { Theme } from '../theme/themes';
+import { inkOn, Theme } from '../theme/themes';
 
 type Props = {
   value: number;
@@ -13,9 +22,11 @@ type Props = {
   onPressLong?: () => void;
 };
 
-// Compact target indicator. Tap to edit inline - pill becomes a number
-// input. Blur or submit commits; tap outside the pill or hit return ends
-// the edit.
+const ACCESSORY_ID = 'targetPillBar';
+
+// Compact target indicator. Tap to edit inline: the pill becomes a number
+// input. The iOS number pad has no return key, so a Done bar above it ends
+// the edit; dismissing the keyboard blurs the input, and blur commits.
 export function TargetPill({ value, onChange, onPressLong }: Props) {
   const { t } = useT();
   const theme = useTheme();
@@ -47,7 +58,9 @@ export function TargetPill({ value, onChange, onPressLong }: Props) {
   if (editing) {
     return (
       <View style={[styles.pill, styles.pillEditing]}>
-        <Text style={styles.label}>{t.chrome.target.toUpperCase()}</Text>
+        <Text style={styles.label} numberOfLines={1} maxFontSizeMultiplier={FONT_CAP.numeral}>
+          {t.chrome.target.toUpperCase()}
+        </Text>
         <TextInput
           ref={ref}
           value={draft}
@@ -59,9 +72,27 @@ export function TargetPill({ value, onChange, onPressLong }: Props) {
           onSubmitEditing={commit}
           onBlur={commit}
           returnKeyType="done"
+          inputAccessoryViewID={ACCESSORY_ID}
           style={styles.input}
+          maxFontSizeMultiplier={FONT_CAP.numeral}
           accessibilityLabel={t.chrome.target}
         />
+        {Platform.OS === 'ios' ? (
+          <InputAccessoryView nativeID={ACCESSORY_ID}>
+            <View style={styles.bar}>
+              <Pressable
+                onPress={() => Keyboard.dismiss()}
+                accessibilityRole="button"
+                accessibilityLabel={t.chrome.done}
+                style={({ pressed }) => [styles.doneBtn, pressed && { opacity: 0.8 }]}
+              >
+                <Text style={[styles.doneText, { color: inkOn(theme.gold, theme) }]} maxFontSizeMultiplier={FONT_CAP.keypad}>
+                  {t.chrome.done}
+                </Text>
+              </Pressable>
+            </View>
+          </InputAccessoryView>
+        ) : null}
       </View>
     );
   }
@@ -75,8 +106,12 @@ export function TargetPill({ value, onChange, onPressLong }: Props) {
       accessibilityHint={t.chrome.targetChange}
       style={({ pressed }) => [styles.pill, pressed && { opacity: 0.7 }]}
     >
-      <Text style={styles.label}>{t.chrome.target.toUpperCase()}</Text>
-      <Text style={styles.value}>{value}</Text>
+      <Text style={styles.label} numberOfLines={1} maxFontSizeMultiplier={FONT_CAP.numeral}>
+        {t.chrome.target.toUpperCase()}
+      </Text>
+      <Text style={styles.value} maxFontSizeMultiplier={FONT_CAP.numeral}>
+        {value}
+      </Text>
       <Ionicons name="pencil" size={11} color={theme.gold} style={styles.hint} />
     </Pressable>
   );
@@ -101,7 +136,7 @@ const makeStyles = (theme: Theme) =>
     },
     label: {
       color: theme.gold,
-      fontSize: 10,
+      fontSize: 12,
       fontWeight: '800',
       letterSpacing: 1.2,
       textTransform: 'uppercase',
@@ -123,5 +158,26 @@ const makeStyles = (theme: Theme) =>
       minWidth: 38,
       padding: 0,
       textAlign: 'left',
+    },
+    bar: {
+      height: 44,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'flex-end',
+      paddingHorizontal: 16,
+      backgroundColor: theme.bg,
+      borderTopWidth: 1,
+      borderTopColor: theme.hairline,
+    },
+    doneBtn: {
+      minHeight: 36,
+      paddingHorizontal: 16,
+      borderRadius: radii.pill,
+      backgroundColor: theme.gold,
+      justifyContent: 'center',
+    },
+    doneText: {
+      fontSize: 15,
+      fontWeight: '800',
     },
   });

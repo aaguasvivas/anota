@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
-import { Animated, StyleSheet, View } from 'react-native';
+import { Animated, Easing, StyleSheet, View } from 'react-native';
+import { useReduceMotion } from '../hooks/useReduceMotion';
 import { useThemedStyles } from '../theme/makeStyles';
 import { Theme } from '../theme/themes';
 
@@ -13,15 +14,26 @@ type Props = {
 export function ProgressBar({ progress, color, glowColor, height = 8 }: Props) {
   const styles = useThemedStyles(makeStyles);
   const anim = useRef(new Animated.Value(progress)).current;
+  const reduceMotion = useReduceMotion();
 
   useEffect(() => {
+    if (reduceMotion) {
+      // No overshoot: a short ease to the new length.
+      Animated.timing(anim, {
+        toValue: progress,
+        duration: 200,
+        easing: Easing.out(Easing.quad),
+        useNativeDriver: false,
+      }).start();
+      return;
+    }
     Animated.spring(anim, {
       toValue: progress,
       useNativeDriver: false,
       bounciness: 6,
       speed: 14,
     }).start();
-  }, [progress, anim]);
+  }, [progress, anim, reduceMotion]);
 
   // Clamp: the bouncy spring overshoots its target, and an unclamped
   // interpolation lets a reset-to-zero dip below 0%. A negative percent width

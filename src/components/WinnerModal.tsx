@@ -1,10 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Sharing from 'expo-sharing';
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
+  AccessibilityInfo,
   Animated,
   BackHandler,
+  Easing,
   Pressable,
   Share,
   StyleSheet,
@@ -12,11 +14,12 @@ import {
   View,
 } from 'react-native';
 import { captureRef } from 'react-native-view-shot';
-import { radii, spacing } from '../constants/layout';
+import { FONT_CAP, radii, spacing } from '../constants/layout';
+import { useReduceMotion } from '../hooks/useReduceMotion';
 import { teamDisplayName, useT } from '../i18n';
 import { useTheme, useThemeControls } from '../theme/ThemeProvider';
 import { useThemedStyles } from '../theme/makeStyles';
-import { getTheme, Theme } from '../theme/themes';
+import { getTheme, inkOn, Theme } from '../theme/themes';
 import type { MatchState, Team } from '../types';
 import { DominoTile } from './DominoTile';
 import { ShareCard } from './ShareCard';
@@ -28,6 +31,14 @@ type Props = {
   onKeepPlaying: () => void;
 };
 
+// The card waits this long so the winning score's pop and the progress bar
+// finishing are seen on the board first (and a keypad win's sheet is gone).
+export const WIN_ENTRANCE_DELAY_MS = 320;
+// The buttons ignore taps until the card has settled: the card appears over
+// the scoring controls, and a fast second tap meant for the board must not
+// start a new match or open the share sheet.
+const ARM_DELAY_MS = WIN_ENTRANCE_DELAY_MS + 300;
+
 // A plain overlay, not a react-native Modal. The keypad submit that wins the
 // match dismisses the ScoreKeypad modal and shows this celebration in the
 // same commit; as an overlay that never stacks UIKit presentations, and the
@@ -37,9 +48,12 @@ export function WinnerModal({ visible, state, onNewMatch, onKeepPlaying }: Props
   const theme = useTheme();
   const { proUnlocked } = useThemeControls();
   const styles = useThemedStyles(makeStyles);
-  const scale = useRef(new Animated.Value(0.6)).current;
+  const reduceMotion = useReduceMotion();
+  const scale = useRef(new Animated.Value(0.85)).current;
   const opacity = useRef(new Animated.Value(0)).current;
   const cardRef = useRef<View>(null);
+  const resultRef = useRef<View>(null);
+  const [armed, setArmed] = useState(false);
   // Free users always share the Classic Felt card; Pro shares the active theme.
   const cardTheme = proUnlocked ? theme : getTheme('classic');
 
@@ -47,24 +61,51 @@ export function WinnerModal({ visible, state, onNewMatch, onKeepPlaying }: Props
   const subtitle = useMemo(() => pick(t.winner.subtitles), [visible, t, pick]);
 
   useEffect(() => {
-    if (visible) {
-      scale.setValue(0.6);
+    if (!visible) {
+      // Reset while hidden so the next win never paints a frame at full size.
       opacity.setValue(0);
-      Animated.parallel([
-        Animated.spring(scale, {
-          toValue: 1,
-          useNativeDriver: true,
-          bounciness: 14,
-          speed: 12,
-        }),
-        Animated.timing(opacity, {
-          toValue: 1,
-          duration: 250,
-          useNativeDriver: true,
-        }),
-      ]).start();
+      scale.setValue(0.85);
+      return;
     }
-  }, [visible, scale, opacity]);
+    opacity.setValue(0);
+    scale.setValue(reduceMotion ? 1 : 0.85);
+    const fade = Animated.timing(opacity, {
+      toValue: 1,
+      duration: 220,
+      easing: Easing.out(Easing.quad),
+      useNativeDriver: true,
+    });
+    Animated.sequence([
+      Animated.delay(WIN_ENTRANCE_DELAY_MS),
+      reduceMotion
+        ? fade
+        : Animated.parallel([
+            Animated.spring(scale, {
+              toValue: 1,
+              bounciness: 12,
+              speed: 14,
+              useNativeDriver: true,
+            }),
+            fade,
+          ]),
+    ]).start();
+  }, [visible, reduceMotion, scale, opacity]);
+
+  useEffect(() => {
+    setArmed(false);
+    if (!visible) return;
+    const id = setTimeout(() => setArmed(true), ARM_DELAY_MS);
+    return () => clearTimeout(id);
+  }, [visible]);
+
+  // Move VoiceOver to the result once the card is in.
+  useEffect(() => {
+    if (!visible) return;
+    const id = setTimeout(() => {
+      if (resultRef.current) AccessibilityInfo.sendAccessibilityEvent(resultRef.current, 'focus');
+    }, ARM_DELAY_MS);
+    return () => clearTimeout(id);
+  }, [visible]);
 
   // The Modal used to handle Android's back button; the overlay does it here.
   useEffect(() => {
@@ -106,97 +147,153 @@ export function WinnerModal({ visible, state, onNewMatch, onKeepPlaying }: Props
   }
 
   return (
-    <Animated.View style={[styles.backdrop, { opacity }]}>
-        <View collapsable={false} style={{ position: 'absolute', left: -9999, top: 0 }}>
-          <View ref={cardRef} collapsable={false}>
-            <ShareCard
-              theme={cardTheme}
-              winnerName={winnerName}
-              loserName={loserName}
-              winnerScore={winner.score}
-              loserScore={loser.score}
-              winnerId={winner.id}
-            />
-          </View>
-        </View>
-        <Animated.View
-          style={[
-            styles.card,
-            { opacity, transform: [{ scale }], borderColor: winnerColor },
-          ]}
-        >
-          <LinearGradient
-            colors={[
-              `${winnerColor}33`,
-              'rgba(0,0,0,0)',
-              `${winnerColor}22`,
-            ]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={StyleSheet.absoluteFill}
+    <Animated.View
+      style={[styles.backdrop, { opacity }]}
+      accessibilityViewIsModal
+      onAccessibilityEscape={onKeepPlaying}
+    >
+      <View
+        collapsable={false}
+        style={{ position: 'absolute', left: -9999, top: 0 }}
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
+      >
+        <View ref={cardRef} collapsable={false}>
+          <ShareCard
+            theme={cardTheme}
+            winnerName={winnerName}
+            loserName={loserName}
+            winnerScore={winner.score}
+            loserScore={loser.score}
+            winnerId={winner.id}
           />
+        </View>
+      </View>
+      <Animated.View
+        style={[
+          styles.card,
+          { transform: [{ scale }], borderColor: winnerColor },
+        ]}
+      >
+        <LinearGradient
+          colors={[
+            `${winnerColor}33`,
+            'rgba(0,0,0,0)',
+            `${winnerColor}22`,
+          ]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={StyleSheet.absoluteFill}
+        />
 
-          <View style={styles.tileRow}>
-            <DominoTile top={6} bottom={6} pipColor={winnerColor} size={42} />
-          </View>
+        <View style={styles.tileRow}>
+          <DominoTile top={6} bottom={6} pipColor={winnerColor} size={42} />
+        </View>
 
-          <Text style={[styles.phrase, { color: winnerColor }]}>{phrase}</Text>
-          <Text style={styles.subtitle}>{subtitle}</Text>
+        <View
+          ref={resultRef}
+          accessible
+          accessibilityLabel={`${phrase} ${winnerName} ${winner.score}, ${loserName} ${loser.score}`}
+        >
+          <Text style={[styles.phrase, { color: winnerColor }]} maxFontSizeMultiplier={FONT_CAP.numeral}>
+            {phrase}
+          </Text>
+          <Text style={styles.subtitle} maxFontSizeMultiplier={FONT_CAP.winnerLabel}>
+            {subtitle}
+          </Text>
 
           <View style={styles.scoreBlock}>
-            <Text style={styles.winnerName} numberOfLines={1}>
+            <Text
+              style={styles.winnerName}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.75}
+              maxFontSizeMultiplier={FONT_CAP.winnerLabel}
+            >
               {winnerName}
             </Text>
-            <Text style={[styles.winnerScore, { color: winnerColor }]}>{winner.score}</Text>
+            <Text style={[styles.winnerScore, { color: winnerColor }]} maxFontSizeMultiplier={FONT_CAP.numeral}>
+              {winner.score}
+            </Text>
             <View style={styles.versus}>
               <View style={[styles.divider, { backgroundColor: `${winnerColor}55` }]} />
-              <Text style={styles.vsText}>{t.chrome.vs}</Text>
+              <Text style={styles.vsText} maxFontSizeMultiplier={FONT_CAP.winnerLabel}>
+                {t.chrome.vs}
+              </Text>
               <View style={[styles.divider, { backgroundColor: `${winnerColor}55` }]} />
             </View>
-            <Text style={styles.loserLine}>
+            <Text
+              style={styles.loserLine}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.75}
+              maxFontSizeMultiplier={FONT_CAP.winnerLabel}
+            >
               {loserName}  ·  {loser.score}
             </Text>
           </View>
+        </View>
 
-          <View style={styles.actions}>
-            <Pressable
-              onPress={onKeepPlaying}
-              accessibilityRole="button"
-              accessibilityLabel={t.winner.keepPlaying}
-              style={({ pressed }) => [
-                styles.secondaryBtn,
-                pressed && { opacity: 0.6 },
-              ]}
-            >
-              <Text style={styles.secondaryText}>{t.winner.keepPlaying}</Text>
-            </Pressable>
-            <Pressable
-              onPress={onNewMatch}
-              accessibilityRole="button"
-              accessibilityLabel={t.winner.newMatch}
-              style={({ pressed }) => [
-                styles.primaryBtn,
-                { backgroundColor: winnerColor },
-                pressed && { opacity: 0.85 },
-              ]}
-            >
-              <Text style={styles.primaryText}>{t.winner.newMatch}</Text>
-            </Pressable>
-          </View>
-
+        <View style={styles.actions}>
           <Pressable
-            onPress={shareResult}
-            hitSlop={10}
+            onPress={onKeepPlaying}
+            disabled={!armed}
             accessibilityRole="button"
-            accessibilityLabel={t.winner.share}
-            style={styles.shareBtn}
+            accessibilityLabel={t.winner.keepPlaying}
+            style={({ pressed }) => [
+              styles.secondaryBtn,
+              pressed && { opacity: 0.6 },
+            ]}
           >
-            <View style={styles.shareInner}>
-              <Ionicons name="share-outline" size={15} color={theme.gold} />
-              <Text style={styles.shareText}>{t.winner.share}</Text>
-            </View>
+            <Text
+              style={styles.secondaryText}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.8}
+              maxFontSizeMultiplier={FONT_CAP.winnerButton}
+            >
+              {t.winner.keepPlaying}
+            </Text>
           </Pressable>
-        </Animated.View>
+          <Pressable
+            onPress={onNewMatch}
+            disabled={!armed}
+            accessibilityRole="button"
+            accessibilityLabel={t.winner.newMatch}
+            style={({ pressed }) => [
+              styles.primaryBtn,
+              { backgroundColor: winnerColor },
+              pressed && { opacity: 0.85 },
+            ]}
+          >
+            <Text
+              style={[styles.primaryText, { color: inkOn(winnerColor, theme) }]}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.8}
+              maxFontSizeMultiplier={FONT_CAP.winnerButton}
+            >
+              {t.winner.newMatch}
+            </Text>
+          </Pressable>
+        </View>
+
+        <Pressable
+          onPress={shareResult}
+          disabled={!armed}
+          hitSlop={10}
+          accessibilityRole="button"
+          accessibilityLabel={t.winner.share}
+          style={styles.shareBtn}
+        >
+          <View style={styles.shareInner}>
+            <Ionicons name="share-outline" size={15} color={theme.gold} />
+            <Text style={styles.shareText} maxFontSizeMultiplier={FONT_CAP.winnerLabel}>
+              {t.winner.share}
+            </Text>
+          </View>
+        </Pressable>
+      </Animated.View>
     </Animated.View>
   );
 }
@@ -274,7 +371,7 @@ const makeStyles = (theme: Theme) =>
   },
   vsText: {
     color: theme.textDim,
-    fontSize: 11,
+    fontSize: 12,
     letterSpacing: 1.5,
     fontWeight: '700',
     textTransform: 'uppercase',
@@ -292,11 +389,11 @@ const makeStyles = (theme: Theme) =>
   primaryBtn: {
     flex: 1.4,
     paddingVertical: 16,
+    paddingHorizontal: 8,
     borderRadius: radii.md,
     alignItems: 'center',
   },
   primaryText: {
-    color: theme.tileInk,
     fontSize: 15,
     fontWeight: '800',
     letterSpacing: 0.3,
@@ -304,6 +401,7 @@ const makeStyles = (theme: Theme) =>
   secondaryBtn: {
     flex: 1,
     paddingVertical: 16,
+    paddingHorizontal: 8,
     borderRadius: radii.md,
     borderWidth: 1,
     borderColor: theme.hairline,

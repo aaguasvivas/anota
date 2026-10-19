@@ -1,11 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect, useState } from 'react';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
-import { radii, spacing } from '../constants/layout';
+import { FONT_CAP, radii, spacing } from '../constants/layout';
+import { useReduceMotion } from '../hooks/useReduceMotion';
 import { teamDisplayName, useT } from '../i18n';
 import { useTheme } from '../theme/ThemeProvider';
 import { useThemedStyles } from '../theme/makeStyles';
-import { Theme } from '../theme/themes';
+import { inkOn, Theme } from '../theme/themes';
 import type { Team } from '../types';
 import { tapLight } from '../utils/haptics';
 
@@ -22,10 +23,12 @@ export function ScoreKeypad({ visible, team, onCancel, onSubmit }: Props) {
   const { t } = useT();
   const theme = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const reduceMotion = useReduceMotion();
   const [entry, setEntry] = useState('');
   const color = team ? theme.teams[team.id].color : theme.gold;
   const name = team ? teamDisplayName(team, t) : '';
-  const canAdd = parseInt(entry, 10) > 0;
+  const n = parseInt(entry, 10) || 0;
+  const canAdd = n > 0;
 
   useEffect(() => {
     if (visible) setEntry('');
@@ -40,28 +43,33 @@ export function ScoreKeypad({ visible, team, onCancel, onSubmit }: Props) {
     setEntry((prev) => prev.slice(0, -1));
   }
   function commit() {
-    const parsed = parseInt(entry, 10);
-    if (Number.isFinite(parsed) && parsed > 0) onSubmit(parsed);
+    if (canAdd) onSubmit(n);
   }
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onCancel}>
+    <Modal
+      visible={visible}
+      transparent
+      animationType={reduceMotion ? 'fade' : 'slide'}
+      onRequestClose={onCancel}
+    >
       <View style={styles.backdrop}>
-        <Pressable
-          style={StyleSheet.absoluteFill}
-          onPress={onCancel}
-          accessibilityRole="button"
-          accessibilityLabel={t.chrome.cancel}
-        />
+        <Pressable style={StyleSheet.absoluteFill} onPress={onCancel} accessible={false} />
         <View style={[styles.sheet, { borderColor: `${color}66` }]}>
-          <View style={styles.handle} />
-          <Text style={styles.title}>{t.customModal.titleFor}</Text>
-          <Text style={[styles.team, { color }]} numberOfLines={1}>
+          <Text style={styles.title} maxFontSizeMultiplier={FONT_CAP.keypad}>
+            {t.customModal.titleFor}
+          </Text>
+          <Text style={[styles.team, { color }]} numberOfLines={1} maxFontSizeMultiplier={FONT_CAP.keypad}>
             {name}
           </Text>
 
-          <Text style={[styles.entry, { color }]} numberOfLines={1}>
+          <Text style={[styles.entry, { color }]} numberOfLines={1} maxFontSizeMultiplier={FONT_CAP.numeral}>
             {entry || '0'}
+          </Text>
+          {/* The sheet covers the team's score, so show where this entry
+              lands before Add. The line always renders so nothing jumps. */}
+          <Text style={styles.preview} numberOfLines={1} maxFontSizeMultiplier={FONT_CAP.numeral}>
+            {team ? (canAdd ? `${team.score} → ${team.score + n}` : `${team.score}`) : ''}
           </Text>
           <View style={[styles.rule, { backgroundColor: `${color}55` }]} />
 
@@ -75,7 +83,7 @@ export function ScoreKeypad({ visible, team, onCancel, onSubmit }: Props) {
                 style={({ pressed }) => [styles.key, pressed && styles.keyPressed]}
                 android_ripple={{ color: 'rgba(255,255,255,0.12)' }}
               >
-                <Text style={styles.keyText}>{d}</Text>
+                <Text style={styles.keyText} maxFontSizeMultiplier={FONT_CAP.numeral}>{d}</Text>
               </Pressable>
             ))}
             <Pressable
@@ -94,7 +102,7 @@ export function ScoreKeypad({ visible, team, onCancel, onSubmit }: Props) {
               style={({ pressed }) => [styles.key, pressed && styles.keyPressed]}
               android_ripple={{ color: 'rgba(255,255,255,0.12)' }}
             >
-              <Text style={styles.keyText}>0</Text>
+              <Text style={styles.keyText} maxFontSizeMultiplier={FONT_CAP.numeral}>0</Text>
             </Pressable>
             <Pressable
               onPress={commit}
@@ -108,7 +116,13 @@ export function ScoreKeypad({ visible, team, onCancel, onSubmit }: Props) {
                 pressed && canAdd && styles.keyPressed,
               ]}
             >
-              <Text style={[styles.addText, { color: canAdd ? theme.tileInk : theme.textFaint }]}>
+              <Text
+                style={[styles.addText, { color: canAdd ? inkOn(color, theme) : theme.textDim }]}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.8}
+                maxFontSizeMultiplier={FONT_CAP.numeral}
+              >
                 {t.chrome.add}
               </Text>
             </Pressable>
@@ -121,7 +135,9 @@ export function ScoreKeypad({ visible, team, onCancel, onSubmit }: Props) {
             accessibilityLabel={t.chrome.cancel}
             style={({ pressed }) => [styles.cancel, pressed && { opacity: 0.6 }]}
           >
-            <Text style={styles.cancelText}>{t.chrome.cancel}</Text>
+            <Text style={styles.cancelText} maxFontSizeMultiplier={FONT_CAP.keypad}>
+              {t.chrome.cancel}
+            </Text>
           </Pressable>
         </View>
       </View>
@@ -142,16 +158,8 @@ const makeStyles = (theme: Theme) =>
     borderTopRightRadius: radii.xl,
     borderWidth: 1,
     paddingHorizontal: spacing.xl,
-    paddingTop: spacing.sm,
+    paddingTop: spacing.lg,
     paddingBottom: spacing.xxl + 12,
-  },
-  handle: {
-    width: 44,
-    height: 5,
-    borderRadius: 3,
-    backgroundColor: theme.divider,
-    alignSelf: 'center',
-    marginBottom: spacing.md,
   },
   title: {
     color: theme.textDim,
@@ -173,10 +181,18 @@ const makeStyles = (theme: Theme) =>
     fontVariant: ['tabular-nums'],
     marginTop: spacing.sm,
   },
+  preview: {
+    color: theme.text,
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '700',
+    textAlign: 'center',
+    fontVariant: ['tabular-nums'],
+  },
   rule: {
     height: 2,
     borderRadius: 1,
-    marginTop: spacing.xs,
+    marginTop: spacing.sm,
     marginBottom: spacing.md,
   },
   grid: {
@@ -191,6 +207,7 @@ const makeStyles = (theme: Theme) =>
     borderRadius: radii.md,
     alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: 6,
     backgroundColor: 'rgba(255,255,255,0.04)',
     borderWidth: 1,
     borderColor: theme.hairline,
@@ -213,7 +230,11 @@ const makeStyles = (theme: Theme) =>
   cancel: {
     alignSelf: 'center',
     marginTop: spacing.md,
-    paddingVertical: spacing.xs,
+    minHeight: 44,
+    minWidth: 88,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.sm,
   },
   cancelText: {
     color: theme.textDim,

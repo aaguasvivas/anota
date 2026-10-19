@@ -11,6 +11,12 @@ export function tapMedium() {
   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
 }
 
+// Removals (Undo, remove a round) feel different from adding points.
+export function tapSoft() {
+  if (isHapticsMuted()) return;
+  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Soft).catch(() => {});
+}
+
 export function notifySuccess() {
   if (isHapticsMuted()) return;
   Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});

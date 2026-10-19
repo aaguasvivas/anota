@@ -3,7 +3,7 @@ import { useKeepAwake } from 'expo-keep-awake';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
 import React, { useCallback, useEffect, useState } from 'react';
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { AccessibilityInfo, Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
 import { initAds } from './src/ads/ads';
@@ -20,11 +20,12 @@ import { ScorePad } from './src/components/ScorePad';
 import { SettingsModal } from './src/components/SettingsModal';
 import { TargetPill } from './src/components/TargetPill';
 import { TeamCard } from './src/components/TeamCard';
-import { WinnerModal } from './src/components/WinnerModal';
+import { WIN_ENTRANCE_DELAY_MS, WinnerModal } from './src/components/WinnerModal';
 import { useCaptureHarness } from './src/dev/captureHarness';
-import { radii, spacing } from './src/constants/layout';
+import { FONT_CAP, radii, spacing } from './src/constants/layout';
 import { useLayoutMetrics } from './src/hooks/useLayoutMetrics';
 import { useMatch } from './src/hooks/useMatch';
+import { applyPoints, applyRemoveRound, applyUndo } from './src/match/reducer';
 import { LanguageProvider, teamDisplayName, useT } from './src/i18n';
 import {
   endIap,
@@ -35,13 +36,14 @@ import {
 } from './src/iap/purchases';
 import { useThemedStyles } from './src/theme/makeStyles';
 import { ThemeProvider, useTheme, useThemeControls } from './src/theme/ThemeProvider';
-import { Theme } from './src/theme/themes';
+import { Theme, ThemeId } from './src/theme/themes';
 import type { Round, TeamId } from './src/types';
 import {
   notifySuccess,
   notifyWarning,
   tapLight,
   tapMedium,
+  tapSoft,
 } from './src/utils/haptics';
 import { hydratePrefs } from './src/utils/preferences';
 
@@ -86,6 +88,11 @@ function Scorekeeper() {
   const [confirmReset, setConfirmReset] = useState(false);
   const [roundToRemove, setRoundToRemove] = useState<Round | null>(null);
   const [proOpen, setProOpen] = useState(false);
+  // The theme tile that opened the Pro sheet, so the sheet can name it and
+  // apply it after a purchase.
+  const [proThemeId, setProThemeId] = useState<ThemeId | null>(null);
+  // The team name the user tapped, so Settings opens with that field focused.
+  const [focusTeam, setFocusTeam] = useState<TeamId | null>(null);
 
   // DEV capture harness (inert in release builds).
   const matchStateRef = React.useRef(match.state);
@@ -160,7 +167,9 @@ function Scorekeeper() {
   // modals on the new architecture makes UIKit refuse the presentation and
   // desyncs native from JS, which froze the app. Settings (the only real
   // modal) closes, revealing the overlay behind it.
-  const openPro = useCallback(() => {
+  const openPro = useCallback((themeId?: ThemeId) => {
+    setProThemeId(themeId ?? null);
+    setFocusTeam(null);
     setSettingsOpen(false);
     setProOpen(true);
   }, []);
@@ -171,16 +180,37 @@ function Scorekeeper() {
     setSettingsOpen(true);
   }, []);
 
-  // Celebrate when an (unacknowledged) winner appears.
+  // Celebrate when an (unacknowledged) winner appears, timed with the card's
+  // entrance rather than on top of the scoring tap.
   useEffect(() => {
-    if (showWinner) {
-      notifySuccess();
-    }
+    if (!showWinner) return;
+    const id = setTimeout(notifySuccess, WIN_ENTRANCE_DELAY_MS);
+    return () => clearTimeout(id);
   }, [showWinner]);
 
+  // VoiceOver users hear the new score after every change.
+  function announceScore(teamId: TeamId, score: number) {
+    AccessibilityInfo.announceForAccessibilityWithOptions(
+      `${teamDisplayName(match.state.teams[teamId], t)}, ${score}`,
+      { queue: true },
+    );
+  }
+
   function handleAdd(teamId: TeamId, points: number) {
-    tapMedium();
+    const next = applyPoints(match.state, teamId, points);
+    // A winning add gets the success pattern with the card instead.
+    if (!(next.winnerId && !next.winnerAcknowledged)) tapMedium();
     match.addPoints(teamId, points);
+    announceScore(teamId, next.teams[teamId].score);
+  }
+
+  function handleUndo() {
+    const last = match.state.rounds[0];
+    if (!last) return;
+    tapSoft();
+    const next = applyUndo(match.state);
+    match.undoLast();
+    announceScore(last.teamId, next.teams[last.teamId].score);
   }
 
   function handleResetConfirm() {
@@ -191,14 +221,25 @@ function Scorekeeper() {
 
   function confirmRemoveRound() {
     if (!roundToRemove) return;
-    tapMedium();
+    tapSoft();
+    const next = applyRemoveRound(match.state, roundToRemove.id);
     match.removeRound(roundToRemove.id);
+    announceScore(roundToRemove.teamId, next.teams[roundToRemove.teamId].score);
     setRoundToRemove(null);
   }
 
-  function openRename() {
+  function openSettings() {
+    tapLight();
+    setFocusTeam(null);
     setSettingsOpen(true);
   }
+
+  function openRename(teamId: TeamId) {
+    setFocusTeam(teamId);
+    setSettingsOpen(true);
+  }
+
+  const lastRound = match.state.rounds[0] ?? null;
 
   const removeRoundMessage = roundToRemove
     ? t.history.removeRoundConfirm(
@@ -233,22 +274,18 @@ function Scorekeeper() {
       <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
         <View style={styles.header}>
           <View style={styles.brand}>
-            <Text style={styles.brandWord}>{t.brand.name}</Text>
+            <Text style={styles.brandWord} maxFontSizeMultiplier={FONT_CAP.board}>
+              {t.brand.name}
+            </Text>
             <View style={styles.brandDot} />
           </View>
           <TargetPill
             value={match.state.targetScore}
             onChange={match.setTargetScore}
-            onPressLong={() => {
-              tapLight();
-              setSettingsOpen(true);
-            }}
+            onPressLong={openSettings}
           />
           <Pressable
-            onPress={() => {
-              tapLight();
-              setSettingsOpen(true);
-            }}
+            onPress={openSettings}
             style={({ pressed }) => [
               styles.iconBtn,
               pressed && { opacity: 0.6 },
@@ -267,7 +304,8 @@ function Scorekeeper() {
               team={match.state.teams.A}
               targetScore={match.state.targetScore}
               isLeader={match.leader === 'A'}
-              onRename={openRename}
+              onRename={() => openRename('A')}
+              metrics={m}
             />
             <View style={styles.padWrap}>
               <ScorePad
@@ -278,11 +316,12 @@ function Scorekeeper() {
                   tapLight();
                   setCustomFor(id);
                 }}
+                metrics={m}
               />
             </View>
           </View>
 
-          <View style={styles.divider}>
+          <View style={[styles.divider, { paddingVertical: m.dividerPadV }]}>
             <RoundStrip
               rounds={match.state.rounds}
               teams={match.state.teams}
@@ -298,7 +337,8 @@ function Scorekeeper() {
               team={match.state.teams.B}
               targetScore={match.state.targetScore}
               isLeader={match.leader === 'B'}
-              onRename={openRename}
+              onRename={() => openRename('B')}
+              metrics={m}
             />
             <View style={styles.padWrap}>
               <ScorePad
@@ -309,31 +349,49 @@ function Scorekeeper() {
                   tapLight();
                   setCustomFor(id);
                 }}
+                metrics={m}
               />
             </View>
           </View>
         </View>
 
-        <View style={styles.footer}>
+        <View style={[styles.footer, { paddingBottom: showBanner ? spacing.sm : spacing.xs }]}>
+          {/* Undo names the entry it removes: the team's color and the points. */}
           <Pressable
-            onPress={() => {
-              if (match.state.rounds.length === 0) return;
-              tapLight();
-              match.undoLast();
-            }}
-            disabled={match.state.rounds.length === 0}
+            onPress={handleUndo}
+            disabled={!lastRound}
             accessibilityRole="button"
-            accessibilityLabel={t.chrome.undo}
-            accessibilityState={{ disabled: match.state.rounds.length === 0 }}
+            accessibilityLabel={
+              lastRound
+                ? t.chrome.undoA11y(
+                    lastRound.points,
+                    teamDisplayName(match.state.teams[lastRound.teamId], t),
+                  )
+                : t.chrome.undo
+            }
+            accessibilityState={{ disabled: !lastRound }}
             style={({ pressed }) => [
               styles.footerBtn,
               pressed && { opacity: 0.7 },
-              match.state.rounds.length === 0 && { opacity: 0.35 },
+              !lastRound && { opacity: 0.35 },
             ]}
           >
             <View style={styles.footerBtnInner}>
               <Ionicons name="arrow-undo-outline" size={16} color={theme.textDim} />
-              <Text style={styles.footerBtnText}>{t.chrome.undo}</Text>
+              {lastRound ? (
+                <View
+                  style={[styles.undoDot, { backgroundColor: theme.teams[lastRound.teamId].color }]}
+                />
+              ) : null}
+              <Text
+                style={styles.footerBtnText}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.85}
+                maxFontSizeMultiplier={FONT_CAP.board}
+              >
+                {lastRound ? t.chrome.undoLast(lastRound.points) : t.chrome.undo}
+              </Text>
             </View>
           </Pressable>
           <Pressable
@@ -350,7 +408,15 @@ function Scorekeeper() {
           >
             <View style={styles.footerBtnInner}>
               <Ionicons name="reload-outline" size={16} color={theme.textDim} />
-              <Text style={styles.footerBtnText}>{t.chrome.newMatch}</Text>
+              <Text
+                style={styles.footerBtnText}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.85}
+                maxFontSizeMultiplier={FONT_CAP.board}
+              >
+                {t.chrome.newMatch}
+              </Text>
             </View>
           </Pressable>
         </View>
@@ -376,15 +442,12 @@ function Scorekeeper() {
         onClose={() => setSettingsOpen(false)}
         onRename={match.renameTeam}
         onTargetChange={match.setTargetScore}
-        onResetMatch={() => {
-          setSettingsOpen(false);
-          setConfirmReset(true);
-        }}
         onRequestPro={openPro}
         showRemoveAds={!adFree}
+        focusTeam={focusTeam}
       />
 
-      <ProSheet visible={proOpen} onClose={closePro} />
+      <ProSheet visible={proOpen} onClose={closePro} themeId={proThemeId} />
 
       <ConfirmDialog
         visible={confirmReset}
@@ -399,7 +462,7 @@ function Scorekeeper() {
       <ConfirmDialog
         visible={roundToRemove !== null}
         title={removeRoundMessage}
-        confirmLabel={t.chrome.confirm}
+        confirmLabel={t.history.removeButton}
         cancelLabel={t.chrome.cancel}
         destructive
         onConfirm={confirmRemoveRound}
@@ -485,7 +548,6 @@ const makeStyles = (theme: Theme) =>
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: spacing.sm,
   },
   footer: {
     flexDirection: 'row',
@@ -513,5 +575,11 @@ const makeStyles = (theme: Theme) =>
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
+    paddingHorizontal: 8,
+  },
+  undoDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
   },
 });

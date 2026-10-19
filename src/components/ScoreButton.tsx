@@ -1,7 +1,8 @@
 import React from 'react';
 import { Pressable, StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-native';
-import { radii } from '../constants/layout';
+import { FONT_CAP, radii } from '../constants/layout';
 import { useTheme } from '../theme/ThemeProvider';
+import { largeLabelInk } from '../theme/themes';
 
 type Props = {
   label: string;
@@ -23,7 +24,7 @@ export function ScoreButton({
 }: Props) {
   const theme = useTheme();
   const bg = subdued ? `${color}26` : color;
-  const labelColor = subdued ? color : theme.tile;
+  const labelColor = subdued ? color : largeLabelInk(color, theme);
   return (
     <Pressable
       onPress={onPress}
@@ -31,7 +32,9 @@ export function ScoreButton({
       accessibilityLabel={accessibilityLabel ?? label}
       style={({ pressed }) => [
         styles.base,
-        subdued && { borderColor: `${color}66`, borderWidth: 1 },
+        // Tinted chips sit flat: a drop shadow under tinted digits blurs them,
+        // most visibly on the light Bone theme.
+        subdued && { borderColor: `${color}66`, borderWidth: 1, shadowOpacity: 0, elevation: 0 },
         { backgroundColor: bg },
         pressed && styles.pressed,
         style,
@@ -39,7 +42,15 @@ export function ScoreButton({
       android_ripple={{ color: 'rgba(255,255,255,0.15)' }}
     >
       <View pointerEvents="none">
-        <Text style={[styles.label, { color: labelColor }]}>{label}</Text>
+        <Text
+          style={[styles.label, { color: labelColor }]}
+          numberOfLines={1}
+          adjustsFontSizeToFit
+          minimumFontScale={0.8}
+          maxFontSizeMultiplier={FONT_CAP.numeral}
+        >
+          {label}
+        </Text>
       </View>
     </Pressable>
   );

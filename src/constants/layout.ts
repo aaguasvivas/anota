@@ -22,3 +22,17 @@ export const QUICK_SCORES = [25, 30, 50] as const;
 export const TARGET_PRESETS = [100, 150, 200] as const;
 
 export const DEFAULT_TARGET = 200;
+
+// Dynamic Type caps (maxFontSizeMultiplier). The board is one screen that
+// never scrolls, so its text may grow only a little before it would push the
+// + Points buttons under the footer; sheets and dialogs can grow more, and the
+// scrolling Settings sheet the most. Numerals already auto-shrink to fit.
+export const FONT_CAP = {
+  numeral: 1,
+  board: 1.1,
+  keypad: 1.3,
+  overlay: 1.5,
+  winnerLabel: 1.3,
+  winnerButton: 1.15,
+  scroll: 2,
+} as const;

@@ -8,6 +8,9 @@ export type ThemeTier = 'free' | 'pro';
 export interface TeamColors {
   color: string;
   glow: string;
+  // The team color as small text on the felt (round chips, leads pill, UP
+  // badge). Equal to color except where color alone falls under 4.5:1.
+  text: string;
 }
 
 export interface Theme {
@@ -57,8 +60,8 @@ const classic: Theme = {
   gold: colors.gold,
   danger: colors.danger,
   teams: {
-    A: { color: teamPalette.A.color, glow: teamPalette.A.glow },
-    B: { color: teamPalette.B.color, glow: teamPalette.B.glow },
+    A: { color: teamPalette.A.color, glow: teamPalette.A.glow, text: '#F2717B' },
+    B: { color: teamPalette.B.color, glow: teamPalette.B.glow, text: teamPalette.B.color },
   },
 };
 
@@ -81,8 +84,8 @@ const midnight: Theme = {
   gold: '#6FA8FF',
   danger: '#E5484D',
   teams: {
-    A: { color: '#FF7A6B', glow: 'rgba(255, 122, 107, 0.35)' },
-    B: { color: '#57C8D6', glow: 'rgba(87, 200, 214, 0.35)' },
+    A: { color: '#FF7A6B', glow: 'rgba(255, 122, 107, 0.35)', text: '#FF7A6B' },
+    B: { color: '#57C8D6', glow: 'rgba(87, 200, 214, 0.35)', text: '#57C8D6' },
   },
 };
 
@@ -105,8 +108,8 @@ const mahogany: Theme = {
   gold: '#D9A05B',
   danger: '#E5484D',
   teams: {
-    A: { color: '#E0734A', glow: 'rgba(224, 115, 74, 0.35)' },
-    B: { color: '#7FB0C4', glow: 'rgba(127, 176, 196, 0.35)' },
+    A: { color: '#E0734A', glow: 'rgba(224, 115, 74, 0.35)', text: '#E0734A' },
+    B: { color: '#7FB0C4', glow: 'rgba(127, 176, 196, 0.35)', text: '#7FB0C4' },
   },
 };
 
@@ -129,8 +132,8 @@ const casino: Theme = {
   gold: '#E8C36B',
   danger: '#E5484D',
   teams: {
-    A: { color: '#EF9B5E', glow: 'rgba(239, 155, 94, 0.35)' },
-    B: { color: '#E89B7A', glow: 'rgba(232, 155, 122, 0.35)' },
+    A: { color: '#EF9B5E', glow: 'rgba(239, 155, 94, 0.35)', text: '#EF9B5E' },
+    B: { color: '#86B8F2', glow: 'rgba(134, 184, 242, 0.35)', text: '#86B8F2' },
   },
 };
 
@@ -148,13 +151,13 @@ const bone: Theme = {
   tileShadow: '#D8CDB4',
   tileInk: '#2A2117',
   text: '#2A2117',
-  textDim: 'rgba(42, 33, 23, 0.62)',
+  textDim: 'rgba(42, 33, 23, 0.72)',
   textFaint: 'rgba(42, 33, 23, 0.40)',
-  gold: '#B8862F',
+  gold: '#7A5714',
   danger: '#C0392B',
   teams: {
-    A: { color: '#C0432B', glow: 'rgba(192, 67, 43, 0.28)' },
-    B: { color: '#2F6DA8', glow: 'rgba(47, 109, 168, 0.28)' },
+    A: { color: '#C0432B', glow: 'rgba(192, 67, 43, 0.28)', text: '#963220' },
+    B: { color: '#2F6DA8', glow: 'rgba(47, 109, 168, 0.28)', text: '#23578A' },
   },
 };
 
@@ -177,14 +180,45 @@ const carbon: Theme = {
   gold: '#E6B449',
   danger: '#E5484D',
   teams: {
-    A: { color: '#FF6B5E', glow: 'rgba(255, 107, 94, 0.35)' },
-    B: { color: '#5EA6FF', glow: 'rgba(94, 166, 255, 0.35)' },
+    A: { color: '#FF6B5E', glow: 'rgba(255, 107, 94, 0.35)', text: '#FF6B5E' },
+    B: { color: '#5EA6FF', glow: 'rgba(94, 166, 255, 0.35)', text: '#5EA6FF' },
   },
 };
 
 export const THEMES: readonly Theme[] = [classic, midnight, mahogany, casino, bone, carbon];
 export const THEME_IDS: readonly ThemeId[] = THEMES.map((t) => t.id);
 export const FREE_THEME_ID: ThemeId = 'classic';
+
+// WCAG relative luminance of a 6-digit hex color.
+function luminance(hex: string): number {
+  const v = hex.replace('#', '');
+  const ch = (i: number) => {
+    const c = parseInt(v.slice(i, i + 2), 16) / 255;
+    return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+  };
+  return 0.2126 * ch(0) + 0.7152 * ch(2) + 0.0722 * ch(4);
+}
+
+export function contrastRatio(a: string, b: string): number {
+  const la = luminance(a);
+  const lb = luminance(b);
+  return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
+}
+
+// Label ink for text on a solid fill: whichever of the theme's two inks
+// (ivory tile or dark tile ink) has the higher contrast on that fill.
+export function inkOn(fill: string, theme: Theme): string {
+  return contrastRatio(theme.tile, fill) > contrastRatio(theme.tileInk, fill)
+    ? theme.tile
+    : theme.tileInk;
+}
+
+// Large bold labels (the 19pt "+ Points") need 3:1. Keep the ivory label
+// wherever it already passes, so the free Classic look stays as it is, and
+// switch to the higher-contrast ink only where ivory fails.
+export function largeLabelInk(fill: string, theme: Theme): string {
+  return contrastRatio(theme.tile, fill) >= 3 ? theme.tile : inkOn(fill, theme);
+}
 
 export function getTheme(id: string): Theme {
   return THEMES.find((t) => t.id === id) ?? classic;

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   KeyboardAvoidingView,
   Modal,
@@ -11,13 +11,15 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { radii, spacing, TARGET_PRESETS } from '../constants/layout';
+import { FONT_CAP, radii, spacing, TARGET_PRESETS } from '../constants/layout';
 import { ThemePicker } from './ThemePicker';
 import { devRefs } from '../dev/captureHarness';
+import { useReduceMotion } from '../hooks/useReduceMotion';
 import { useT } from '../i18n';
-import { useTheme } from '../theme/ThemeProvider';
+import { useRestore } from '../iap/useRestore';
+import { useTheme, useThemeControls } from '../theme/ThemeProvider';
 import { useThemedStyles } from '../theme/makeStyles';
-import { Theme } from '../theme/themes';
+import { inkOn, Theme, ThemeId } from '../theme/themes';
 import type { MatchState, TeamId } from '../types';
 import { isHapticsMuted, setHapticsMuted, subscribePrefs } from '../utils/preferences';
 
@@ -27,10 +29,13 @@ type Props = {
   onClose: () => void;
   onRename: (teamId: TeamId, name: string) => void;
   onTargetChange: (target: number) => void;
-  onResetMatch: () => void;
-  onRequestPro: () => void;
+  onRequestPro: (themeId?: ThemeId) => void;
   showRemoveAds: boolean;
+  // Set when the sheet opened from a tap on a team name: that field gets focus.
+  focusTeam: TeamId | null;
 };
+
+const CAP = FONT_CAP.scroll;
 
 export function SettingsModal({
   visible,
@@ -38,17 +43,23 @@ export function SettingsModal({
   onClose,
   onRename,
   onTargetChange,
-  onResetMatch,
   onRequestPro,
   showRemoveAds,
+  focusTeam,
 }: Props) {
   const { t, lang, setLang } = useT();
   const theme = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const reduceMotion = useReduceMotion();
+  const { proUnlocked } = useThemeControls();
+  const { status: restoreStatus, restore, reset: resetRestore } = useRestore();
   const [nameA, setNameA] = useState(state.teams.A.name);
   const [nameB, setNameB] = useState(state.teams.B.name);
   const [customTarget, setCustomTarget] = useState(String(state.targetScore));
   const [hapticsOn, setHapticsOn] = useState(!isHapticsMuted());
+  const nameARef = useRef<TextInput>(null);
+  const nameBRef = useRef<TextInput>(null);
+  const goldInk = inkOn(theme.gold, theme);
 
   useEffect(() => {
     if (visible) {
@@ -56,8 +67,9 @@ export function SettingsModal({
       setNameB(state.teams.B.name);
       setCustomTarget(String(state.targetScore));
       setHapticsOn(!isHapticsMuted());
+      resetRestore();
     }
-  }, [visible, state]);
+  }, [visible, state, resetRestore]);
 
   useEffect(() => subscribePrefs((p) => setHapticsOn(!p.hapticsMuted)), []);
 
@@ -82,15 +94,54 @@ export function SettingsModal({
     }
   }
 
+  // Every way out (Done, backdrop, swipe or back) saves what was typed.
+  function close() {
+    commitNames();
+    commitCustomTarget();
+    onClose();
+  }
+
+  function focusRequestedName() {
+    if (focusTeam === 'A') nameARef.current?.focus();
+    if (focusTeam === 'B') nameBRef.current?.focus();
+  }
+
+  // Opened from a team name: Return saves and goes straight back to the game.
+  function submitName() {
+    commitNames();
+    if (focusTeam) close();
+  }
+
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+    <Modal
+      visible={visible}
+      transparent
+      animationType={reduceMotion ? 'fade' : 'slide'}
+      onRequestClose={close}
+      onShow={focusRequestedName}
+    >
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.backdrop}
       >
-        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
+        <Pressable style={StyleSheet.absoluteFill} onPress={close} accessible={false} />
         <View style={styles.sheet}>
-          <View style={styles.handle} />
+          <View style={styles.header}>
+            <Text style={styles.title} accessibilityRole="header" maxFontSizeMultiplier={CAP}>
+              {t.chrome.settings}
+            </Text>
+            <Pressable
+              onPress={close}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel={t.chrome.done}
+              style={({ pressed }) => [styles.doneBtn, pressed && { opacity: 0.6 }]}
+            >
+              <Text style={styles.doneText} maxFontSizeMultiplier={CAP}>
+                {t.chrome.done}
+              </Text>
+            </Pressable>
+          </View>
           <ScrollView
             ref={(r) => {
               devRefs.settingsScroll = r;
@@ -98,88 +149,50 @@ export function SettingsModal({
             keyboardShouldPersistTaps="handled"
             contentContainerStyle={styles.body}
           >
-            <Text style={styles.title}>{t.settings.title}</Text>
-
-            <Text style={styles.sectionLabel}>{t.settings.languageSection}</Text>
-            <View style={styles.langRow}>
-              <Pressable
-                onPress={() => setLang('es')}
-                accessibilityRole="button"
-                accessibilityLabel={t.settings.languageEs}
-                accessibilityState={{ selected: lang === 'es' }}
-                style={({ pressed }) => [
-                  styles.langChip,
-                  lang === 'es' && styles.langChipActive,
-                  pressed && { opacity: 0.7 },
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.langChipText,
-                    lang === 'es' && styles.langChipTextActive,
-                  ]}
-                >
-                  {t.settings.languageEs}
-                </Text>
-              </Pressable>
-              <Pressable
-                onPress={() => setLang('en')}
-                accessibilityRole="button"
-                accessibilityLabel={t.settings.languageEn}
-                accessibilityState={{ selected: lang === 'en' }}
-                style={({ pressed }) => [
-                  styles.langChip,
-                  lang === 'en' && styles.langChipActive,
-                  pressed && { opacity: 0.7 },
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.langChipText,
-                    lang === 'en' && styles.langChipTextActive,
-                  ]}
-                >
-                  {t.settings.languageEn}
-                </Text>
-              </Pressable>
-            </View>
-
-            <Text style={[styles.sectionLabel, { marginTop: spacing.xl }]}>
+            <Text style={styles.sectionLabel} maxFontSizeMultiplier={CAP}>
               {t.settings.namesSection}
             </Text>
             <View style={styles.teamRow}>
               <View style={[styles.swatch, { backgroundColor: theme.teams.A.color }]} />
               <TextInput
+                ref={nameARef}
                 value={nameA}
                 onChangeText={setNameA}
                 onBlur={commitNames}
                 maxLength={24}
                 placeholder={t.team.defaultA}
-                placeholderTextColor={theme.textFaint}
+                placeholderTextColor={theme.textDim}
                 style={styles.input}
                 returnKeyType="done"
-                onSubmitEditing={commitNames}
+                selectTextOnFocus
+                onSubmitEditing={submitName}
+                maxFontSizeMultiplier={CAP}
+                accessibilityLabel={t.settings.nameTopA11y}
               />
             </View>
             <View style={styles.teamRow}>
               <View style={[styles.swatch, { backgroundColor: theme.teams.B.color }]} />
               <TextInput
+                ref={nameBRef}
                 value={nameB}
                 onChangeText={setNameB}
                 onBlur={commitNames}
                 maxLength={24}
                 placeholder={t.team.defaultB}
-                placeholderTextColor={theme.textFaint}
+                placeholderTextColor={theme.textDim}
                 style={styles.input}
                 returnKeyType="done"
-                onSubmitEditing={commitNames}
+                selectTextOnFocus
+                onSubmitEditing={submitName}
+                maxFontSizeMultiplier={CAP}
+                accessibilityLabel={t.settings.nameBottomA11y}
               />
             </View>
 
-            <Text style={[styles.sectionLabel, { marginTop: spacing.xl }]}>
+            <Text style={[styles.sectionLabel, styles.sectionGap]} maxFontSizeMultiplier={CAP}>
               {t.settings.targetSection}
             </Text>
-            <View style={styles.targetRow}>
+            <View style={styles.chipRow}>
               {TARGET_PRESETS.map((preset) => {
                 const active = state.targetScore === preset;
                 return (
@@ -193,16 +206,14 @@ export function SettingsModal({
                     accessibilityLabel={`${t.settings.targetSection} ${preset}`}
                     accessibilityState={{ selected: active }}
                     style={({ pressed }) => [
-                      styles.targetChip,
-                      active && styles.targetChipActive,
+                      styles.chip,
+                      active && styles.chipActive,
                       pressed && { opacity: 0.7 },
                     ]}
                   >
                     <Text
-                      style={[
-                        styles.targetChipText,
-                        active && styles.targetChipTextActive,
-                      ]}
+                      style={[styles.targetChipText, active && { color: goldInk }]}
+                      maxFontSizeMultiplier={CAP}
                     >
                       {preset}
                     </Text>
@@ -212,7 +223,9 @@ export function SettingsModal({
             </View>
 
             <View style={[styles.teamRow, { marginTop: spacing.md }]}>
-              <Text style={styles.customLabel}>{t.settings.customLabel}</Text>
+              <Text style={styles.customLabel} maxFontSizeMultiplier={CAP}>
+                {t.settings.customLabel}
+              </Text>
               <TextInput
                 value={customTarget}
                 onChangeText={handleCustomTarget}
@@ -221,19 +234,53 @@ export function SettingsModal({
                 keyboardType="number-pad"
                 maxLength={4}
                 placeholder="200"
-                placeholderTextColor={theme.textFaint}
+                placeholderTextColor={theme.textDim}
                 style={[styles.input, { textAlign: 'right' }]}
                 returnKeyType="done"
+                maxFontSizeMultiplier={CAP}
+                accessibilityLabel={t.settings.customTargetA11y}
               />
             </View>
 
-            <Text style={[styles.sectionLabel, { marginTop: spacing.xl }]}>
-              {t.settings.hapticsSection}
+            <Text style={[styles.sectionLabel, styles.sectionGap]} maxFontSizeMultiplier={CAP}>
+              {t.settings.languageSection}
             </Text>
-            <View style={styles.toggleRow}>
+            <View style={styles.chipRow}>
+              {(['es', 'en'] as const).map((code) => {
+                const active = lang === code;
+                const label = code === 'es' ? t.settings.languageEs : t.settings.languageEn;
+                return (
+                  <Pressable
+                    key={code}
+                    onPress={() => setLang(code)}
+                    accessibilityRole="button"
+                    accessibilityLabel={label}
+                    accessibilityState={{ selected: active }}
+                    style={({ pressed }) => [
+                      styles.chip,
+                      active && styles.chipActive,
+                      pressed && { opacity: 0.7 },
+                    ]}
+                  >
+                    <Text
+                      style={[styles.langChipText, active && { color: goldInk }]}
+                      maxFontSizeMultiplier={CAP}
+                    >
+                      {label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+
+            <View style={[styles.toggleRow, styles.sectionGap]}>
               <View style={styles.toggleTextWrap}>
-                <Text style={styles.toggleLabel}>{t.settings.hapticsLabel}</Text>
-                <Text style={styles.toggleHint}>{t.settings.hapticsHint}</Text>
+                <Text style={styles.toggleLabel} maxFontSizeMultiplier={CAP}>
+                  {t.settings.hapticsLabel}
+                </Text>
+                <Text style={styles.toggleHint} maxFontSizeMultiplier={CAP}>
+                  {t.settings.hapticsHint}
+                </Text>
               </View>
               <Switch
                 value={hapticsOn}
@@ -242,57 +289,53 @@ export function SettingsModal({
                   setHapticsMuted(!v);
                 }}
                 trackColor={{ false: theme.bgDeep, true: theme.gold }}
-                thumbColor={hapticsOn ? theme.text : theme.textDim}
+                thumbColor={hapticsOn ? theme.tile : theme.textDim}
                 accessibilityLabel={t.settings.hapticsLabel}
               />
             </View>
 
-            <Text style={[styles.sectionLabel, { marginTop: spacing.xl }]}>{t.settings.themeSection}</Text>
+            <Text style={[styles.sectionLabel, styles.sectionGap]} maxFontSizeMultiplier={CAP}>
+              {t.settings.themeSection}
+            </Text>
             <ThemePicker onRequestPro={onRequestPro} />
 
-            {showRemoveAds ? (
-              <Pressable
-                onPress={onRequestPro}
-                accessibilityRole="button"
-                accessibilityLabel={t.settings.removeAdsRow}
-                style={({ pressed }) => [
-                  styles.resetBtn,
-                  pressed && { opacity: 0.7 },
-                ]}
-              >
-                <Text style={styles.removeAdsText}>
-                  {t.settings.removeAdsRow}
+            {!proUnlocked ? (
+              <>
+                <Text style={[styles.sectionLabel, styles.sectionGap]} maxFontSizeMultiplier={CAP}>
+                  {t.settings.purchasesSection}
                 </Text>
-              </Pressable>
+                {showRemoveAds ? (
+                  <Pressable
+                    onPress={() => onRequestPro()}
+                    accessibilityRole="button"
+                    accessibilityLabel={t.settings.removeAdsRow}
+                    style={({ pressed }) => [styles.removeAdsBtn, pressed && { opacity: 0.7 }]}
+                  >
+                    <Text style={styles.removeAdsText} maxFontSizeMultiplier={CAP}>
+                      {t.settings.removeAdsRow}
+                    </Text>
+                  </Pressable>
+                ) : null}
+                <Pressable
+                  onPress={() => {
+                    if (restoreStatus !== 'pending') restore();
+                  }}
+                  disabled={restoreStatus === 'pending'}
+                  accessibilityRole="button"
+                  accessibilityLabel={t.pro.restore}
+                  style={({ pressed }) => [styles.restoreBtn, pressed && { opacity: 0.6 }]}
+                >
+                  <Text style={styles.restoreText} maxFontSizeMultiplier={CAP}>
+                    {restoreStatus === 'pending' ? t.pro.buying : t.pro.restore}
+                  </Text>
+                </Pressable>
+                {restoreStatus === 'restored' || restoreStatus === 'notFound' ? (
+                  <Text style={styles.restoreResult} maxFontSizeMultiplier={CAP}>
+                    {restoreStatus === 'restored' ? t.pro.restored : t.pro.notFound}
+                  </Text>
+                ) : null}
+              </>
             ) : null}
-
-            <Pressable
-              onPress={onResetMatch}
-              accessibilityRole="button"
-              accessibilityLabel={t.settings.resetMatch}
-              style={({ pressed }) => [
-                styles.resetBtn,
-                pressed && { opacity: 0.7 },
-              ]}
-            >
-              <Text style={styles.resetText}>{t.settings.resetMatch}</Text>
-            </Pressable>
-
-            <Pressable
-              onPress={() => {
-                commitNames();
-                commitCustomTarget();
-                onClose();
-              }}
-              accessibilityRole="button"
-              accessibilityLabel={t.chrome.done}
-              style={({ pressed }) => [
-                styles.doneBtn,
-                pressed && { opacity: 0.85 },
-              ]}
-            >
-              <Text style={styles.doneText}>{t.chrome.done}</Text>
-            </Pressable>
           </ScrollView>
         </View>
       </KeyboardAvoidingView>
@@ -317,48 +360,61 @@ const makeStyles = (theme: Theme) =>
     borderColor: theme.hairline,
     maxHeight: '88%',
   },
-  handle: {
-    width: 44,
-    height: 5,
-    borderRadius: 3,
-    backgroundColor: theme.divider,
-    alignSelf: 'center',
-    marginTop: 10,
-    marginBottom: 4,
-  },
-  body: {
-    padding: spacing.xl,
-    paddingBottom: spacing.xxl + 16,
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.md,
   },
   title: {
     color: theme.text,
     fontSize: 22,
     fontWeight: '800',
-    marginBottom: spacing.xl,
     letterSpacing: 0.2,
+  },
+  doneBtn: {
+    minHeight: 44,
+    minWidth: 44,
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+  },
+  doneText: {
+    color: theme.gold,
+    fontSize: 17,
+    fontWeight: '800',
+  },
+  body: {
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.xxl + 16,
   },
   sectionLabel: {
     color: theme.textDim,
-    fontSize: 11,
+    fontSize: 12,
     letterSpacing: 1.4,
     textTransform: 'uppercase',
     fontWeight: '800',
     marginBottom: spacing.sm,
   },
-  langRow: {
+  sectionGap: {
+    marginTop: spacing.xl,
+  },
+  chipRow: {
     flexDirection: 'row',
     gap: spacing.sm,
   },
-  langChip: {
+  chip: {
     flex: 1,
-    paddingVertical: 12,
+    paddingVertical: 14,
     borderRadius: radii.md,
     alignItems: 'center',
     backgroundColor: theme.bgDeep,
     borderWidth: 1,
     borderColor: theme.hairline,
   },
-  langChipActive: {
+  chipActive: {
     backgroundColor: theme.gold,
     borderColor: theme.gold,
   },
@@ -368,8 +424,11 @@ const makeStyles = (theme: Theme) =>
     fontWeight: '800',
     letterSpacing: 0.4,
   },
-  langChipTextActive: {
-    color: theme.tileInk,
+  targetChipText: {
+    color: theme.textDim,
+    fontSize: 16,
+    fontWeight: '800',
+    fontVariant: ['tabular-nums'],
   },
   teamRow: {
     flexDirection: 'row',
@@ -393,32 +452,6 @@ const makeStyles = (theme: Theme) =>
     fontSize: 17,
     fontWeight: '600',
     paddingVertical: 14,
-  },
-  targetRow: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  targetChip: {
-    flex: 1,
-    paddingVertical: 14,
-    borderRadius: radii.md,
-    alignItems: 'center',
-    backgroundColor: theme.bgDeep,
-    borderWidth: 1,
-    borderColor: theme.hairline,
-  },
-  targetChipActive: {
-    backgroundColor: theme.gold,
-    borderColor: theme.gold,
-  },
-  targetChipText: {
-    color: theme.textDim,
-    fontSize: 16,
-    fontWeight: '800',
-    fontVariant: ['tabular-nums'],
-  },
-  targetChipTextActive: {
-    color: theme.tileInk,
   },
   customLabel: {
     color: theme.textDim,
@@ -449,25 +482,18 @@ const makeStyles = (theme: Theme) =>
     letterSpacing: 0.2,
   },
   toggleHint: {
-    color: theme.textFaint,
+    color: theme.textDim,
     fontSize: 12,
     marginTop: 2,
     letterSpacing: 0.2,
   },
-  resetBtn: {
-    marginTop: spacing.xxl,
+  removeAdsBtn: {
     paddingVertical: 14,
     borderRadius: radii.md,
     borderWidth: 1,
-    borderColor: `${theme.danger}80`,
+    borderColor: `${theme.gold}66`,
+    backgroundColor: `${theme.gold}1A`,
     alignItems: 'center',
-    backgroundColor: `${theme.danger}14`,
-  },
-  resetText: {
-    color: theme.danger,
-    fontWeight: '700',
-    fontSize: 14,
-    letterSpacing: 0.4,
   },
   removeAdsText: {
     color: theme.gold,
@@ -475,17 +501,20 @@ const makeStyles = (theme: Theme) =>
     fontSize: 14,
     letterSpacing: 0.4,
   },
-  doneBtn: {
-    marginTop: spacing.lg,
-    backgroundColor: theme.gold,
-    paddingVertical: 16,
-    borderRadius: radii.md,
+  restoreBtn: {
+    marginTop: spacing.xs,
+    minHeight: 44,
+    justifyContent: 'center',
     alignItems: 'center',
   },
-  doneText: {
-    color: theme.tileInk,
-    fontWeight: '800',
-    fontSize: 16,
-    letterSpacing: 0.4,
+  restoreText: {
+    color: theme.textDim,
+    fontWeight: '700',
+    fontSize: 14,
+  },
+  restoreResult: {
+    color: theme.textDim,
+    fontSize: 13,
+    textAlign: 'center',
   },
 });

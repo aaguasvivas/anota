@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
+  AccessibilityInfo,
   Alert,
   Animated,
   BackHandler,
@@ -8,7 +9,7 @@ import {
   Text,
   View,
 } from 'react-native';
-import { radii, spacing } from '../constants/layout';
+import { FONT_CAP, radii, spacing } from '../constants/layout';
 import { useAdsRemoved } from '../ads/AdsRemovedProvider';
 import { useT } from '../i18n';
 import {
@@ -17,15 +18,17 @@ import {
   PRO_PRODUCT_ID,
   PRODUCT_UNAVAILABLE,
   REMOVE_ADS_PRODUCT_ID,
-  restoreOwned,
 } from '../iap/purchases';
-import { useThemeControls } from '../theme/ThemeProvider';
+import { useRestore } from '../iap/useRestore';
+import { useTheme, useThemeControls } from '../theme/ThemeProvider';
 import { useThemedStyles } from '../theme/makeStyles';
-import { Theme } from '../theme/themes';
+import { inkOn, Theme, ThemeId } from '../theme/themes';
 
 type Props = {
   visible: boolean;
   onClose: () => void;
+  // The locked theme the user tapped, if the sheet opened from a theme tile.
+  themeId?: ThemeId | null;
 };
 
 const FALLBACK_PRO_PRICE = '$2.99';
@@ -37,31 +40,39 @@ const FALLBACK_REMOVE_ADS_PRICE = '$1.99';
 // swallows every touch until the app is killed. This overlay is a plain view
 // inside the root, so nothing is ever presented over the Settings modal, and
 // StoreKit gets a clean screen to present the payment sheet on.
-export function ProSheet({ visible, onClose }: Props) {
+export function ProSheet({ visible, onClose, themeId }: Props) {
   const { t } = useT();
+  const theme = useTheme();
   const styles = useThemedStyles(makeStyles);
-  const { setProUnlocked } = useThemeControls();
-  const { setAdsRemoved } = useAdsRemoved();
+  const { proUnlocked, setProUnlocked, setThemeId } = useThemeControls();
+  const { adsRemoved, setAdsRemoved } = useAdsRemoved();
+  const { status: restoreStatus, restore, reset: resetRestore } = useRestore();
   const [proPrice, setProPrice] = useState<string | null>(null);
   const [removeAdsPrice, setRemoveAdsPrice] = useState<string | null>(null);
-  const [pending, setPending] = useState<'pro' | 'ads' | 'restore' | null>(
-    null,
-  );
-  const [notFound, setNotFound] = useState(false);
-  const [success, setSuccess] = useState<
-    'thanks' | 'thanksNoAds' | 'restored' | null
-  >(null);
+  const [buying, setBuying] = useState<'pro' | 'ads' | null>(null);
+  const [success, setSuccess] = useState<'thanks' | 'thanksNoAds' | null>(null);
   const opacity = useRef(new Animated.Value(0)).current;
+  const titleRef = useRef<Text>(null);
+  const pending = buying !== null || restoreStatus === 'pending';
+  // Someone who already removed ads is offered only the upgrade to Pro.
+  const offerRemoveAds = !adsRemoved;
 
   useEffect(() => {
-    if (visible) {
+    if (!visible) {
+      // Reset while hidden so the next open never paints at full opacity.
       opacity.setValue(0);
-      Animated.timing(opacity, {
-        toValue: 1,
-        duration: 160,
-        useNativeDriver: true,
-      }).start();
+      return;
     }
+    opacity.setValue(0);
+    Animated.timing(opacity, {
+      toValue: 1,
+      duration: 160,
+      useNativeDriver: true,
+    }).start();
+    const id = setTimeout(() => {
+      if (titleRef.current) AccessibilityInfo.sendAccessibilityEvent(titleRef.current, 'focus');
+    }, 350);
+    return () => clearTimeout(id);
   }, [visible, opacity]);
 
   // The Modal used to handle Android's back button; the overlay does it here.
@@ -81,8 +92,8 @@ export function ProSheet({ visible, onClose }: Props) {
   useEffect(() => {
     if (!visible) return;
     let active = true;
-    setNotFound(false);
     setSuccess(null);
+    resetRestore();
     getPriceLabels().then((labels) => {
       if (!active) return;
       if (labels[PRO_PRODUCT_ID]) setProPrice(labels[PRO_PRODUCT_ID]);
@@ -93,16 +104,21 @@ export function ProSheet({ visible, onClose }: Props) {
     return () => {
       active = false;
     };
-  }, [visible]);
+  }, [visible, resetRestore]);
 
-  const proLabel = t.pro.buyPro.replace(
-    '{price}',
-    proPrice ?? FALLBACK_PRO_PRICE,
-  );
+  // After buying Pro from a locked tile, switch to that theme. This runs in an
+  // effect, not in the buy handler, because setThemeId checks the Pro flag and
+  // must see it after the unlock has rendered.
+  useEffect(() => {
+    if (success === 'thanks' && proUnlocked && themeId) setThemeId(themeId);
+  }, [success, proUnlocked, themeId, setThemeId]);
+
+  const proLabel = t.pro.buyPro.replace('{price}', proPrice ?? FALLBACK_PRO_PRICE);
   const removeAdsLabel = t.pro.buyRemoveAds.replace(
     '{price}',
     removeAdsPrice ?? FALLBACK_REMOVE_ADS_PRICE,
   );
+  const goldInk = inkOn(theme.gold, theme);
 
   // A product the store does not know about is a configuration problem, not
   // a payment failure, and saying so plainly beats a generic retry prompt.
@@ -115,8 +131,8 @@ export function ProSheet({ visible, onClose }: Props) {
   // covers the case where the user closes the sheet mid-purchase.
   async function handleBuyPro() {
     if (pending) return;
-    setNotFound(false);
-    setPending('pro');
+    resetRestore();
+    setBuying('pro');
     try {
       const owned = await buyProduct(PRO_PRODUCT_ID);
       if (owned) {
@@ -126,14 +142,14 @@ export function ProSheet({ visible, onClose }: Props) {
     } catch (e: any) {
       Alert.alert(t.pro.errorTitle, messageFor(e));
     } finally {
-      setPending(null);
+      setBuying(null);
     }
   }
 
   async function handleBuyRemoveAds() {
     if (pending) return;
-    setNotFound(false);
-    setPending('ads');
+    resetRestore();
+    setBuying('ads');
     try {
       const owned = await buyProduct(REMOVE_ADS_PRODUCT_ID);
       if (owned) {
@@ -143,107 +159,114 @@ export function ProSheet({ visible, onClose }: Props) {
     } catch (e: any) {
       Alert.alert(t.pro.errorTitle, messageFor(e));
     } finally {
-      setPending(null);
-    }
-  }
-
-  async function handleRestore() {
-    if (pending) return;
-    setNotFound(false);
-    setPending('restore');
-    try {
-      const owned = await restoreOwned();
-      if (owned.includes(PRO_PRODUCT_ID)) setProUnlocked(true);
-      if (owned.includes(REMOVE_ADS_PRODUCT_ID)) setAdsRemoved(true);
-      if (owned.length > 0) {
-        setSuccess('restored');
-      } else {
-        setNotFound(true);
-      }
-    } catch {
-      setNotFound(true);
-    } finally {
-      setPending(null);
+      setBuying(null);
     }
   }
 
   if (!visible) return null;
 
-  return (
-    <Animated.View style={[styles.backdrop, { opacity }]}>
-      <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
-      <View style={styles.card}>
-        <Text style={styles.title}>{t.pro.title}</Text>
-        <Text style={styles.blurb}>{t.pro.blurb}</Text>
+  const successText =
+    success === 'thanks'
+      ? t.pro.thanks
+      : success === 'thanksNoAds'
+        ? t.pro.thanksNoAds
+        : restoreStatus === 'restored'
+          ? t.pro.restored
+          : null;
 
-        {success ? (
+  return (
+    <Animated.View
+      style={[styles.backdrop, { opacity }]}
+      accessibilityViewIsModal
+      onAccessibilityEscape={onClose}
+    >
+      <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessible={false} />
+      <View style={styles.card}>
+        <Text ref={titleRef} style={styles.title} accessibilityRole="header" maxFontSizeMultiplier={FONT_CAP.overlay}>
+          {t.pro.title}
+        </Text>
+        <Text style={styles.blurb} maxFontSizeMultiplier={FONT_CAP.overlay}>
+          {t.pro.blurb}
+        </Text>
+        {themeId && !successText ? (
+          <Text style={styles.context} maxFontSizeMultiplier={FONT_CAP.overlay}>
+            {t.pro.themeContext(t.settings.themeNames[themeId])}
+          </Text>
+        ) : null}
+
+        {successText ? (
           <>
-            <Text style={styles.success}>
-              {success === 'thanks'
-                ? t.pro.thanks
-                : success === 'thanksNoAds'
-                  ? t.pro.thanksNoAds
-                  : t.pro.restored}
+            <Text style={styles.success} maxFontSizeMultiplier={FONT_CAP.overlay}>
+              {successText}
             </Text>
 
             <Pressable
               onPress={onClose}
               accessibilityRole="button"
               accessibilityLabel={t.pro.close}
-              style={({ pressed }) => [
-                styles.buyBtn,
-                pressed && { opacity: 0.85 },
-              ]}
+              style={({ pressed }) => [styles.buyBtn, pressed && { opacity: 0.85 }]}
             >
-              <Text style={styles.buyText}>{t.pro.close}</Text>
+              <Text style={[styles.buyText, { color: goldInk }]} maxFontSizeMultiplier={FONT_CAP.overlay}>
+                {t.pro.close}
+              </Text>
             </Pressable>
           </>
         ) : (
           <>
             <Pressable
               onPress={handleBuyPro}
-              disabled={pending !== null}
+              disabled={pending}
               accessibilityRole="button"
               accessibilityLabel={proLabel}
               style={({ pressed }) => [
                 styles.buyBtn,
                 pressed && { opacity: 0.85 },
-                pending !== null && { opacity: 0.7 },
+                pending && { opacity: 0.7 },
               ]}
             >
-              <Text style={styles.buyText}>
-                {pending === 'pro' ? t.pro.buying : proLabel}
+              <Text style={[styles.buyText, { color: goldInk }]} maxFontSizeMultiplier={FONT_CAP.overlay}>
+                {buying === 'pro' ? t.pro.buying : proLabel}
               </Text>
             </Pressable>
-            <Text style={styles.includes}>{t.pro.proIncludes}</Text>
+            <Text style={styles.includes} maxFontSizeMultiplier={FONT_CAP.overlay}>
+              {offerRemoveAds ? t.pro.proIncludes : t.pro.proIncludesAdsOff}
+            </Text>
 
-            <Pressable
-              onPress={handleBuyRemoveAds}
-              disabled={pending !== null}
-              accessibilityRole="button"
-              accessibilityLabel={removeAdsLabel}
-              style={({ pressed }) => [
-                styles.altBtn,
-                pressed && { opacity: 0.85 },
-                pending !== null && { opacity: 0.7 },
-              ]}
-            >
-              <Text style={styles.altText}>
-                {pending === 'ads' ? t.pro.buying : removeAdsLabel}
+            {offerRemoveAds ? (
+              <Pressable
+                onPress={handleBuyRemoveAds}
+                disabled={pending}
+                accessibilityRole="button"
+                accessibilityLabel={removeAdsLabel}
+                style={({ pressed }) => [
+                  styles.altBtn,
+                  pressed && { opacity: 0.85 },
+                  pending && { opacity: 0.7 },
+                ]}
+              >
+                <Text style={styles.altText} maxFontSizeMultiplier={FONT_CAP.overlay}>
+                  {buying === 'ads' ? t.pro.buying : removeAdsLabel}
+                </Text>
+              </Pressable>
+            ) : null}
+
+            {restoreStatus === 'notFound' ? (
+              <Text style={styles.notFound} maxFontSizeMultiplier={FONT_CAP.overlay}>
+                {t.pro.notFound}
               </Text>
-            </Pressable>
-
-            {notFound ? <Text style={styles.notFound}>{t.pro.notFound}</Text> : null}
+            ) : null}
 
             <Pressable
-              onPress={handleRestore}
-              disabled={pending !== null}
+              onPress={() => {
+                if (!pending) restore();
+              }}
+              disabled={pending}
               accessibilityRole="button"
               accessibilityLabel={t.pro.restore}
               style={({ pressed }) => [styles.linkBtn, pressed && { opacity: 0.6 }]}
             >
-              <Text style={styles.linkText}>
-                {pending === 'restore' ? t.pro.buying : t.pro.restore}
+              <Text style={styles.linkText} maxFontSizeMultiplier={FONT_CAP.overlay}>
+                {restoreStatus === 'pending' ? t.pro.buying : t.pro.restore}
               </Text>
             </Pressable>
 
@@ -253,7 +276,9 @@ export function ProSheet({ visible, onClose }: Props) {
               accessibilityLabel={t.pro.close}
               style={({ pressed }) => [styles.linkBtn, pressed && { opacity: 0.6 }]}
             >
-              <Text style={styles.closeText}>{t.pro.close}</Text>
+              <Text style={styles.linkText} maxFontSizeMultiplier={FONT_CAP.overlay}>
+                {t.pro.close}
+              </Text>
             </Pressable>
           </>
         )}
@@ -294,6 +319,12 @@ const makeStyles = (theme: Theme) =>
       marginTop: spacing.sm,
       lineHeight: 20,
     },
+    context: {
+      color: theme.textDim,
+      fontSize: 14,
+      lineHeight: 20,
+      marginTop: spacing.sm,
+    },
     buyBtn: {
       marginTop: spacing.xl,
       paddingVertical: 14,
@@ -302,7 +333,6 @@ const makeStyles = (theme: Theme) =>
       backgroundColor: theme.gold,
     },
     buyText: {
-      color: theme.tileInk,
       fontWeight: '800',
       fontSize: 15,
       letterSpacing: 0.2,
@@ -343,17 +373,13 @@ const makeStyles = (theme: Theme) =>
       marginTop: spacing.xl,
     },
     linkBtn: {
-      marginTop: spacing.md,
-      paddingVertical: spacing.sm,
+      marginTop: spacing.xs,
+      minHeight: 44,
+      justifyContent: 'center',
       alignItems: 'center',
     },
     linkText: {
       color: theme.textDim,
-      fontWeight: '700',
-      fontSize: 14,
-    },
-    closeText: {
-      color: theme.textFaint,
       fontWeight: '700',
       fontSize: 14,
     },

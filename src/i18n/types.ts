@@ -6,6 +6,8 @@ export type Dictionary = {
   };
   chrome: {
     undo: string;
+    undoLast: (n: number) => string;
+    undoA11y: (n: number, name: string) => string;
     newMatch: string;
     settings: string;
     cancel: string;
@@ -28,32 +30,37 @@ export type Dictionary = {
     addPoints: string;
     arrived: string;
     toWin: (n: number) => string;
+    scoreA11y: (name: string, score: number, target: number, left: number, leading: boolean) => string;
+    renameHint: string;
   };
   customModal: {
     titleFor: string;
   };
   settings: {
-    title: string;
     namesSection: string;
+    nameTopA11y: string;
+    nameBottomA11y: string;
     targetSection: string;
     customLabel: string;
+    customTargetA11y: string;
     languageSection: string;
     languageEs: string;
     languageEn: string;
-    hapticsSection: string;
     hapticsLabel: string;
     hapticsHint: string;
-    resetMatch: string;
     themeSection: string;
     themeNames: { classic: string; midnight: string; mahogany: string; casino: string; bone: string; carbon: string };
     themeLockedTag: string;
+    themeLockedA11y: string;
+    themeLockedHint: string;
+    purchasesSection: string;
     removeAdsRow: string;
   };
   history: {
-    sectionTitle: string;
     emptySubtitle: string;
     removeRoundConfirm: (n: number, name: string) => string;
     removeHint: string;
+    removeButton: string;
   };
   winner: {
     phrases: readonly string[];
@@ -71,8 +78,10 @@ export type Dictionary = {
   pro: {
     title: string;
     blurb: string;
+    themeContext: (themeName: string) => string;
     buyPro: string;
     proIncludes: string;
+    proIncludesAdsOff: string;
     buyRemoveAds: string;
     buying: string;
     restore: string;

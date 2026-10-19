@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import {
+  AccessibilityInfo,
   Animated,
   BackHandler,
   Pressable,
@@ -7,10 +8,11 @@ import {
   Text,
   View,
 } from 'react-native';
-import { radii, spacing } from '../constants/layout';
+import { FONT_CAP, radii, spacing } from '../constants/layout';
 import { useT } from '../i18n';
+import { useTheme } from '../theme/ThemeProvider';
 import { useThemedStyles } from '../theme/makeStyles';
-import { Theme } from '../theme/themes';
+import { inkOn, Theme } from '../theme/themes';
 
 type Props = {
   visible: boolean;
@@ -37,20 +39,31 @@ export function ConfirmDialog({
   onCancel,
 }: Props) {
   const { t } = useT();
+  const theme = useTheme();
   const styles = useThemedStyles(makeStyles);
   const opacity = useRef(new Animated.Value(0)).current;
+  const titleRef = useRef<Text>(null);
   const confirm = confirmLabel ?? t.chrome.confirm;
   const cancel = cancelLabel ?? t.chrome.cancel;
+  const confirmFill = destructive ? theme.danger : theme.gold;
 
   useEffect(() => {
-    if (visible) {
+    if (!visible) {
+      // Reset while hidden so the next open never paints at full opacity.
       opacity.setValue(0);
-      Animated.timing(opacity, {
-        toValue: 1,
-        duration: 160,
-        useNativeDriver: true,
-      }).start();
+      return;
     }
+    opacity.setValue(0);
+    Animated.timing(opacity, {
+      toValue: 1,
+      duration: 160,
+      useNativeDriver: true,
+    }).start();
+    // VoiceOver starts on the question, not on whatever was behind it.
+    const id = setTimeout(() => {
+      if (titleRef.current) AccessibilityInfo.sendAccessibilityEvent(titleRef.current, 'focus');
+    }, 350);
+    return () => clearTimeout(id);
   }, [visible, opacity]);
 
   // The Modal used to handle Android's back button; the overlay does it here.
@@ -66,11 +79,21 @@ export function ConfirmDialog({
   if (!visible) return null;
 
   return (
-    <Animated.View style={[styles.backdrop, { opacity }]}>
-      <Pressable style={StyleSheet.absoluteFill} onPress={onCancel} />
+    <Animated.View
+      style={[styles.backdrop, { opacity }]}
+      accessibilityViewIsModal
+      onAccessibilityEscape={onCancel}
+    >
+      <Pressable style={StyleSheet.absoluteFill} onPress={onCancel} accessible={false} />
       <View style={styles.card}>
-        <Text style={styles.title}>{title}</Text>
-        {message ? <Text style={styles.message}>{message}</Text> : null}
+        <Text ref={titleRef} style={styles.title} accessibilityRole="header" maxFontSizeMultiplier={FONT_CAP.overlay}>
+          {title}
+        </Text>
+        {message ? (
+          <Text style={styles.message} maxFontSizeMultiplier={FONT_CAP.overlay}>
+            {message}
+          </Text>
+        ) : null}
         <View style={styles.row}>
           <Pressable
             onPress={onCancel}
@@ -82,7 +105,9 @@ export function ConfirmDialog({
               pressed && { opacity: 0.6 },
             ]}
           >
-            <Text style={styles.cancelText}>{cancel}</Text>
+            <Text style={styles.cancelText} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} maxFontSizeMultiplier={FONT_CAP.overlay}>
+              {cancel}
+            </Text>
           </Pressable>
           <Pressable
             onPress={onConfirm}
@@ -90,12 +115,16 @@ export function ConfirmDialog({
             accessibilityLabel={confirm}
             style={({ pressed }) => [
               styles.btn,
-              destructive ? styles.destructive : styles.primary,
+              { backgroundColor: confirmFill },
               pressed && { opacity: 0.85 },
             ]}
           >
             <Text
-              style={destructive ? styles.destructiveText : styles.primaryText}
+              style={[styles.confirmText, { color: inkOn(confirmFill, theme) }]}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.8}
+              maxFontSizeMultiplier={FONT_CAP.overlay}
             >
               {confirm}
             </Text>
@@ -146,6 +175,7 @@ const makeStyles = (theme: Theme) =>
   btn: {
     flex: 1,
     paddingVertical: 14,
+    paddingHorizontal: 8,
     borderRadius: radii.md,
     alignItems: 'center',
   },
@@ -159,19 +189,7 @@ const makeStyles = (theme: Theme) =>
     fontWeight: '700',
     fontSize: 14,
   },
-  primary: {
-    backgroundColor: theme.gold,
-  },
-  primaryText: {
-    color: theme.tileInk,
-    fontWeight: '800',
-    fontSize: 14,
-  },
-  destructive: {
-    backgroundColor: theme.danger,
-  },
-  destructiveText: {
-    color: '#fff',
+  confirmText: {
     fontWeight: '800',
     fontSize: 14,
   },
