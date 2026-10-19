@@ -220,6 +220,22 @@ Gratis. Descarga Anota y olvídate del papel.
 
 ---
 
+## Version 1.3 "What's New" (release notes)
+
+**English:**
+```
+A design pass on the scoreboard.
+On smaller iPhones with an ad showing, the round history no longer hides behind the second team's card. On the largest iPhones, scores are bigger. Undo now shows the points it removes, and the points pad shows your new total before you add.
+Text and colors are easier to read in every theme, with better support for larger text, VoiceOver and Reduce Motion. You can also restore purchases from Settings.
+```
+
+**Español:**
+```
+Un repaso al diseño del marcador.
+En iPhone pequeños con anuncio, el historial de rondas ya no queda tapado por la tarjeta del otro equipo. En los iPhone más grandes, los puntos se ven más grandes. Deshacer ahora muestra los puntos que quita, y el teclado de puntos muestra el total nuevo antes de sumar.
+Textos y colores más fáciles de leer en todos los temas, con mejor soporte para texto grande, VoiceOver y Reducir movimiento. También puedes restaurar tus compras desde Ajustes.
+```
+
 ## Version 1.2 "What's New" (release notes)
 
 **English:**

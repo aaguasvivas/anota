@@ -39,13 +39,19 @@ export function ThemePicker({ onRequestPro }: { onRequestPro: (themeId: ThemeId)
               <View style={[styles.dot, { backgroundColor: th.teams.A.color }]} />
               <View style={[styles.dot, { backgroundColor: th.teams.B.color }]} />
             </View>
-            <Text numberOfLines={2} style={[styles.name, { color: th.text }]} maxFontSizeMultiplier={FONT_CAP.scroll}>
+            <Text
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.8}
+              style={[styles.name, { color: th.text }]}
+              maxFontSizeMultiplier={FONT_CAP.themeTile}
+            >
               {name}
             </Text>
             {locked && (
               <View style={styles.lock}>
                 <Ionicons name="lock-closed" size={12} color={th.text} />
-                <Text style={[styles.lockTag, { color: th.text }]} maxFontSizeMultiplier={FONT_CAP.scroll}>
+                <Text style={[styles.lockTag, { color: th.text }]} maxFontSizeMultiplier={FONT_CAP.themeTile}>
                   {t.settings.themeLockedTag}
                 </Text>
               </View>

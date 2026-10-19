@@ -11,6 +11,7 @@ import {
   View,
 } from 'react-native';
 import { FONT_CAP, radii } from '../constants/layout';
+import { CAPTURE_BUILD, devRefs } from '../dev/captureHarness';
 import { useT } from '../i18n';
 import { useTheme } from '../theme/ThemeProvider';
 import { useThemedStyles } from '../theme/makeStyles';
@@ -39,11 +40,18 @@ export function TargetPill({ value, onChange, onPressLong }: Props) {
     if (!editing) setDraft(String(value));
   }, [value, editing]);
 
+  // Focus after the edit view has mounted, not with autoFocus: autoFocus opens
+  // the keyboard before the Done bar attaches, and iOS then shows the number
+  // pad without the bar until the first keystroke.
+  useEffect(() => {
+    if (editing) ref.current?.focus();
+  }, [editing]);
+
   function startEdit() {
     setDraft(String(value));
     setEditing(true);
-    // autoFocus on the TextInput handles the keyboard.
   }
+  if (CAPTURE_BUILD) devRefs.editTarget = startEdit;
 
   function commit() {
     const parsed = parseInt(draft, 10);
@@ -67,7 +75,6 @@ export function TargetPill({ value, onChange, onPressLong }: Props) {
           onChangeText={(txt) => setDraft(txt.replace(/[^0-9]/g, '').slice(0, 4))}
           keyboardType="number-pad"
           maxLength={4}
-          autoFocus
           selectTextOnFocus
           onSubmitEditing={commit}
           onBlur={commit}
@@ -130,8 +137,9 @@ const makeStyles = (theme: Theme) =>
       paddingHorizontal: 12,
       gap: 7,
     },
+    // Editing shows as a full gold border. The fill stays the resting tint:
+    // a stronger tint drops the gold label under 4.5:1 in Bone.
     pillEditing: {
-      backgroundColor: `${theme.gold}2E`,
       borderColor: theme.gold,
     },
     label: {

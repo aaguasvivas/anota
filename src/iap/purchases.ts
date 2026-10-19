@@ -161,23 +161,21 @@ export async function getPriceLabels(): Promise<
   }
 }
 
+// Throws when the store cannot answer, so a tapped Restore can tell a failure
+// from "nothing to restore". The silent launch restore catches it.
 export async function restoreOwned(): Promise<ProductId[]> {
-  try {
-    await ensureConnected();
-    const purchases = await withTimeout(
-      Promise.resolve(getAvailablePurchases()),
-      10000,
-      'getAvailablePurchases',
-    );
-    const owned = new Set<ProductId>();
-    for (const p of purchases ?? []) {
-      const id = purchasedId(p);
-      if (id) owned.add(id);
-    }
-    return [...owned];
-  } catch {
-    return [];
+  await ensureConnected();
+  const purchases = await withTimeout(
+    Promise.resolve(getAvailablePurchases()),
+    10000,
+    'getAvailablePurchases',
+  );
+  const owned = new Set<ProductId>();
+  for (const p of purchases ?? []) {
+    const id = purchasedId(p);
+    if (id) owned.add(id);
   }
+  return [...owned];
 }
 
 export async function buyProduct(sku: ProductId): Promise<boolean> {

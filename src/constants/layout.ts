@@ -35,4 +35,8 @@ export const FONT_CAP = {
   winnerLabel: 1.3,
   winnerButton: 1.15,
   scroll: 2,
+  // Theme tiles sit in a three-column grid about 80pt wide inside on a 375pt
+  // phone. Names stay on one line and shrink to fit ("Medianoche" needs about
+  // 84pt at this cap), so a long word never breaks in the middle.
+  themeTile: 1.2,
 } as const;

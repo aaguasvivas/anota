@@ -25,7 +25,6 @@ import { useCaptureHarness } from './src/dev/captureHarness';
 import { FONT_CAP, radii, spacing } from './src/constants/layout';
 import { useLayoutMetrics } from './src/hooks/useLayoutMetrics';
 import { useMatch } from './src/hooks/useMatch';
-import { applyPoints, applyRemoveRound, applyUndo } from './src/match/reducer';
 import { LanguageProvider, teamDisplayName, useT } from './src/i18n';
 import {
   endIap,
@@ -37,7 +36,7 @@ import {
 import { useThemedStyles } from './src/theme/makeStyles';
 import { ThemeProvider, useTheme, useThemeControls } from './src/theme/ThemeProvider';
 import { Theme, ThemeId } from './src/theme/themes';
-import type { Round, TeamId } from './src/types';
+import type { Round, Team, TeamId } from './src/types';
 import {
   notifySuccess,
   notifyWarning,
@@ -139,7 +138,7 @@ function Scorekeeper() {
       Alert.alert(tRef.current.pro.errorTitle, tRef.current.pro.storeError),
     );
     initIap().then(async () => {
-      const owned = await restoreOwned();
+      const owned = await restoreOwned().catch(() => []);
       if (active) owned.forEach(grant);
     });
     return () => {
@@ -189,28 +188,29 @@ function Scorekeeper() {
   }, [showWinner]);
 
   // VoiceOver users hear the new score after every change.
-  function announceScore(teamId: TeamId, score: number) {
+  function announceScore(team: Team) {
     AccessibilityInfo.announceForAccessibilityWithOptions(
-      `${teamDisplayName(match.state.teams[teamId], t)}, ${score}`,
+      `${teamDisplayName(team, t)}, ${team.score}`,
       { queue: true },
     );
   }
 
   function handleAdd(teamId: TeamId, points: number) {
-    const next = applyPoints(match.state, teamId, points);
+    const before = match.latest();
+    const next = match.addPoints(teamId, points);
+    // The reducer ignores taps while the winner card is up.
+    if (next === before) return;
     // A winning add gets the success pattern with the card instead.
     if (!(next.winnerId && !next.winnerAcknowledged)) tapMedium();
-    match.addPoints(teamId, points);
-    announceScore(teamId, next.teams[teamId].score);
+    announceScore(next.teams[teamId]);
   }
 
   function handleUndo() {
-    const last = match.state.rounds[0];
+    const last = match.latest().rounds[0];
     if (!last) return;
     tapSoft();
-    const next = applyUndo(match.state);
-    match.undoLast();
-    announceScore(last.teamId, next.teams[last.teamId].score);
+    const next = match.undoLast();
+    announceScore(next.teams[last.teamId]);
   }
 
   function handleResetConfirm() {
@@ -222,9 +222,8 @@ function Scorekeeper() {
   function confirmRemoveRound() {
     if (!roundToRemove) return;
     tapSoft();
-    const next = applyRemoveRound(match.state, roundToRemove.id);
-    match.removeRound(roundToRemove.id);
-    announceScore(roundToRemove.teamId, next.teams[roundToRemove.teamId].score);
+    const next = match.removeRound(roundToRemove.id);
+    announceScore(next.teams[roundToRemove.teamId]);
     setRoundToRemove(null);
   }
 
@@ -565,7 +564,10 @@ const makeStyles = (theme: Theme) =>
     backgroundColor: 'rgba(255,255,255,0.03)',
     alignItems: 'center',
   },
+  // flexShrink lets the row limit the label, so adjustsFontSizeToFit can
+  // shrink "Deshacer +100" at large text sizes instead of overflowing.
   footerBtnText: {
+    flexShrink: 1,
     color: theme.textDim,
     fontWeight: '800',
     fontSize: 14,

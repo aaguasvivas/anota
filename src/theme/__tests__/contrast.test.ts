@@ -16,6 +16,18 @@ function flatten(color: string, surface: string): string {
   return `#${out.join('')}`;
 }
 
+// Blend a "#RRGGBBAA" color onto an opaque hex surface.
+function flattenHex(color: string, surface: string): string {
+  const c = color.replace('#', '');
+  const s = surface.replace('#', '');
+  const a = parseInt(c.slice(6, 8), 16) / 255;
+  const out = [0, 2, 4].map((i) => {
+    const v = Math.round(parseInt(c.slice(i, i + 2), 16) * a + parseInt(s.slice(i, i + 2), 16) * (1 - a));
+    return v.toString(16).padStart(2, '0');
+  });
+  return `#${out.join('')}`;
+}
+
 // CIELAB distance, to check that the two team colors read as different.
 function lab(hex: string): [number, number, number] {
   const v = hex.replace('#', '');
@@ -50,18 +62,28 @@ describe.each(THEMES.map((t) => [t.id, t] as const))('%s', (_id, theme) => {
     }
   });
 
-  test('labels on solid team fills reach 4.5:1 (Classic red: 4.49, used only at 15pt bold and up)', () => {
+  test('labels on solid team fills reach 4.5:1 (newest round chip, keypad Add)', () => {
     for (const team of ['A', 'B'] as const) {
       const fill = theme.teams[team].color;
-      const floor = theme.id === 'classic' && team === 'A' ? 4.49 : 4.5;
-      expect(contrastRatio(inkOn(fill, theme), fill)).toBeGreaterThanOrEqual(floor);
+      expect(contrastRatio(inkOn(fill, theme), fill)).toBeGreaterThanOrEqual(4.5);
     }
   });
 
   test('team text and dim text reach 4.5:1 on the felt', () => {
     for (const team of ['A', 'B'] as const) {
       expect(contrastRatio(theme.teams[team].text, theme.felt)).toBeGreaterThanOrEqual(4.5);
+      // The leads pill draws team text on a 10% tint of the team color.
+      const pill = flattenHex(`${theme.teams[team].color}1A`, theme.felt);
+      expect(contrastRatio(theme.teams[team].text, pill)).toBeGreaterThanOrEqual(4.5);
+      // The UP badge sits on the leading card, where the card's team-colored
+      // shadow shows through its translucent fill. A 17% tint of the team
+      // color matches the lightest surface pixel measured in captures: the
+      // Spanish ARRIBA badge, Classic B, 4.68:1 on the SE (4.65 here).
+      const badge = flattenHex(`${theme.teams[team].color}2B`, theme.felt);
+      expect(contrastRatio(theme.teams[team].text, badge)).toBeGreaterThanOrEqual(4.5);
     }
+    // The target pill draws the gold label on a 10% tint of gold.
+    expect(contrastRatio(theme.gold, flattenHex(`${theme.gold}1A`, theme.felt))).toBeGreaterThanOrEqual(4.5);
     expect(contrastRatio(flatten(theme.textDim, theme.felt), theme.felt)).toBeGreaterThanOrEqual(4.5);
     expect(contrastRatio(theme.text, theme.felt)).toBeGreaterThanOrEqual(7);
     // Gold is also a text color: the target pill label and the share link.

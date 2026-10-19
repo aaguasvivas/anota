@@ -30,16 +30,20 @@ export type Dictionary = {
     addPoints: string;
     arrived: string;
     toWin: (n: number) => string;
-    scoreA11y: (name: string, score: number, target: number, left: number, leading: boolean) => string;
+    // left is the visible remaining text (toWin or arrived), so VoiceOver says what the card shows.
+    scoreA11y: (name: string, score: number, target: number, left: string, leading: boolean) => string;
     renameHint: string;
   };
   customModal: {
     titleFor: string;
+    // The team's total under the entry: alone before digits, then with the result.
+    total: (score: number, next: number | null) => string;
+    totalA11y: (score: number, next: number | null) => string;
   };
   settings: {
     namesSection: string;
-    nameTopA11y: string;
-    nameBottomA11y: string;
+    nameFirstA11y: string;
+    nameSecondA11y: string;
     targetSection: string;
     customLabel: string;
     customTargetA11y: string;
@@ -87,6 +91,7 @@ export type Dictionary = {
     restore: string;
     restored: string;
     notFound: string;
+    restoreFailed: string;
     thanks: string;
     thanksNoAds: string;
     close: string;

@@ -31,6 +31,7 @@ export function TeamCard({ team, targetScore, isLeader, onRename, metrics: m }: 
   const teamGlow = theme.teams[team.id].glow;
   const progress = Math.min(1, team.score / targetScore);
   const remaining = Math.max(0, targetScore - team.score);
+  const remainingText = remaining === 0 ? t.team.arrived : t.team.toWin(remaining);
   const name = teamDisplayName(team, t);
   const [topFace, bottomFace] = tileFacesForScore(team.score, targetScore);
 
@@ -96,7 +97,7 @@ export function TeamCard({ team, targetScore, isLeader, onRename, metrics: m }: 
         <View
           style={styles.scoreRow}
           accessible
-          accessibilityLabel={t.team.scoreA11y(name, team.score, targetScore, remaining, isLeader)}
+          accessibilityLabel={t.team.scoreA11y(name, team.score, targetScore, remainingText, isLeader)}
         >
           <AnimatedScore
             value={team.score}
@@ -119,7 +120,7 @@ export function TeamCard({ team, targetScore, isLeader, onRename, metrics: m }: 
               minimumFontScale={0.85}
               maxFontSizeMultiplier={FONT_CAP.numeral}
             >
-              {remaining === 0 ? t.team.arrived : t.team.toWin(remaining)}
+              {remainingText}
             </Text>
           </View>
         </View>

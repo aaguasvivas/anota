@@ -8,8 +8,9 @@ export type ThemeTier = 'free' | 'pro';
 export interface TeamColors {
   color: string;
   glow: string;
-  // The team color as small text on the felt (round chips, leads pill, UP
-  // badge). Equal to color except where color alone falls under 4.5:1.
+  // The team color as small text: round chips and the leads pill on the felt,
+  // the UP badge on the leading card. Equal to color except where color falls
+  // under 4.5:1 on one of those surfaces (contrast.test.ts checks all three).
   text: string;
 }
 
@@ -61,7 +62,9 @@ const classic: Theme = {
   danger: colors.danger,
   teams: {
     A: { color: teamPalette.A.color, glow: teamPalette.A.glow, text: '#F2717B' },
-    B: { color: teamPalette.B.color, glow: teamPalette.B.glow, text: teamPalette.B.color },
+    // Lighter than the fill so the "Ellos arriba por N" label also reaches
+    // 4.5:1 on the leads pill, which is a tint of the same blue.
+    B: { color: teamPalette.B.color, glow: teamPalette.B.glow, text: '#5B95F7' },
   },
 };
 
@@ -108,7 +111,8 @@ const mahogany: Theme = {
   gold: '#D9A05B',
   danger: '#E5484D',
   teams: {
-    A: { color: '#E0734A', glow: 'rgba(224, 115, 74, 0.35)', text: '#E0734A' },
+    // Lighter text: the leading card's orange glow lifts the UP badge surface.
+    A: { color: '#E0734A', glow: 'rgba(224, 115, 74, 0.35)', text: '#E8855E' },
     B: { color: '#7FB0C4', glow: 'rgba(127, 176, 196, 0.35)', text: '#7FB0C4' },
   },
 };

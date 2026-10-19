@@ -52,30 +52,47 @@ export function SettingsModal({
   const styles = useThemedStyles(makeStyles);
   const reduceMotion = useReduceMotion();
   const { proUnlocked } = useThemeControls();
-  const { status: restoreStatus, restore, reset: resetRestore } = useRestore();
+  const { status: restoreStatus, message: restoreMessage, restore, reset: resetRestore } = useRestore();
   const [nameA, setNameA] = useState(state.teams.A.name);
   const [nameB, setNameB] = useState(state.teams.B.name);
   const [customTarget, setCustomTarget] = useState(String(state.targetScore));
   const [hapticsOn, setHapticsOn] = useState(!isHapticsMuted());
   const nameARef = useRef<TextInput>(null);
   const nameBRef = useRef<TextInput>(null);
+  // The latest typed names. iOS can apply an autocorrection and blur the field
+  // in one event batch, before React re-renders, so a commit reads this, not
+  // the rendered state.
+  const typed = useRef({ A: state.teams.A.name, B: state.teams.B.name });
   const goldInk = inkOn(theme.gold, theme);
 
+  // Load the fields when the sheet opens, and only then: a commit while the
+  // sheet is open (a preset tap with a name still being typed) must not copy
+  // the old values back over the user's edits.
+  const wasVisible = useRef(false);
   useEffect(() => {
-    if (visible) {
+    if (visible && !wasVisible.current) {
+      typed.current = { A: state.teams.A.name, B: state.teams.B.name };
       setNameA(state.teams.A.name);
       setNameB(state.teams.B.name);
       setCustomTarget(String(state.targetScore));
       setHapticsOn(!isHapticsMuted());
       resetRestore();
     }
+    wasVisible.current = visible;
   }, [visible, state, resetRestore]);
 
   useEffect(() => subscribePrefs((p) => setHapticsOn(!p.hapticsMuted)), []);
 
+  // The fields show what was saved: the sheet no longer re-reads the match
+  // while it is open, so trim here the same way the rename does.
   function commitNames() {
-    onRename('A', nameA);
-    onRename('B', nameB);
+    const a = typed.current.A.trim().slice(0, 24);
+    const b = typed.current.B.trim().slice(0, 24);
+    typed.current = { A: a, B: b };
+    setNameA(a);
+    setNameB(b);
+    onRename('A', a);
+    onRename('B', b);
   }
 
   function handleCustomTarget(v: string) {
@@ -89,6 +106,7 @@ export function SettingsModal({
     const num = parseInt(customTarget, 10);
     if (Number.isFinite(num) && num > 0) {
       onTargetChange(num);
+      setCustomTarget(String(num));
     } else {
       setCustomTarget(String(state.targetScore));
     }
@@ -157,7 +175,10 @@ export function SettingsModal({
               <TextInput
                 ref={nameARef}
                 value={nameA}
-                onChangeText={setNameA}
+                onChangeText={(v) => {
+                  typed.current.A = v;
+                  setNameA(v);
+                }}
                 onBlur={commitNames}
                 maxLength={24}
                 placeholder={t.team.defaultA}
@@ -167,7 +188,7 @@ export function SettingsModal({
                 selectTextOnFocus
                 onSubmitEditing={submitName}
                 maxFontSizeMultiplier={CAP}
-                accessibilityLabel={t.settings.nameTopA11y}
+                accessibilityLabel={t.settings.nameFirstA11y}
               />
             </View>
             <View style={styles.teamRow}>
@@ -175,7 +196,10 @@ export function SettingsModal({
               <TextInput
                 ref={nameBRef}
                 value={nameB}
-                onChangeText={setNameB}
+                onChangeText={(v) => {
+                  typed.current.B = v;
+                  setNameB(v);
+                }}
                 onBlur={commitNames}
                 maxLength={24}
                 placeholder={t.team.defaultB}
@@ -185,7 +209,7 @@ export function SettingsModal({
                 selectTextOnFocus
                 onSubmitEditing={submitName}
                 maxFontSizeMultiplier={CAP}
-                accessibilityLabel={t.settings.nameBottomA11y}
+                accessibilityLabel={t.settings.nameSecondA11y}
               />
             </View>
 
@@ -227,6 +251,9 @@ export function SettingsModal({
                 {t.settings.customLabel}
               </Text>
               <TextInput
+                // Remount on a language switch: iOS builds the number pad's
+                // Done bar once, with the label it had at mount.
+                key={lang}
                 value={customTarget}
                 onChangeText={handleCustomTarget}
                 onEndEditing={commitCustomTarget}
@@ -237,6 +264,7 @@ export function SettingsModal({
                 placeholderTextColor={theme.textDim}
                 style={[styles.input, { textAlign: 'right' }]}
                 returnKeyType="done"
+                inputAccessoryViewButtonLabel={t.chrome.done}
                 maxFontSizeMultiplier={CAP}
                 accessibilityLabel={t.settings.customTargetA11y}
               />
@@ -252,7 +280,12 @@ export function SettingsModal({
                 return (
                   <Pressable
                     key={code}
-                    onPress={() => setLang(code)}
+                    onPress={() => {
+                      // The switch remounts the Other field, which skips its
+                      // end-editing commit, so commit first.
+                      commitCustomTarget();
+                      setLang(code);
+                    }}
                     accessibilityRole="button"
                     accessibilityLabel={label}
                     accessibilityState={{ selected: active }}
@@ -299,7 +332,8 @@ export function SettingsModal({
             </Text>
             <ThemePicker onRequestPro={onRequestPro} />
 
-            {!proUnlocked ? (
+            {/* Stays up after a Pro restore so the result line is seen. */}
+            {!proUnlocked || restoreStatus === 'restored' ? (
               <>
                 <Text style={[styles.sectionLabel, styles.sectionGap]} maxFontSizeMultiplier={CAP}>
                   {t.settings.purchasesSection}
@@ -316,22 +350,24 @@ export function SettingsModal({
                     </Text>
                   </Pressable>
                 ) : null}
-                <Pressable
-                  onPress={() => {
-                    if (restoreStatus !== 'pending') restore();
-                  }}
-                  disabled={restoreStatus === 'pending'}
-                  accessibilityRole="button"
-                  accessibilityLabel={t.pro.restore}
-                  style={({ pressed }) => [styles.restoreBtn, pressed && { opacity: 0.6 }]}
-                >
-                  <Text style={styles.restoreText} maxFontSizeMultiplier={CAP}>
-                    {restoreStatus === 'pending' ? t.pro.buying : t.pro.restore}
-                  </Text>
-                </Pressable>
-                {restoreStatus === 'restored' || restoreStatus === 'notFound' ? (
+                {!proUnlocked ? (
+                  <Pressable
+                    onPress={() => {
+                      if (restoreStatus !== 'pending') restore();
+                    }}
+                    disabled={restoreStatus === 'pending'}
+                    accessibilityRole="button"
+                    accessibilityLabel={t.pro.restore}
+                    style={({ pressed }) => [styles.restoreBtn, pressed && { opacity: 0.6 }]}
+                  >
+                    <Text style={styles.restoreText} maxFontSizeMultiplier={CAP}>
+                      {restoreStatus === 'pending' ? t.pro.buying : t.pro.restore}
+                    </Text>
+                  </Pressable>
+                ) : null}
+                {restoreMessage ? (
                   <Text style={styles.restoreResult} maxFontSizeMultiplier={CAP}>
-                    {restoreStatus === 'restored' ? t.pro.restored : t.pro.notFound}
+                    {restoreMessage}
                   </Text>
                 ) : null}
               </>

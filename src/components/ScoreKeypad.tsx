@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect, useState } from 'react';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { FONT_CAP, radii, spacing } from '../constants/layout';
+import { CAPTURE_BUILD, devRefs } from '../dev/captureHarness';
 import { useReduceMotion } from '../hooks/useReduceMotion';
 import { teamDisplayName, useT } from '../i18n';
 import { useTheme } from '../theme/ThemeProvider';
@@ -33,6 +34,7 @@ export function ScoreKeypad({ visible, team, onCancel, onSubmit }: Props) {
   useEffect(() => {
     if (visible) setEntry('');
   }, [visible]);
+  if (CAPTURE_BUILD) devRefs.setKeypadEntry = setEntry;
 
   function pressDigit(d: string) {
     tapLight();
@@ -68,8 +70,15 @@ export function ScoreKeypad({ visible, team, onCancel, onSubmit }: Props) {
           </Text>
           {/* The sheet covers the team's score, so show where this entry
               lands before Add. The line always renders so nothing jumps. */}
-          <Text style={styles.preview} numberOfLines={1} maxFontSizeMultiplier={FONT_CAP.numeral}>
-            {team ? (canAdd ? `${team.score} → ${team.score + n}` : `${team.score}`) : ''}
+          <Text
+            style={styles.preview}
+            numberOfLines={1}
+            maxFontSizeMultiplier={FONT_CAP.numeral}
+            accessibilityLabel={
+              team ? t.customModal.totalA11y(team.score, canAdd ? team.score + n : null) : undefined
+            }
+          >
+            {team ? t.customModal.total(team.score, canAdd ? team.score + n : null) : ''}
           </Text>
           <View style={[styles.rule, { backgroundColor: `${color}55` }]} />
 

@@ -49,8 +49,13 @@ export function WinnerModal({ visible, state, onNewMatch, onKeepPlaying }: Props
   const { proUnlocked } = useThemeControls();
   const styles = useThemedStyles(makeStyles);
   const reduceMotion = useReduceMotion();
-  const scale = useRef(new Animated.Value(0.85)).current;
-  const opacity = useRef(new Animated.Value(0)).current;
+  // New values for every showing. A value reused after the card unmounts can
+  // get its last native value (1) written back, and the next win would then
+  // paint the full card for a frame before its entrance starts.
+  const { scale, opacity } = useMemo(
+    () => ({ scale: new Animated.Value(0.85), opacity: new Animated.Value(0) }),
+    [visible],
+  );
   const cardRef = useRef<View>(null);
   const resultRef = useRef<View>(null);
   const [armed, setArmed] = useState(false);
@@ -61,21 +66,15 @@ export function WinnerModal({ visible, state, onNewMatch, onKeepPlaying }: Props
   const subtitle = useMemo(() => pick(t.winner.subtitles), [visible, t, pick]);
 
   useEffect(() => {
-    if (!visible) {
-      // Reset while hidden so the next win never paints a frame at full size.
-      opacity.setValue(0);
-      scale.setValue(0.85);
-      return;
-    }
-    opacity.setValue(0);
-    scale.setValue(reduceMotion ? 1 : 0.85);
+    if (!visible) return;
+    if (reduceMotion) scale.setValue(1);
     const fade = Animated.timing(opacity, {
       toValue: 1,
       duration: 220,
       easing: Easing.out(Easing.quad),
       useNativeDriver: true,
     });
-    Animated.sequence([
+    const entrance = Animated.sequence([
       Animated.delay(WIN_ENTRANCE_DELAY_MS),
       reduceMotion
         ? fade
@@ -88,7 +87,9 @@ export function WinnerModal({ visible, state, onNewMatch, onKeepPlaying }: Props
             }),
             fade,
           ]),
-    ]).start();
+    ]);
+    entrance.start();
+    return () => entrance.stop();
   }, [visible, reduceMotion, scale, opacity]);
 
   useEffect(() => {
@@ -146,164 +147,173 @@ export function WinnerModal({ visible, state, onNewMatch, onKeepPlaying }: Props
     }
   }
 
+  // The outer layer keeps alpha 1 while the card is up, so it takes every tap.
+  // During the entrance delay the backdrop is at alpha 0, and iOS skips alpha-0
+  // views when it hit-tests, so without this layer taps would reach the board.
   return (
-    <Animated.View
-      style={[styles.backdrop, { opacity }]}
+    <View
+      style={styles.blocker}
+      collapsable={false}
       accessibilityViewIsModal
       onAccessibilityEscape={onKeepPlaying}
     >
-      <View
-        collapsable={false}
-        style={{ position: 'absolute', left: -9999, top: 0 }}
-        accessibilityElementsHidden
-        importantForAccessibility="no-hide-descendants"
-      >
-        <View ref={cardRef} collapsable={false}>
-          <ShareCard
-            theme={cardTheme}
-            winnerName={winnerName}
-            loserName={loserName}
-            winnerScore={winner.score}
-            loserScore={loser.score}
-            winnerId={winner.id}
-          />
-        </View>
-      </View>
-      <Animated.View
-        style={[
-          styles.card,
-          { transform: [{ scale }], borderColor: winnerColor },
-        ]}
-      >
-        <LinearGradient
-          colors={[
-            `${winnerColor}33`,
-            'rgba(0,0,0,0)',
-            `${winnerColor}22`,
-          ]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={StyleSheet.absoluteFill}
-        />
-
-        <View style={styles.tileRow}>
-          <DominoTile top={6} bottom={6} pipColor={winnerColor} size={42} />
-        </View>
-
+      <Animated.View style={[styles.backdrop, { opacity }]}>
         <View
-          ref={resultRef}
-          accessible
-          accessibilityLabel={`${phrase} ${winnerName} ${winner.score}, ${loserName} ${loser.score}`}
+          collapsable={false}
+          style={{ position: 'absolute', left: -9999, top: 0 }}
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
         >
-          <Text style={[styles.phrase, { color: winnerColor }]} maxFontSizeMultiplier={FONT_CAP.numeral}>
-            {phrase}
-          </Text>
-          <Text style={styles.subtitle} maxFontSizeMultiplier={FONT_CAP.winnerLabel}>
-            {subtitle}
-          </Text>
+          <View ref={cardRef} collapsable={false}>
+            <ShareCard
+              theme={cardTheme}
+              winnerName={winnerName}
+              loserName={loserName}
+              winnerScore={winner.score}
+              loserScore={loser.score}
+              winnerId={winner.id}
+            />
+          </View>
+        </View>
+        <Animated.View
+          style={[
+            styles.card,
+            { transform: [{ scale }], borderColor: winnerColor },
+          ]}
+        >
+          <LinearGradient
+            colors={[
+              `${winnerColor}33`,
+              'rgba(0,0,0,0)',
+              `${winnerColor}22`,
+            ]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={StyleSheet.absoluteFill}
+          />
 
-          <View style={styles.scoreBlock}>
-            <Text
-              style={styles.winnerName}
-              numberOfLines={1}
-              adjustsFontSizeToFit
-              minimumFontScale={0.75}
-              maxFontSizeMultiplier={FONT_CAP.winnerLabel}
-            >
-              {winnerName}
+          <View style={styles.tileRow}>
+            <DominoTile top={6} bottom={6} pipColor={winnerColor} size={42} />
+          </View>
+
+          <View
+            ref={resultRef}
+            accessible
+            accessibilityLabel={`${phrase} ${winnerName} ${winner.score}, ${loserName} ${loser.score}`}
+          >
+            <Text style={[styles.phrase, { color: winnerColor }]} maxFontSizeMultiplier={FONT_CAP.numeral}>
+              {phrase}
             </Text>
-            <Text style={[styles.winnerScore, { color: winnerColor }]} maxFontSizeMultiplier={FONT_CAP.numeral}>
-              {winner.score}
+            <Text style={styles.subtitle} maxFontSizeMultiplier={FONT_CAP.winnerLabel}>
+              {subtitle}
             </Text>
-            <View style={styles.versus}>
-              <View style={[styles.divider, { backgroundColor: `${winnerColor}55` }]} />
-              <Text style={styles.vsText} maxFontSizeMultiplier={FONT_CAP.winnerLabel}>
-                {t.chrome.vs}
+
+            <View style={styles.scoreBlock}>
+              <Text
+                style={styles.winnerName}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.75}
+                maxFontSizeMultiplier={FONT_CAP.winnerLabel}
+              >
+                {winnerName}
               </Text>
-              <View style={[styles.divider, { backgroundColor: `${winnerColor}55` }]} />
+              <Text style={[styles.winnerScore, { color: winnerColor }]} maxFontSizeMultiplier={FONT_CAP.numeral}>
+                {winner.score}
+              </Text>
+              <View style={styles.versus}>
+                <View style={[styles.divider, { backgroundColor: `${winnerColor}55` }]} />
+                <Text style={styles.vsText} maxFontSizeMultiplier={FONT_CAP.winnerLabel}>
+                  {t.chrome.vs}
+                </Text>
+                <View style={[styles.divider, { backgroundColor: `${winnerColor}55` }]} />
+              </View>
+              <Text
+                style={styles.loserLine}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.75}
+                maxFontSizeMultiplier={FONT_CAP.winnerLabel}
+              >
+                {loserName}  ·  {loser.score}
+              </Text>
             </View>
-            <Text
-              style={styles.loserLine}
-              numberOfLines={1}
-              adjustsFontSizeToFit
-              minimumFontScale={0.75}
-              maxFontSizeMultiplier={FONT_CAP.winnerLabel}
-            >
-              {loserName}  ·  {loser.score}
-            </Text>
           </View>
-        </View>
 
-        <View style={styles.actions}>
-          <Pressable
-            onPress={onKeepPlaying}
-            disabled={!armed}
-            accessibilityRole="button"
-            accessibilityLabel={t.winner.keepPlaying}
-            style={({ pressed }) => [
-              styles.secondaryBtn,
-              pressed && { opacity: 0.6 },
-            ]}
-          >
-            <Text
-              style={styles.secondaryText}
-              numberOfLines={1}
-              adjustsFontSizeToFit
-              minimumFontScale={0.8}
-              maxFontSizeMultiplier={FONT_CAP.winnerButton}
+          <View style={styles.actions}>
+            <Pressable
+              onPress={onKeepPlaying}
+              disabled={!armed}
+              accessibilityRole="button"
+              accessibilityLabel={t.winner.keepPlaying}
+              style={({ pressed }) => [
+                styles.secondaryBtn,
+                pressed && { opacity: 0.6 },
+              ]}
             >
-              {t.winner.keepPlaying}
-            </Text>
-          </Pressable>
-          <Pressable
-            onPress={onNewMatch}
-            disabled={!armed}
-            accessibilityRole="button"
-            accessibilityLabel={t.winner.newMatch}
-            style={({ pressed }) => [
-              styles.primaryBtn,
-              { backgroundColor: winnerColor },
-              pressed && { opacity: 0.85 },
-            ]}
-          >
-            <Text
-              style={[styles.primaryText, { color: inkOn(winnerColor, theme) }]}
-              numberOfLines={1}
-              adjustsFontSizeToFit
-              minimumFontScale={0.8}
-              maxFontSizeMultiplier={FONT_CAP.winnerButton}
+              <Text
+                style={styles.secondaryText}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.8}
+                maxFontSizeMultiplier={FONT_CAP.winnerButton}
+              >
+                {t.winner.keepPlaying}
+              </Text>
+            </Pressable>
+            <Pressable
+              onPress={onNewMatch}
+              disabled={!armed}
+              accessibilityRole="button"
+              accessibilityLabel={t.winner.newMatch}
+              style={({ pressed }) => [
+                styles.primaryBtn,
+                { backgroundColor: winnerColor },
+                pressed && { opacity: 0.85 },
+              ]}
             >
-              {t.winner.newMatch}
-            </Text>
-          </Pressable>
-        </View>
-
-        <Pressable
-          onPress={shareResult}
-          disabled={!armed}
-          hitSlop={10}
-          accessibilityRole="button"
-          accessibilityLabel={t.winner.share}
-          style={styles.shareBtn}
-        >
-          <View style={styles.shareInner}>
-            <Ionicons name="share-outline" size={15} color={theme.gold} />
-            <Text style={styles.shareText} maxFontSizeMultiplier={FONT_CAP.winnerLabel}>
-              {t.winner.share}
-            </Text>
+              <Text
+                style={[styles.primaryText, { color: inkOn(winnerColor, theme) }]}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.8}
+                maxFontSizeMultiplier={FONT_CAP.winnerButton}
+              >
+                {t.winner.newMatch}
+              </Text>
+            </Pressable>
           </View>
-        </Pressable>
+
+          <Pressable
+            onPress={shareResult}
+            disabled={!armed}
+            hitSlop={10}
+            accessibilityRole="button"
+            accessibilityLabel={t.winner.share}
+            style={styles.shareBtn}
+          >
+            <View style={styles.shareInner}>
+              <Ionicons name="share-outline" size={15} color={theme.gold} />
+              <Text style={styles.shareText} maxFontSizeMultiplier={FONT_CAP.winnerLabel}>
+                {t.winner.share}
+              </Text>
+            </View>
+          </Pressable>
+        </Animated.View>
       </Animated.View>
-    </Animated.View>
+    </View>
   );
 }
 
 const makeStyles = (theme: Theme) =>
   StyleSheet.create({
-  backdrop: {
+  blocker: {
     ...StyleSheet.absoluteFillObject,
     zIndex: 1000,
     elevation: 1000,
+  },
+  backdrop: {
+    ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(0,0,0,0.75)',
     alignItems: 'center',
     justifyContent: 'center',

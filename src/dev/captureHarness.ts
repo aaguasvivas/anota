@@ -4,7 +4,7 @@
 // on only when the bundle was built with EXPO_PUBLIC_CAPTURE=1; store builds
 // never set that variable, so the effect returns immediately.
 import { useEffect, useRef } from 'react';
-import { Dimensions, InteractionManager, ScrollView } from 'react-native';
+import { Dimensions, InteractionManager, Keyboard, ScrollView } from 'react-native';
 import type { LanguageCode } from '../i18n/types';
 import type { ThemeId } from '../theme/themes';
 import type { MatchState } from '../types';
@@ -27,6 +27,8 @@ export type CaptureSpec = {
   match?: MatchState;
   overlay?: CaptureOverlay;
   settingsScroll?: 'top' | 'end';
+  keypadDigits?: string;
+  editTarget?: boolean;
   settleMs?: number;
 };
 
@@ -39,9 +41,14 @@ export type CaptureControls = {
   setOverlay: (o: CaptureOverlay) => void;
 };
 
-// The settings sheet registers its ScrollView here so a capture can show the
-// lower half of the sheet.
-export const devRefs: { settingsScroll: ScrollView | null } = { settingsScroll: null };
+// Components register handles here so a capture can show states that need a
+// tap: the lower half of the settings sheet, typed keypad digits, and the
+// target pill in edit mode.
+export const devRefs: {
+  settingsScroll: ScrollView | null;
+  setKeypadEntry?: (digits: string) => void;
+  editTarget?: () => void;
+} = { settingsScroll: null };
 
 export const CAPTURE_BUILD = process.env.EXPO_PUBLIC_CAPTURE === '1';
 const SERVER = 'http://localhost:8099';
@@ -72,7 +79,9 @@ export function useCaptureHarness(controls: CaptureControls) {
         const spec = (await res.json()) as CaptureSpec;
         if (spec.seq === seq) return;
         seq = spec.seq;
-        // Close every dialog first so a native modal never stacks on another.
+        // Close every dialog and the keyboard first, so a native modal never
+        // stacks on another and an open target edit ends.
+        Keyboard.dismiss();
         ref.current.setOverlay('none');
         await wait(450);
         ref.current.setProUnlocked(spec.pro ?? false);
@@ -89,6 +98,12 @@ export function useCaptureHarness(controls: CaptureControls) {
         if (spec.overlay === 'settings' && spec.settingsScroll === 'end') {
           devRefs.settingsScroll?.scrollToEnd({ animated: false });
           await wait(300);
+        }
+        if (spec.keypadDigits) devRefs.setKeypadEntry?.(spec.keypadDigits);
+        if (spec.editTarget) {
+          devRefs.editTarget?.();
+          // The keyboard and its Done bar slide in.
+          await wait(900);
         }
         await wait(spec.settleMs ?? 700);
         await painted();

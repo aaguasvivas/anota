@@ -12,7 +12,7 @@ export const colors = {
   // Ivory tile
   tile: '#F3EDDC',
   tileShadow: '#C9C0A8',
-  tileInk: '#10130E',
+  tileInk: '#0B0D09',
 
   // Text
   text: '#F4EFE2',

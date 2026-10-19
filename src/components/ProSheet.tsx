@@ -46,7 +46,7 @@ export function ProSheet({ visible, onClose, themeId }: Props) {
   const styles = useThemedStyles(makeStyles);
   const { proUnlocked, setProUnlocked, setThemeId } = useThemeControls();
   const { adsRemoved, setAdsRemoved } = useAdsRemoved();
-  const { status: restoreStatus, restore, reset: resetRestore } = useRestore();
+  const { status: restoreStatus, message: restoreMessage, restore, reset: resetRestore } = useRestore();
   const [proPrice, setProPrice] = useState<string | null>(null);
   const [removeAdsPrice, setRemoveAdsPrice] = useState<string | null>(null);
   const [buying, setBuying] = useState<'pro' | 'ads' | null>(null);
@@ -106,12 +106,14 @@ export function ProSheet({ visible, onClose, themeId }: Props) {
     };
   }, [visible, resetRestore]);
 
-  // After buying Pro from a locked tile, switch to that theme. This runs in an
-  // effect, not in the buy handler, because setThemeId checks the Pro flag and
-  // must see it after the unlock has rendered.
+  // After buying or restoring Pro from a locked tile, switch to that theme.
+  // This runs in an effect, not in the handler, because setThemeId checks the
+  // Pro flag and must see it after the unlock has rendered.
   useEffect(() => {
-    if (success === 'thanks' && proUnlocked && themeId) setThemeId(themeId);
-  }, [success, proUnlocked, themeId, setThemeId]);
+    if ((success === 'thanks' || restoreStatus === 'restored') && proUnlocked && themeId) {
+      setThemeId(themeId);
+    }
+  }, [success, restoreStatus, proUnlocked, themeId, setThemeId]);
 
   const proLabel = t.pro.buyPro.replace('{price}', proPrice ?? FALLBACK_PRO_PRICE);
   const removeAdsLabel = t.pro.buyRemoveAds.replace(
@@ -250,9 +252,9 @@ export function ProSheet({ visible, onClose, themeId }: Props) {
               </Pressable>
             ) : null}
 
-            {restoreStatus === 'notFound' ? (
+            {restoreStatus === 'notFound' || restoreStatus === 'failed' ? (
               <Text style={styles.notFound} maxFontSizeMultiplier={FONT_CAP.overlay}>
-                {t.pro.notFound}
+                {restoreMessage}
               </Text>
             ) : null}
 
